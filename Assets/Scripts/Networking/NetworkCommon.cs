@@ -1,4 +1,5 @@
-﻿using Unity.Networking.Transport;
+﻿using System;
+using Unity.Networking.Transport;
 
 public enum ConnectionState
 {
@@ -48,6 +49,7 @@ public interface INetworkCallbacks
     void OnEvent(int clientId, NetworkEvent info);
 }
 
+[Flags]
 public enum NetworkMessage
 {
     // Shared messages

@@ -53,8 +53,8 @@ public class NetworkStatisticsClient
         m_CMDQ.Update(m_NetworkClient.lastAcknowlegdedCommandTime - m_NetworkClient.serverTime);
         m_Interp.Update(interpTime * 1000);
 
-        m_SnapshotsIn.Update(clientCounters != null ? clientCounters.snapshotsIn : 0);
-        m_CommandsOut.Update(clientCounters != null ? clientCounters.commandsOut : 0);
+        m_SnapshotsIn.Update(clientCounters != null ? clientCounters.SnapshotsIn : 0);
+        m_CommandsOut.Update(clientCounters != null ? clientCounters.CommandsOut : 0);
         m_EventsIn.Update(clientCounters != null ? clientCounters.eventsIn : 0);
         m_EventsOut.Update(clientCounters != null ? clientCounters.eventsOut : 0);
 
@@ -117,7 +117,7 @@ public class NetworkStatisticsClient
         GameDebug.Log("Tick rate : " + Game.serverTickRate.IntValue);
         GameDebug.Log("clientID  : " + m_NetworkClient.clientId);
         GameDebug.Log("rtt       : " + m_NetworkClient.rtt);
-        GameDebug.Log("LastPkgSeq: " + m_NetworkClient.counters.packageContentStatsPackageSequence);
+        GameDebug.Log("LastPkgSeq: " + m_NetworkClient.counters.PackageContentStatsPackageSequence);
         GameDebug.Log("ServerTime: " + m_NetworkClient.serverTime);
         Console.Write("-------------------");
     }
@@ -130,7 +130,7 @@ public class NetworkStatisticsClient
         float dx = 1.0f;  // bar spacing
         float w = 1.0f;  // width of bars
         int maxbits = 0;
-        var stats = m_NetworkClient.counters.packageContentStats;
+        var stats = m_NetworkClient.counters.PackageContentStats;
         var last = m_NetworkClient.counters.packagesIn;
         for (var i = last; i > 0 && i > last - stats.Length; --i)
         {

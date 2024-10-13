@@ -245,7 +245,7 @@ public class ThinClientGameLoop : Game.IGameLoop
 
     public bool Init(string[] args)
     {
-        NetworkClient.m_DropSnapshots = true;
+        NetworkClient.DropSnapshots = true;
 
 #if UNITY_EDITOR        
         Game.game.levelManager.UnloadLevel();
@@ -269,7 +269,7 @@ public class ThinClientGameLoop : Game.IGameLoop
 
     public void Shutdown()
     {
-        NetworkClient.m_DropSnapshots = false;
+        NetworkClient.DropSnapshots = false;
     }
 
     public void Update()
