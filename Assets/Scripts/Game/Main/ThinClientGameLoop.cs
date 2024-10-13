@@ -424,7 +424,7 @@ public class ThinClient : INetworkCallbacks, INetworkClientCallbacks
     {
         GameDebug.Assert(m_ClientState == ClientState.Browsing, "Expected ClientState to be browsing");
         GameDebug.Assert(m_clientWorld == null, "Expected ClientWorld to be null");
-        GameDebug.Assert(m_NetworkClient.connectionState == NetworkClient.ConnectionState.Disconnected, "Expected network connectionState to be disconnected");
+        GameDebug.Assert(m_NetworkClient.connectionState == ConnectionState.Disconnected, "Expected network connectionState to be disconnected");
 
         m_ClientState = ClientState.Connecting;
         connectRetryCount = 0;
@@ -434,12 +434,12 @@ public class ThinClient : INetworkCallbacks, INetworkClientCallbacks
     {
         switch (m_NetworkClient.connectionState)
         {
-            case NetworkClient.ConnectionState.Connected:
+            case ConnectionState.Connected:
                 break;
-            case NetworkClient.ConnectionState.Connecting:
+            case ConnectionState.Connecting:
                 // Do nothing; just wait for either success or failure
                 break;
-            case NetworkClient.ConnectionState.Disconnected:
+            case ConnectionState.Disconnected:
                 if(connectRetryCount < 2)
                 {
                     connectRetryCount++;

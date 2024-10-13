@@ -674,7 +674,7 @@ public class ClientGameLoop : Game.IGameLoop, INetworkCallbacks, INetworkClientC
     {
         GameDebug.Assert(m_ClientState == ClientState.Browsing, "Expected ClientState to be browsing");
         GameDebug.Assert(m_clientWorld == null, "Expected ClientWorld to be null");
-        GameDebug.Assert(m_NetworkClient.connectionState == NetworkClient.ConnectionState.Disconnected, "Expected network connectionState to be disconnected");
+        GameDebug.Assert(m_NetworkClient.connectionState == ConnectionState.Disconnected, "Expected network connectionState to be disconnected");
 
         m_ClientState = ClientState.Connecting;
         connectRetryCount = 0;
@@ -684,13 +684,13 @@ public class ClientGameLoop : Game.IGameLoop, INetworkCallbacks, INetworkClientC
     {
         switch (m_NetworkClient.connectionState)
         {
-            case NetworkClient.ConnectionState.Connected:
+            case ConnectionState.Connected:
                 m_GameMessage = "Waiting for map info";
                 break;
-            case NetworkClient.ConnectionState.Connecting:
+            case ConnectionState.Connecting:
                 // Do nothing; just wait for either success or failure
                 break;
-            case NetworkClient.ConnectionState.Disconnected:
+            case ConnectionState.Disconnected:
                 if(connectRetryCount < 2)
                 {
                     connectRetryCount++;
