@@ -4,6 +4,7 @@ using Unity.Entities;
 using UnityEngine.Profiling;
 using UnityEngine.Ucg.Matchmaking;
 using System;
+using Networking.Socket;
 
 public class NullSnapshotConsumer : ISnapshotConsumer
 {

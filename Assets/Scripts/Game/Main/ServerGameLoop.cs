@@ -2,6 +2,7 @@
 using UnityEngine;
 using Unity.Entities;
 using NetworkCompression;
+using Networking.Socket;
 using UnityEngine.Profiling;
 using SQP;
 

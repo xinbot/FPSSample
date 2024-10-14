@@ -137,8 +137,8 @@ namespace NetcodeTests
                     server.world.AssertReplicatedToClient(client.world, server.clients[0]);
             }
             var c = server.networkServer.GetConnections()[server.clients[0]];
-            GameDebug.Log("Sent bytes:  " + c.counters.bytesOut);
-            GameDebug.Log("Sent packages: " + c.counters.packagesOut);
+            GameDebug.Log("Sent bytes:  " + c.counters.BytesOut);
+            GameDebug.Log("Sent packages: " + c.counters.PackagesOut);
             GameDebug.Log("Generated snapshots: " + server.networkServer.statsGeneratedEntitySnapshots);
             GameDebug.Log("Sent snapshotdata: " + server.networkServer.statsSentOutgoing);
         }

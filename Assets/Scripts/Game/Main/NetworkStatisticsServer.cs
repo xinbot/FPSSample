@@ -103,14 +103,14 @@ internal class NetworkStatisticsServer
         {
             var client = c.Value;
             Console.Write(string.Format("   {0:00} {1,5} {2,5} {3,5} {4,5} {5,5} {6:00.00} {7,5} {8:00.00} {9,5} {10,5}",
-                client.connectionId, client.rtt, client.inSequence, client.inSequenceTime, client.outSequence, client.outSequenceAck,
-                (client.counters.avgPackagesIn.graph.average * Game.serverTickRate.FloatValue),
-                (int)(client.counters.avgBytesIn.graph.average * Game.serverTickRate.FloatValue),
-                (client.counters.avgPackagesOut.graph.average * Game.serverTickRate.FloatValue),
-                (int)(client.counters.avgBytesOut.graph.average * Game.serverTickRate.FloatValue),
-                client.counters.fragmentedPackagesOut
+                client.ConnectionId, client.RTT, client.InSequence, client.InSequenceTime, client.OutSequence, client.OutSequenceAck,
+                (client.counters.AvgPackagesIn.graph.average * Game.serverTickRate.FloatValue),
+                (int)(client.counters.AvgBytesIn.graph.average * Game.serverTickRate.FloatValue),
+                (client.counters.AvgPackagesOut.graph.average * Game.serverTickRate.FloatValue),
+                (int)(client.counters.AvgBytesOut.graph.average * Game.serverTickRate.FloatValue),
+                client.counters.FragmentedPackagesOut
                 ));
-            byteOutSum += (int)(client.counters.avgBytesOut.graph.average * Game.serverTickRate.FloatValue);
+            byteOutSum += (int)(client.counters.AvgBytesOut.graph.average * Game.serverTickRate.FloatValue);
             byteOutCount++;
         }
         if(byteOutCount > 0)

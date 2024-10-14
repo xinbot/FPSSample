@@ -210,7 +210,7 @@ namespace NetcodeTests
             // TODO (petera) fix this (see also comments below)
             foreach(var c in m_NetworkServer.GetConnections())
             {
-                m_NetworkServer.MapReady(c.Value.connectionId);
+                m_NetworkServer.MapReady(c.Value.ConnectionId);
             }
         }
 

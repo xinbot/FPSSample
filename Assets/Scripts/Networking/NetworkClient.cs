@@ -52,7 +52,7 @@ public class Counters : NetworkConnectionCounters
 
     public void ClearSectionStats()
     {
-        var idx = packagesIn % PackageContentStats.Length;
+        var idx = PackagesIn % PackageContentStats.Length;
         if (PackageContentStats[idx] == null)
         {
             PackageContentStats[idx] = new List<PackageSectionStats>();
@@ -67,7 +67,7 @@ public class Counters : NetworkConnectionCounters
 
     public void AddSectionStats(string name, int offset, Color color)
     {
-        var idx = packagesIn % PackageContentStats.Length;
+        var idx = PackagesIn % PackageContentStats.Length;
         PackageContentStats[idx].Add(new PackageSectionStats
             {SectionName = name, SectionStart = _lastOffset, SectionLength = offset - _lastOffset, Color = color});
         _lastOffset = offset;
@@ -139,7 +139,7 @@ public class NetworkClient
 
     public int rtt
     {
-        get { return _clientConnection != null ? _clientConnection.rtt : 0; }
+        get { return _clientConnection != null ? _clientConnection.RTT : 0; }
     }
 
     public float timeSinceSnapshot
@@ -227,11 +227,11 @@ public class NetworkClient
         }
 
         // Force transport layer to disconnect
-        _transport.Disconnect(_clientConnection.connectionId);
+        _transport.Disconnect(_clientConnection.ConnectionId);
 
         // Note, we have to call OnDisconnect manually as disconnecting forcefully like this does not
         // generate an disconnect event from the transport layer
-        OnDisconnect(_clientConnection.connectionId);
+        OnDisconnect(_clientConnection.ConnectionId);
     }
 
     public void QueueCommand(int time, DataGenerator generator)
@@ -278,11 +278,11 @@ public class NetworkClient
             var outstandingPackages = _clientConnection.outstandingPackages;
             for (var i = 0; i < outstandingPackages.m_Elements.Length; i++)
             {
-                if (outstandingPackages.m_Sequences[i] != -1 && outstandingPackages.m_Elements[i].events.Count > 0)
+                if (outstandingPackages.m_Sequences[i] != -1 && outstandingPackages.m_Elements[i].Events.Count > 0)
                 {
                     GameDebug.Log("Outstanding Package: " + i + " (idx), " + outstandingPackages.m_Sequences[i] +
-                                  " (seq), " + outstandingPackages.m_Elements[i].events.Count + " (numevs), " +
-                                  ((GameNetworkEvents.EventType) outstandingPackages.m_Elements[i].events[0].type
+                                  " (seq), " + outstandingPackages.m_Elements[i].Events.Count + " (numevs), " +
+                                  ((GameNetworkEvents.EventType) outstandingPackages.m_Elements[i].Events[0].type
                                       .typeId) + " (ev0)");
                 }
             }
@@ -342,7 +342,7 @@ public class NetworkClient
 
     private void OnConnect(int connectionId)
     {
-        if (_clientConnection != null && _clientConnection.connectionId == connectionId)
+        if (_clientConnection != null && _clientConnection.ConnectionId == connectionId)
         {
             GameDebug.Assert(connectionState == ConnectionState.Connecting);
         }
@@ -350,7 +350,7 @@ public class NetworkClient
 
     private void OnDisconnect(int connectionId)
     {
-        if (_clientConnection == null || _clientConnection.connectionId != connectionId)
+        if (_clientConnection == null || _clientConnection.ConnectionId != connectionId)
         {
             return;
         }
@@ -359,9 +359,9 @@ public class NetworkClient
         {
             GameDebug.Log("Disconnected from server");
             GameDebug.Log(string.Format("Last package sent : {0}. Last package received {1} {2} ms ago",
-                _clientConnection.outSequence,
-                _clientConnection.inSequence,
-                NetworkUtils.stopwatch.ElapsedMilliseconds - _clientConnection.inSequenceTime));
+                _clientConnection.OutSequence,
+                _clientConnection.InSequence,
+                NetworkUtils.stopwatch.ElapsedMilliseconds - _clientConnection.InSequenceTime));
         }
         else if (_clientConnection.ConnectionState == ConnectionState.Connecting)
         {
@@ -387,7 +387,7 @@ public class NetworkClient
         }
 
         // SHould these be asserts?
-        if (_clientConnection == null || _clientConnection.connectionId != connectionId)
+        if (_clientConnection == null || _clientConnection.ConnectionId != connectionId)
         {
             return;
         }
@@ -414,12 +414,12 @@ public class NetworkClient
 #pragma warning restore
     }
 
-    class ClientConnection : NetworkConnection<Counters, ClientPackageInfo>
+    private class ClientConnection : NetworkConnection<Counters, ClientPackageInfo>
     {
         // Time we received the last snapshot
         public long SnapshotReceivedTime;
 
-        // Server simulation time (actualy time spent doing simulation regardless of tickrate)
+        // Server simulation time (actual time spent doing simulation regardless of tick rate)
         public float ServerSimTime;
 
         private readonly ClientConfig _clientConfig;
@@ -486,7 +486,7 @@ public class NetworkClient
             NetworkCompressionModel model, INetworkClientCallbacks networkClientConsumer,
             ISnapshotConsumer snapshotConsumer) where TInputStream : struct, IInputStream
         {
-            counters.bytesIn += packageSize;
+            counters.BytesIn += packageSize;
 
             var packageSequence = ProcessPackageHeader(packageData, packageSize, out var content, out var assembledData,
                 out var assembledSize, out var headerSize);
@@ -561,7 +561,7 @@ public class NetworkClient
              */
 
             var rawOutputStream = new BitOutputStream(m_PackageBuffer);
-            if (inSequence == 0 || !CanSendPackage(ref rawOutputStream))
+            if (InSequence == 0 || !CanSendPackage(ref rawOutputStream))
             {
                 return;
             }
@@ -669,7 +669,7 @@ public class NetworkClient
             if (mapSequence > _mapInfo.MapSequence)
             {
                 _mapInfo.MapSequence = mapSequence;
-                _mapInfo.AckSequence = inSequence;
+                _mapInfo.AckSequence = InSequence;
                 _mapInfo.Processed = false;
                 NetworkSchema.CopyFieldsToBuffer(_mapInfo.Schema, ref input, _mapInfo.Data);
                 Reset();
@@ -1186,8 +1186,8 @@ public class NetworkClient
             var sequence = _commandSequence;
             output.WriteRawBits(Sequence.ToUInt16(_commandSequence), 16);
 
-            packageInfo.commandSequence = _commandSequence;
-            packageInfo.commandTime = _commandsOut[_commandSequence].Time;
+            packageInfo.CommandSequence = _commandSequence;
+            packageInfo.CommandTime = _commandsOut[_commandSequence].Time;
 
             CommandInfo previous = _defaultCommandInfo;
             while (_commandsOut.TryGetValue(sequence, out var command))
@@ -1213,16 +1213,16 @@ public class NetworkClient
             base.NotifyDelivered(sequence, info, madeIt);
             if (madeIt)
             {
-                if (info.commandSequence > _commandSequenceAck)
+                if (info.CommandSequence > _commandSequenceAck)
                 {
-                    _commandSequenceAck = info.commandSequence;
-                    LastAcknowlegdedCommandTime = info.commandTime;
+                    _commandSequenceAck = info.CommandSequence;
+                    LastAcknowlegdedCommandTime = info.CommandTime;
                 }
             }
             else
             {
                 // Resend user config if the package was lost
-                if ((info.content & NetworkMessage.ClientConfig) != 0)
+                if ((info.Content & NetworkMessage.ClientConfig) != 0)
                 {
                     _sendClientConfig = true;
                 }

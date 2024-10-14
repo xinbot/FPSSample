@@ -40,13 +40,13 @@ public class NetworkStatisticsClient
 
         m_ServerSimTime.Update(m_NetworkClient.serverSimTime);
 
-        m_BytesIn.Update(clientCounters != null ? clientCounters.bytesIn : 0);
-        m_PackagesIn.Update(clientCounters != null ? clientCounters.packagesIn : 0);
+        m_BytesIn.Update(clientCounters != null ? clientCounters.BytesIn : 0);
+        m_PackagesIn.Update(clientCounters != null ? clientCounters.PackagesIn : 0);
 
-        m_HeaderBitsIn.Update(clientCounters != null ? clientCounters.headerBitsIn : 0);
+        m_HeaderBitsIn.Update(clientCounters != null ? clientCounters.HeaderBitsIn : 0);
 
-        m_BytesOut.Update(clientCounters != null ? clientCounters.bytesOut : 0);
-        m_PackagesOut.Update(clientCounters != null ? clientCounters.packagesOut : 0);
+        m_BytesOut.Update(clientCounters != null ? clientCounters.BytesOut : 0);
+        m_PackagesOut.Update(clientCounters != null ? clientCounters.PackagesOut : 0);
 
         m_Latency.Update(m_NetworkClient.timeSinceSnapshot);
         m_RTT.Update(m_NetworkClient.rtt);
@@ -55,28 +55,28 @@ public class NetworkStatisticsClient
 
         m_SnapshotsIn.Update(clientCounters != null ? clientCounters.SnapshotsIn : 0);
         m_CommandsOut.Update(clientCounters != null ? clientCounters.CommandsOut : 0);
-        m_EventsIn.Update(clientCounters != null ? clientCounters.eventsIn : 0);
-        m_EventsOut.Update(clientCounters != null ? clientCounters.eventsOut : 0);
+        m_EventsIn.Update(clientCounters != null ? clientCounters.EventsIn : 0);
+        m_EventsOut.Update(clientCounters != null ? clientCounters.EventsOut : 0);
 
         // Calculate package loss pct
         if (clientCounters != null && Time.time > m_NextLossCalc)
         {
             m_NextLossCalc = Time.time + 0.2f;
 
-            var packagesIn = clientCounters.packagesIn - m_PackageCountPrevIn;
-            m_PackageCountPrevIn = clientCounters.packagesIn;
+            var packagesIn = clientCounters.PackagesIn - m_PackageCountPrevIn;
+            m_PackageCountPrevIn = clientCounters.PackagesIn;
 
-            var loss = clientCounters.packagesLostIn - m_PackageLossPrevIn;
-            m_PackageLossPrevIn = clientCounters.packagesLostIn;
+            var loss = clientCounters.PackagesLostIn - m_PackageLossPrevIn;
+            m_PackageLossPrevIn = clientCounters.PackagesLostIn;
 
             var totalIn = packagesIn + loss;
             m_PackagesLostPctIn = totalIn != 0 ? loss * 100 / totalIn : 0;
 
-            var packagesOut = clientCounters.packagesOut - m_PackageCountPrevOut;
-            m_PackageCountPrevOut = clientCounters.packagesOut;
+            var packagesOut = clientCounters.PackagesOut - m_PackageCountPrevOut;
+            m_PackageCountPrevOut = clientCounters.PackagesOut;
 
-            loss = clientCounters.packagesLostOut - m_PackageLossPrevOut;
-            m_PackageLossPrevOut = clientCounters.packagesLostOut;
+            loss = clientCounters.PackagesLostOut - m_PackageLossPrevOut;
+            m_PackageLossPrevOut = clientCounters.PackagesLostOut;
 
             var totalOut = packagesOut + loss;
             m_PackagesLostPctOut = totalOut != 0 ? loss * 100 / totalOut : 0;
@@ -131,7 +131,7 @@ public class NetworkStatisticsClient
         float w = 1.0f;  // width of bars
         int maxbits = 0;
         var stats = m_NetworkClient.counters.PackageContentStats;
-        var last = m_NetworkClient.counters.packagesIn;
+        var last = m_NetworkClient.counters.PackagesIn;
         for (var i = last; i > 0 && i > last - stats.Length; --i)
         {
             var s = stats[i % stats.Length];
@@ -236,29 +236,29 @@ public class NetworkStatisticsClient
             return;
 
         int y = 2;
-        DebugOverlay.Write(2, y++, "  Bytes in     : {0}", counters.bytesIn);
-        DebugOverlay.Write(2, y++, "  Bytes out    : {0}", counters.bytesOut);
-        DebugOverlay.Write(2, y++, "  Packages in  : {0}", counters.packagesIn);
-        DebugOverlay.Write(2, y++, "  Packages out : {0}", counters.packagesOut);
+        DebugOverlay.Write(2, y++, "  Bytes in     : {0}", counters.BytesIn);
+        DebugOverlay.Write(2, y++, "  Bytes out    : {0}", counters.BytesOut);
+        DebugOverlay.Write(2, y++, "  Packages in  : {0}", counters.PackagesIn);
+        DebugOverlay.Write(2, y++, "  Packages out : {0}", counters.PackagesOut);
 
         y++;
-        DebugOverlay.Write(2, y++, "  Stale packages        : {0}", counters.packagesStaleIn);
-        DebugOverlay.Write(2, y++, "  Duplicate packages    : {0}", counters.packagesDuplicateIn);
-        DebugOverlay.Write(2, y++, "  Out of order packages : {0}", counters.packagesOutOfOrderIn);
+        DebugOverlay.Write(2, y++, "  Stale packages        : {0}", counters.PackagesStaleIn);
+        DebugOverlay.Write(2, y++, "  Duplicate packages    : {0}", counters.PackagesDuplicateIn);
+        DebugOverlay.Write(2, y++, "  Out of order packages : {0}", counters.PackagesOutOfOrderIn);
 
         y++;
-        DebugOverlay.Write(2, y++, "  Lost packages in      : {0}", counters.packagesLostIn);
-        DebugOverlay.Write(2, y++, "  Lost packages out     : {0}", counters.packagesLostOut);
+        DebugOverlay.Write(2, y++, "  Lost packages in      : {0}", counters.PackagesLostIn);
+        DebugOverlay.Write(2, y++, "  Lost packages out     : {0}", counters.PackagesLostOut);
 
         y++;
-        DebugOverlay.Write(2, y++, "  Fragmented packages in       : {0}", counters.fragmentedPackagesIn);
-        DebugOverlay.Write(2, y++, "  Fragmented packages out      : {0}", counters.fragmentedPackagesOut);
+        DebugOverlay.Write(2, y++, "  Fragmented packages in       : {0}", counters.FragmentedPackagesIn);
+        DebugOverlay.Write(2, y++, "  Fragmented packages out      : {0}", counters.FragmentedPackagesOut);
 
-        DebugOverlay.Write(2, y++, "  Fragmented packages lost in  : {0}", counters.fragmentedPackagesLostIn);
-        DebugOverlay.Write(2, y++, "  Fragmented packages lost out : {0}", counters.fragmentedPackagesLostOut);
+        DebugOverlay.Write(2, y++, "  Fragmented packages lost in  : {0}", counters.FragmentedPackagesLostIn);
+        DebugOverlay.Write(2, y++, "  Fragmented packages lost out : {0}", counters.FragmentedPackagesLostOut);
 
         y++;
-        DebugOverlay.Write(2, y++, "  Choked packages lost : {0}", counters.chokedPackagesOut);
+        DebugOverlay.Write(2, y++, "  Choked packages lost : {0}", counters.ChokedPackagesOut);
     }
 
     float m_FrameTimeScale;
