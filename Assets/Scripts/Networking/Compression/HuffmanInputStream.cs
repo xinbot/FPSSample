@@ -1,16 +1,23 @@
-﻿using UnityEngine;
+﻿using NetworkCompression;
+using UnityEngine;
 
-namespace NetworkCompression
+namespace Networking.Compression
 {
     public struct HuffmanInputStream : IInputStream
     {
+        private NetworkCompressionModel _model;
+        private byte[] _buffer;
+        private ulong _bitBuffer;
+        private int _currentBitIndex;
+        private int _currentByteIndex;
+
         public HuffmanInputStream(NetworkCompressionModel model, byte[] buffer, int bufferOffset)
         {
-            m_Model = model;
-            m_Buffer = buffer;
-            m_CurrentBitIndex = 0;
-            m_CurrentByteIndex = bufferOffset;
-            m_BitBuffer = 0;
+            _model = model;
+            _buffer = buffer;
+            _currentBitIndex = 0;
+            _currentByteIndex = bufferOffset;
+            _bitBuffer = 0;
         }
 
         public void Initialize(NetworkCompressionModel model, byte[] buffer, int bufferOffset)
@@ -18,27 +25,30 @@ namespace NetworkCompression
             this = new HuffmanInputStream(model, buffer, bufferOffset);
         }
 
-        public uint ReadRawBits(int numbits)
+        public uint ReadRawBits(int numBits)
         {
             FillBitBuffer();
-            return ReadRawBitsInternal(numbits);
+            return ReadRawBitsInternal(numBits);
         }
 
         public void ReadRawBytes(byte[] dstBuffer, int dstIndex, int count)
         {
-            for (int i = 0; i < count; i++)
-                dstBuffer[dstIndex + i] = (byte)ReadRawBits(8);
+            for (var i = 0; i < count; i++)
+            {
+                dstBuffer[dstIndex + i] = (byte) ReadRawBits(8);
+            }
         }
 
-        public void SkipRawBits(int numbits)
+        public void SkipRawBits(int numBits)
         {
             // TODO: implement this properly
-            while (numbits >= 32)
+            while (numBits >= 32)
             {
                 ReadRawBits(32);
-                numbits -= 32;
+                numBits -= 32;
             }
-            ReadRawBits(numbits);
+
+            ReadRawBits(numBits);
         }
 
         public void SkipRawBytes(int count)
@@ -50,30 +60,30 @@ namespace NetworkCompression
         {
             FillBitBuffer();
             uint peekMask = (1u << NetworkCompressionConstants.k_MaxHuffmanSymbolLength) - 1u;
-            uint peekBits = (uint)m_BitBuffer & peekMask;
-            ushort huffmanEntry = m_Model.decodeTable[context, peekBits];
+            uint peekBits = (uint) _bitBuffer & peekMask;
+            ushort huffmanEntry = _model.decodeTable[context, peekBits];
             int symbol = huffmanEntry >> 8;
             int length = huffmanEntry & 0xFF;
 
             // Skip Huffman bits
-            m_BitBuffer >>= length;
-            m_CurrentBitIndex -= length;
-            return (uint)symbol;
+            _bitBuffer >>= length;
+            _currentBitIndex -= length;
+            return (uint) symbol;
         }
 
         public uint ReadPackedUInt(int context)
         {
             FillBitBuffer();
             uint peekMask = (1u << NetworkCompressionConstants.k_MaxHuffmanSymbolLength) - 1u;
-            uint peekBits = (uint)m_BitBuffer & peekMask;
-            ushort huffmanEntry = m_Model.decodeTable[context, peekBits];
+            uint peekBits = (uint) _bitBuffer & peekMask;
+            ushort huffmanEntry = _model.decodeTable[context, peekBits];
             int symbol = huffmanEntry >> 8;
             int length = huffmanEntry & 0xFF;
 
             // Skip Huffman bits
-            m_BitBuffer >>= length;
-            m_CurrentBitIndex -= length;
-        
+            _bitBuffer >>= length;
+            _currentBitIndex -= length;
+
             uint offset = NetworkCompressionConstants.k_BucketOffsets[symbol];
             int bits = NetworkCompressionConstants.k_BucketSizes[symbol];
             return ReadRawBitsInternal(bits) + offset;
@@ -81,50 +91,47 @@ namespace NetworkCompression
 
         public int ReadPackedIntDelta(int baseline, int context)
         {
-            return (int)ReadPackedUIntDelta((uint)baseline, context);
+            return (int) ReadPackedUIntDelta((uint) baseline, context);
         }
 
         public uint ReadPackedUIntDelta(uint baseline, int context)
         {
             uint folded = ReadPackedUInt(context);
-            uint delta = (folded >> 1) ^ (uint)-(int)(folded & 1);    // Deinterleave values from [0, -1, 1, -2, 2...] to [..., -2, -1, -0, 1, 2, ...]
+            uint delta =
+                (folded >> 1) ^
+                (uint) -(int) (folded &
+                               1); // Deinterleave values from [0, -1, 1, -2, 2...] to [..., -2, -1, -0, 1, 2, ...]
             return baseline - delta;
         }
 
         public int GetBitPosition2()
         {
-            return m_CurrentByteIndex * 8 - m_CurrentBitIndex;
+            return _currentByteIndex * 8 - _currentBitIndex;
         }
-        
+
         public NetworkCompressionModel GetModel()
         {
-            return m_Model;
+            return _model;
         }
 
-
-        uint ReadRawBitsInternal(int numbits)
+        private void FillBitBuffer()
         {
-            Debug.Assert(numbits >= 0 && numbits <= 32);    //TODO: change back to Debug.Assert
-            Debug.Assert(m_CurrentBitIndex >= numbits);
-            uint res = (uint)(m_BitBuffer & ((1UL << numbits) - 1UL));
-            m_BitBuffer >>= numbits;
-            m_CurrentBitIndex -= numbits;
-            return res;
-        }
-
-        void FillBitBuffer()
-        {
-            while (m_CurrentBitIndex <= 56)
+            // fill a ulong (unsigned 64-bit integer) with 8 buffer values.
+            while (_currentBitIndex <= 56)
             {
-                m_BitBuffer |= (ulong)m_Buffer[m_CurrentByteIndex++] << m_CurrentBitIndex;
-                m_CurrentBitIndex += 8;
+                _bitBuffer |= (ulong) _buffer[_currentByteIndex++] << _currentBitIndex;
+                _currentBitIndex += 8;
             }
         }
 
-        NetworkCompressionModel m_Model;
-        byte[] m_Buffer;
-        ulong m_BitBuffer;
-        int m_CurrentBitIndex;
-        int m_CurrentByteIndex;
+        private uint ReadRawBitsInternal(int numBits)
+        {
+            Debug.Assert(numBits >= 0 && numBits <= 32);
+            Debug.Assert(_currentBitIndex >= numBits);
+            uint res = (uint) (_bitBuffer & ((1UL << numBits) - 1UL));
+            _bitBuffer >>= numBits;
+            _currentBitIndex -= numBits;
+            return res;
+        }
     }
 }

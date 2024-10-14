@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using NUnit.Framework;
 using UnityEngine;
 using NetworkCompression;
+using Networking.Compression;
 
 namespace NetcodeTests
 {
