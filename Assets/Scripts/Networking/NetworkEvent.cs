@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
 using NetworkCompression;
+using Networking;
 
 public delegate void NetworkEventGenerator(ref NetworkWriter data);
 public delegate void NetworkEventProcessor(ushort typeId, ref NetworkReader data);

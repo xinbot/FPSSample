@@ -1,54 +1,64 @@
 ﻿using System;
 using System.Collections.Generic;
-using UnityEngine;
 
-// TODO : Optimize internal data structures
-public class NetworkObjectPool<T> where T : class, new()
+namespace Networking
 {
-    public int allocated { get { return m_Allocated.Count; } }
-    public int capacity { get { return m_Allocated.Capacity; } }
-
-    public NetworkObjectPool(int initialSize, Func<T> factory = null)
+    // TODO : Optimize internal data structures
+    public class NetworkObjectPool<T> where T : class, new()
     {
-        Grow(initialSize);
-        m_Factory = factory;
+        private readonly Func<T> _factory;
+        private readonly List<T> _free = new List<T>();
+        private readonly List<T> _allocated = new List<T>();
+
+        public int allocated => _allocated.Count;
+
+        public int capacity => _allocated.Capacity;
+
+        public NetworkObjectPool(int initialSize, Func<T> factory = null)
+        {
+            Grow(initialSize);
+            _factory = factory;
+        }
+
+        public T Allocate()
+        {
+            if (_free.Count == 0)
+            {
+                Grow(_free.Capacity * 2);
+            }
+
+            var element = _free[_free.Count - 1];
+            _free.RemoveAt(_free.Count - 1);
+            _allocated.Add(element);
+            return element;
+        }
+
+        public void Release(T t)
+        {
+            bool result = _allocated.Remove(t);
+            GameDebug.Assert(result);
+            _free.Add(t);
+        }
+
+        public void Reset()
+        {
+            foreach (var item in _allocated)
+            {
+                _free.Add(item);
+            }
+
+            _allocated.Clear();
+        }
+
+        private void Grow(int count)
+        {
+            _free.Capacity += count;
+            _allocated.Capacity += count;
+
+            for (var i = 0; i < count; ++i)
+            {
+                _free.Add(_factory != null ? _factory() : new T());
+            }
+        }
     }
-
-    public T Allocate()
-    {
-        if (m_Free.Count == 0)
-            Grow(m_Free.Capacity * 2);
-
-        var element = m_Free[m_Free.Count - 1];
-        m_Free.RemoveAt(m_Free.Count - 1);
-        m_Allocated.Add(element);
-        return element;
-    }
-
-    public void Release(T t)
-    {
-        bool result = m_Allocated.Remove(t);
-        GameDebug.Assert(result);
-        m_Free.Add(t);
-    }
-
-    public void Reset()
-    {
-        foreach (var item in m_Allocated)
-            m_Free.Add(item);
-        m_Allocated.Clear();
-    }
-
-    void Grow(int count)
-    {
-        m_Free.Capacity += count;
-        m_Allocated.Capacity += count;
-
-        for (int i = 0; i < count; ++i)
-            m_Free.Add(m_Factory != null ? m_Factory() : new T());
-    }
-
-    Func<T> m_Factory;
-    List<T> m_Free = new List<T>();
-    List<T> m_Allocated = new List<T>();
 }
