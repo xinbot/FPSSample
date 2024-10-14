@@ -14,13 +14,18 @@ namespace Networking.Socket
 
         public SocketTransport(int port = 0, int maxConnections = 16)
         {
-            _idToConnection = new NativeArray<NetworkConnection>(maxConnections, Allocator.Persistent);
-            _socket = new UdpNetworkDriver(new NetworkDataStreamParameter {size = 10 * NetworkConfig.maxPackageSize},
-                new NetworkConfigParameter {disconnectTimeout = ServerGameLoop.serverDisconnectTimeout.IntValue});
+            var networkDataStreamParameter = new NetworkDataStreamParameter {size = 10 * NetworkConfig.maxPackageSize};
+            var networkConfigParameter = new NetworkConfigParameter
+                {disconnectTimeout = ServerGameLoop.serverDisconnectTimeout.IntValue};
+            _socket = new UdpNetworkDriver(networkDataStreamParameter, networkConfigParameter);
             _socket.Bind(new IPEndPoint(IPAddress.Any, port));
 
+            _idToConnection = new NativeArray<NetworkConnection>(maxConnections, Allocator.Persistent);
+
             if (port != 0)
+            {
                 _socket.Listen();
+            }
         }
 
         public int Connect(string ip, int port)
@@ -54,10 +59,11 @@ namespace Networking.Socket
 
             DataStreamReader reader;
             var context = default(DataStreamReader.Context);
-            var ev = _socket.PopEvent(out connection, out reader);
-
-            if (ev == EventType.Empty)
+            var eventType = _socket.PopEvent(out connection, out reader);
+            if (eventType == EventType.Empty)
+            {
                 return false;
+            }
 
             int size = 0;
             if (reader.IsCreated)
@@ -67,7 +73,7 @@ namespace Networking.Socket
                 size = reader.Length;
             }
 
-            switch (ev)
+            switch (eventType)
             {
                 case EventType.Data:
                     e.type = TransportEvent.Type.Data;
@@ -102,8 +108,8 @@ namespace Networking.Socket
 
         public string GetConnectionDescription(int connectionId)
         {
-            return
-                ""; // TODO enable this once RemoteEndPoint is implemented m_Socket.RemoteEndPoint(m_IdToConnection[connectionId]).GetIp();
+            // TODO enable this once RemoteEndPoint is implemented m_Socket.RemoteEndPoint(m_IdToConnection[connectionId]).GetIp();
+            return "";
         }
 
         public void Shutdown()
