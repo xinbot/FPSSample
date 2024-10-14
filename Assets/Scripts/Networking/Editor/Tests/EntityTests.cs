@@ -2,6 +2,7 @@
 using NUnit.Framework;
 using UnityEngine;
 using System.Collections.Generic;
+using Networking.Tests;
 
 namespace NetcodeTests
 {
@@ -209,7 +210,7 @@ namespace NetcodeTests
             // Meanwhile in another part of the net, a router decides to start dropping
             // packages like santa himself. Horrors! Our client is now unable to speak
             // a word. In particualar unable to say ACK
-            NetworkClient.clientBlockOut.Value = "1";
+            NetworkClient.ClientBlockOut.Value = "1";
 
             // The server suspects nothing and passes on a snapshot. Of course no
             // ack will come back from the poor client
@@ -232,7 +233,7 @@ namespace NetcodeTests
 
             // Now the router comes back to life. Server begins to get acks
             // so snapshots can now be delta compressed. Skies seem to be clearing up.
-            NetworkClient.clientBlockOut.Value = "0";
+            NetworkClient.ClientBlockOut.Value = "0";
 
             // Look at them sync again. Perhaps this is the beginning of a beautiful friendship
             for(int i = 0; i < 10; i++)
@@ -255,7 +256,7 @@ namespace NetcodeTests
             TestGameClient client = new TestGameClient(2);
 
             NetworkServer.serverDebug.Value = "2";
-            NetworkClient.clientDebug.Value = "2";
+            NetworkClient.ClientDebug.Value = "2";
 
             // Handshake
             server.Update();
@@ -276,7 +277,7 @@ namespace NetcodeTests
             // Despawn and respawn with new type
             server.DespawnEntity(entity);
 
-            NetworkClient.clientBlockIn.Value = "-1";
+            NetworkClient.ClientBlockIn.Value = "-1";
             NetworkConfig.netChokeSendInterval.Value = "0";
 
             // Run enough updates so that server consider id for despawned entity reusable
@@ -289,7 +290,7 @@ namespace NetcodeTests
             // Spawn new entity. Different type but will have same id
             entity = server.SpawnEntity<TestEntity>(-1);
 
-            NetworkClient.clientBlockIn.Value = "0";
+            NetworkClient.ClientBlockIn.Value = "0";
             server.Update();
             client.Update();
             server.Update();
@@ -307,7 +308,7 @@ namespace NetcodeTests
             TestGameClient client = new TestGameClient(2);
 
             NetworkServer.serverDebug.Value = "2";
-            NetworkClient.clientDebug.Value = "2";
+            NetworkClient.ClientDebug.Value = "2";
 
             // Handshake
             server.Update();
@@ -325,7 +326,7 @@ namespace NetcodeTests
 
             server.world.AssertReplicatedToClient(client.world, server.clients[0]);
 
-            NetworkClient.clientBlockIn.Value = "-1";
+            NetworkClient.ClientBlockIn.Value = "-1";
             NetworkConfig.netChokeSendInterval.Value = "0";
 
             // Run enough updates so that server consider id for despawned entity reusable
@@ -339,7 +340,7 @@ namespace NetcodeTests
             // be sent. We rely on client to prune this entity as a stale entity.
             server.DespawnEntity(entity);
 
-            NetworkClient.clientBlockIn.Value = "0";
+            NetworkClient.ClientBlockIn.Value = "0";
             server.Update();
             client.Update();
             server.Update();

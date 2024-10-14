@@ -81,21 +81,21 @@ public class NetworkClient
 
     [ConfigVar(Name = "client.debug", DefaultValue = "0",
         Description = "Enable debug printing of client handshake etc.", Flags = ConfigVar.Flags.None)]
-    public static ConfigVar clientDebug;
+    public static ConfigVar ClientDebug;
 
     [ConfigVar(Name = "client.blockin", DefaultValue = "0",
         Description = "Cut next N incoming network packges. -1 means forever.", Flags = ConfigVar.Flags.None)]
-    public static ConfigVar clientBlockIn;
+    public static ConfigVar ClientBlockIn;
 
     [ConfigVar(Name = "client.blockout", DefaultValue = "0", Description = "Cut all outgoing network traffic.",
         Flags = ConfigVar.Flags.None)]
-    public static ConfigVar clientBlockOut;
+    public static ConfigVar ClientBlockOut;
 
     [ConfigVar(Name = "client.verifyprotocol", DefaultValue = "1",
         Description = "Verify protocol match when connecting to server.", Flags = ConfigVar.Flags.None)]
-    public static ConfigVar clientVerifyProtocol;
+    public static ConfigVar ClientVerifyProtocol;
 
-    public ClientConfig clientConfig;
+    public readonly ClientConfig ClientConfig;
 
     public Counters counters
     {
@@ -169,7 +169,7 @@ public class NetworkClient
     public NetworkClient(INetworkTransport transport)
     {
         _transport = transport;
-        clientConfig = new ClientConfig();
+        ClientConfig = new ClientConfig();
     }
 
     public void Shutdown()
@@ -181,8 +181,8 @@ public class NetworkClient
     {
         Profiler.BeginSample("NetworkClient.UpdateClientConfig");
 
-        clientConfig.ServerUpdateRate = ClientGameLoop.clientUpdateRate.IntValue;
-        clientConfig.ServerUpdateInterval = ClientGameLoop.clientUpdateInterval.IntValue;
+        ClientConfig.ServerUpdateRate = ClientGameLoop.clientUpdateRate.IntValue;
+        ClientConfig.ServerUpdateInterval = ClientGameLoop.clientUpdateInterval.IntValue;
         if (_clientConnection != null)
         {
             _clientConnection.ClientConfigChanged();
@@ -214,7 +214,7 @@ public class NetworkClient
             return false;
         }
 
-        _clientConnection = new ClientConnection(connectionId, _transport, clientConfig);
+        _clientConnection = new ClientConnection(connectionId, _transport, ClientConfig);
 
         return true;
     }
@@ -316,7 +316,7 @@ public class NetworkClient
     public void SendData()
     {
         if (_clientConnection == null || _clientConnection.ConnectionState == ConnectionState.Disconnected ||
-            clientBlockOut.IntValue > 0)
+            ClientBlockOut.IntValue > 0)
         {
             return;
         }
@@ -376,12 +376,12 @@ public class NetworkClient
         ISnapshotConsumer snapshotConsumer)
     {
         // Block A number of incoming packets. -1 for all 
-        if (clientBlockIn.IntValue > 0)
+        if (ClientBlockIn.IntValue > 0)
         {
-            clientBlockIn.Value = (clientBlockIn.IntValue - 1).ToString();
+            ClientBlockIn.Value = (ClientBlockIn.IntValue - 1).ToString();
         }
 
-        if (clientBlockIn.IntValue != 0)
+        if (ClientBlockIn.IntValue != 0)
         {
             return;
         }
@@ -632,7 +632,7 @@ public class NetworkClient
             GameDebug.Log($"Server protocol id: {serverProtocol}");
             if (ourProtocol != serverProtocol)
             {
-                if (clientVerifyProtocol.IntValue > 0)
+                if (ClientVerifyProtocol.IntValue > 0)
                 {
                     GameDebug.LogError($"Protocol mismatch. Server is: {serverProtocol} and we are: {ourProtocol}");
                     ConnectionState = ConnectionState.Disconnected;
@@ -651,7 +651,7 @@ public class NetworkClient
 
             ConnectionState = ConnectionState.Connected;
 
-            if (clientDebug.IntValue > 0)
+            if (ClientDebug.IntValue > 0)
             {
                 GameDebug.Log($"ReadClientInfo: clientId {newClientId} serverTickRate {ServerTickRate}");
             }
@@ -701,7 +701,7 @@ public class NetworkClient
                 baseSequence2 = input.ReadPackedIntDelta(baseSequence1 - 1, NetworkConfig.baseSequence2Context);
             }
 
-            if (clientDebug.IntValue > 2)
+            if (ClientDebug.IntValue > 2)
             {
                 if (enableNetworkPrediction)
                 {
@@ -1076,9 +1076,9 @@ public class NetworkClient
             }
 
 
-            if (clientDebug.IntValue > 1)
+            if (ClientDebug.IntValue > 1)
             {
-                if (clientDebug.IntValue > 2 || spawnCount > 0 || despawnCount > 0 || schemaCount > 0 || !haveBaseline)
+                if (ClientDebug.IntValue > 2 || spawnCount > 0 || despawnCount > 0 || schemaCount > 0 || !haveBaseline)
                 {
                     string entityIds = "";
                     for (var i = 0; i < _entities.Count; i++)
@@ -1160,7 +1160,7 @@ public class NetworkClient
             output.WriteRawBits((uint) _clientConfig.ServerUpdateInterval, 16);
             _sendClientConfig = false;
 
-            if (clientDebug.IntValue > 0)
+            if (ClientDebug.IntValue > 0)
             {
                 var serverUpdateRate = _clientConfig.ServerUpdateRate;
                 var serverUpdateInterval = _clientConfig.ServerUpdateInterval;

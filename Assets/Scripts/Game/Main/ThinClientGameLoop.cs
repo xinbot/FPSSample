@@ -327,7 +327,7 @@ public class ThinClient : INetworkCallbacks, INetworkClientCallbacks
         m_NetworkClient = new NetworkClient(m_Transport);
 
         if (Application.isEditor || Game.game.buildId == "AutoBuild")
-            NetworkClient.clientVerifyProtocol.Value = "0";
+            NetworkClient.ClientVerifyProtocol.Value = "0";
 
         m_NetworkClient.UpdateClientConfig();
         m_NetworkStatistics = new NetworkStatisticsClient(m_NetworkClient);

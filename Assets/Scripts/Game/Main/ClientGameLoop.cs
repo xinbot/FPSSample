@@ -534,7 +534,7 @@ public class ClientGameLoop : Game.IGameLoop, INetworkCallbacks, INetworkClientC
         m_NetworkClient = new NetworkClient(m_NetworkTransport);
 
         if (Application.isEditor || Game.game.buildId == "AutoBuild")
-            NetworkClient.clientVerifyProtocol.Value = "0";
+            NetworkClient.ClientVerifyProtocol.Value = "0";
 
         m_NetworkClient.UpdateClientConfig();
         m_NetworkStatistics = new NetworkStatisticsClient(m_NetworkClient);
