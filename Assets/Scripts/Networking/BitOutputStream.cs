@@ -1,7 +1,4 @@
-﻿using System;
-using UnityEngine;
-
-namespace Networking
+﻿namespace Networking
 {
     public struct BitOutputStream
     {
@@ -86,7 +83,7 @@ namespace Networking
         public void WriteBits(uint value, int numBits)
         {
             GameDebug.Assert(numBits > 0 && numBits <= 32);
-            GameDebug.Assert((UInt64.MaxValue << numBits & value) == 0);
+            GameDebug.Assert((ulong.MaxValue << numBits & value) == 0);
 
             _bitStage |= ((ulong) value << _currentBitIdx);
             _currentBitIdx += numBits;
@@ -99,11 +96,14 @@ namespace Networking
             }
         }
 
-        public void WriteBytes(byte[] value, int srcIndex, int count)
+        public void WriteBytes(byte[] srcBuffer, int srcIndex, int count)
         {
             Align();
-            NetworkUtils.MemCopy(value, srcIndex, _buffer, _currentByteIdx, count);
-            _currentByteIdx += count;
+            if (srcBuffer != null)
+            {
+                NetworkUtils.MemCopy(srcBuffer, srcIndex, _buffer, _currentByteIdx, count);
+                _currentByteIdx += count;
+            }
         }
 
         public int Align()
@@ -124,7 +124,7 @@ namespace Networking
 
         public void SkipBytes(int bytes)
         {
-            Debug.Assert(_currentBitIdx == 0);
+            GameDebug.Assert(_currentBitIdx == 0);
             _currentByteIdx += bytes;
         }
     }

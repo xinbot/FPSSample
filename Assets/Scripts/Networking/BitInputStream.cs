@@ -77,9 +77,8 @@
             if (dstBuffer != null)
             {
                 NetworkUtils.MemCopy(_buffer, _currentByteIdx, dstBuffer, dstIndex, count);
+                _currentByteIdx += count;
             }
-
-            _currentByteIdx += count;
         }
 
         public int Align()
