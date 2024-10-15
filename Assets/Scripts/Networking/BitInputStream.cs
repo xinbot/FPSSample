@@ -1,104 +1,109 @@
-﻿using System;
-using UnityEngine;
-
-
-public struct BitInputStream
+﻿namespace Networking
 {
-    public BitInputStream(byte[] buffer)
+    public struct BitInputStream
     {
-        m_Buffer = buffer;
-        m_CurrentBitIdx = 0;
-        m_CurrentByteIdx = 0;
-        m_BitStage = 0;
-    }
+        private readonly byte[] _buffer;
 
-    public void Initialize(byte[] buffer)
-    {
-        this = new BitInputStream(buffer);
-    }
-    
-    public int GetBitPosition()
-    {
-        return m_CurrentByteIdx * 8 - m_CurrentBitIdx;
-    }
+        private ulong _bitStage;
+        private int _currentBitIdx;
+        private int _currentByteIdx;
 
-    public long ReadUIntPacked()
-    {
-        int inputBits = 1;
-        long value = 0;
-        while (ReadBits(1) == 0)
+        public BitInputStream(byte[] buffer)
         {
-            value += (1L << inputBits);
-            inputBits += 2;
+            _buffer = buffer;
+
+            _bitStage = 0;
+            _currentBitIdx = 0;
+            _currentByteIdx = 0;
         }
 
-        if (inputBits > 32)
+        public void Initialize(byte[] buffer)
         {
-            long low = ReadBits(32);
-            long high = ReadBits(inputBits - 32);
-            return value + (low | (high << 32));
+            this = new BitInputStream(buffer);
         }
-        else
+
+        public int GetBitPosition()
+        {
+            return _currentByteIdx * 8 - _currentBitIdx;
+        }
+
+        public long ReadUIntPacked()
+        {
+            int inputBits = 1;
+            long value = 0;
+            while (ReadBits(1) == 0)
+            {
+                value += (1L << inputBits);
+                inputBits += 2;
+            }
+
+            if (inputBits > 32)
+            {
+                long low = ReadBits(32);
+                long high = ReadBits(inputBits - 32);
+                return value + (low | (high << 32));
+            }
+
             return value + ReadBits(inputBits);
-    }
+        }
 
-    public long ReadIntDelta(long baseline)
-    {
-        var mapped = ReadUIntPacked();
-        if ((mapped & 1) != 0)
-            return baseline + ((mapped + 1) >> 1);
-        else
+        public long ReadIntDelta(long baseline)
+        {
+            var mapped = ReadUIntPacked();
+            if ((mapped & 1) != 0)
+            {
+                return baseline + ((mapped + 1) >> 1);
+            }
+
             return baseline - (mapped >> 1);
-    }
-
-    public uint ReadBits(int numbits)
-    {
-        GameDebug.Assert(numbits > 0 && numbits <= 32);
-
-        while (m_CurrentBitIdx < 32)
-        {
-            m_BitStage |= (UInt64)m_Buffer[m_CurrentByteIdx++] << m_CurrentBitIdx;
-            m_CurrentBitIdx += 8;
         }
 
-        return ReadBitsInternal(numbits);
-    }
-
-    public void ReadBytes(byte[] dstBuffer, int dstIndex, int count)
-    {
-        Align();
-        if (dstBuffer != null)
-            NetworkUtils.MemCopy(m_Buffer, m_CurrentByteIdx, dstBuffer, dstIndex, count);
-
-        m_CurrentByteIdx += count;
-    }
-
-    public int Align()
-    {
-        var remainder = m_CurrentBitIdx % 8;
-        if (remainder > 0)
+        public uint ReadBits(int numBits)
         {
-            var value = ReadBitsInternal(remainder);
-            GameDebug.Assert(value == 0);
+            GameDebug.Assert(numBits > 0 && numBits <= 32);
+
+            while (_currentBitIdx < 32)
+            {
+                _bitStage |= (ulong) _buffer[_currentByteIdx++] << _currentBitIdx;
+                _currentBitIdx += 8;
+            }
+
+            return ReadBitsInternal(numBits);
         }
 
-        m_CurrentByteIdx -= m_CurrentBitIdx / 8;
-        m_CurrentBitIdx = 0;
-        m_BitStage = 0;
-        return m_CurrentByteIdx;
-    }
+        public void ReadBytes(byte[] dstBuffer, int dstIndex, int count)
+        {
+            Align();
+            if (dstBuffer != null)
+            {
+                NetworkUtils.MemCopy(_buffer, _currentByteIdx, dstBuffer, dstIndex, count);
+            }
 
-    uint ReadBitsInternal(int numbits)
-    {
-        GameDebug.Assert(m_CurrentBitIdx >= numbits);
-        var res = m_BitStage & (((UInt64)1 << numbits) - 1);
-        m_BitStage >>= numbits;
-        m_CurrentBitIdx -= numbits;
-        return (UInt32)res;
-    }
+            _currentByteIdx += count;
+        }
 
-    byte[] m_Buffer;
-    ulong m_BitStage;
-    int m_CurrentBitIdx;
-    int m_CurrentByteIdx;
+        public int Align()
+        {
+            var remainder = _currentBitIdx % 8;
+            if (remainder > 0)
+            {
+                var value = ReadBitsInternal(remainder);
+                GameDebug.Assert(value == 0);
+            }
+
+            _currentByteIdx -= _currentBitIdx / 8;
+            _currentBitIdx = 0;
+            _bitStage = 0;
+            return _currentByteIdx;
+        }
+
+        private uint ReadBitsInternal(int numBits)
+        {
+            GameDebug.Assert(_currentBitIdx >= numBits);
+            var res = _bitStage & (((ulong) 1 << numBits) - 1);
+            _bitStage >>= numBits;
+            _currentBitIdx -= numBits;
+            return (uint) res;
+        }
+    }
 }
