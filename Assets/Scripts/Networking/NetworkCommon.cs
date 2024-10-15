@@ -1,5 +1,6 @@
 ﻿using System;
 using Unity.Networking.Transport;
+using NetworkEvent = Networking.NetworkEvent;
 
 public enum ConnectionState
 {

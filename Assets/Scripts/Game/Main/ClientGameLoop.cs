@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using Networking;
 using Networking.Socket;
 using UnityEngine;
 using Unity.Entities;
@@ -592,12 +593,12 @@ public class ClientGameLoop : Game.IGameLoop, INetworkCallbacks, INetworkClientC
     unsafe public void OnEvent(int clientId, NetworkEvent info)
     {
         Profiler.BeginSample("-ProcessEvent");
-        switch ((GameNetworkEvents.EventType)info.type.typeId)
+        switch ((GameNetworkEvents.EventType)info.Type.TypeId)
         {
             case GameNetworkEvents.EventType.Chat:
-                fixed(uint* data = info.data)
+                fixed(uint* data = info.Data)
                 {
-                    var reader = new NetworkReader(data, info.type.schema);
+                    var reader = new NetworkReader(data, info.Type.Schema);
                     m_ChatSystem.ReceiveMessage(reader.ReadString(256));
                 }
                 break;

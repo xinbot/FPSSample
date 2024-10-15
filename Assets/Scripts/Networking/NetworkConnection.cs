@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using Networking;
 using UnityEngine.Profiling;
 
 public class NetworkConnectionCounters
@@ -522,8 +523,8 @@ public class NetworkConnection<TCounters, TPackageInfo> where TCounters : Networ
             // Release received reliable events
             foreach (var eventInfo in info.Events)
             {
-                if (!ackedEventTypes.Contains(eventInfo.type))
-                    ackedEventTypes.Add(eventInfo.type);
+                if (!ackedEventTypes.Contains(eventInfo.Type))
+                    ackedEventTypes.Add(eventInfo.Type);
                 eventInfo.Release();
             }
         }
@@ -532,12 +533,12 @@ public class NetworkConnection<TCounters, TPackageInfo> where TCounters : Networ
             foreach (var eventInfo in info.Events)
             {
                 counters.EventsLostOut++;
-                if (eventInfo.reliable)
+                if (eventInfo.Reliable)
                 {
                     // Re-add dropped reliable events to outgoing events
                     counters.ReliableEventResendOut++;
                     GameDebug.Log("Resending lost reliable event: " +
-                                  ((GameNetworkEvents.EventType) eventInfo.type.typeId) + ":" + eventInfo.sequence);
+                                  ((GameNetworkEvents.EventType) eventInfo.Type.TypeId) + ":" + eventInfo.Sequence);
                     eventsOut.Add(eventInfo);
                 }
                 else
@@ -573,7 +574,7 @@ public class NetworkConnection<TCounters, TPackageInfo> where TCounters : Networ
         foreach (var eventInfo in eventsOut)
         {
             counters.EventsOut++;
-            if (eventInfo.reliable)
+            if (eventInfo.Reliable)
                 counters.ReliableEventsOut++;
         }
 

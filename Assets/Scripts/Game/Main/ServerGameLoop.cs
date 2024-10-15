@@ -2,6 +2,7 @@
 using UnityEngine;
 using Unity.Entities;
 using NetworkCompression;
+using Networking;
 using Networking.Socket;
 using UnityEngine.Profiling;
 using SQP;
@@ -454,10 +455,10 @@ public class ServerGameLoop : Game.IGameLoop, INetworkCallbacks
     unsafe public void OnEvent(int clientId, NetworkEvent info)
     {
         var client = m_Clients[clientId];
-        var type = info.type.typeId;
-        fixed (uint* data = info.data)
+        var type = info.Type.TypeId;
+        fixed (uint* data = info.Data)
         {
-            var reader = new NetworkReader(data, info.type.schema);
+            var reader = new NetworkReader(data, info.Type.Schema);
 
             switch ((GameNetworkEvents.EventType)type)
             {

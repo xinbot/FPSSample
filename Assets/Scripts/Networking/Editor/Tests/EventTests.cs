@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using Networking;
 using Networking.Tests;
 using NUnit.Framework;
 
@@ -86,9 +87,9 @@ namespace NetcodeTests
             unsafe public void OnEvent(int clientId, NetworkEvent info)
             {
                 var received = new MyEvent();
-                fixed(uint* data = info.data)
+                fixed(uint* data = info.Data)
                 {
-                    var reader = new NetworkReader(data, info.type.schema);
+                    var reader = new NetworkReader(data, info.Type.Schema);
                     received.Deserialize(ref reader);
                     received.AssertReplicatedCorrectly(m_Test.lastEventSent, false);
                 }
@@ -116,9 +117,9 @@ namespace NetcodeTests
             unsafe public void OnEvent(int clientId, NetworkEvent info)
             {
                 var received = new MyEvent();
-                fixed(uint* data = info.data)
+                fixed(uint* data = info.Data)
                 {
-                    var reader = new NetworkReader(data, info.type.schema);
+                    var reader = new NetworkReader(data, info.Type.Schema);
                     received.Deserialize(ref reader);
                     received.AssertReplicatedCorrectly(m_Test.lastEventSent, false);
                 }

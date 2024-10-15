@@ -284,8 +284,8 @@ public class NetworkClient
                 {
                     GameDebug.Log("Outstanding Package: " + i + " (idx), " + outstandingPackages.m_Sequences[i] +
                                   " (seq), " + outstandingPackages.m_Elements[i].Events.Count + " (numevs), " +
-                                  ((GameNetworkEvents.EventType) outstandingPackages.m_Elements[i].Events[0].type
-                                      .typeId) + " (ev0)");
+                                  ((GameNetworkEvents.EventType) outstandingPackages.m_Elements[i].Events[0].Type
+                                      .TypeId) + " (ev0)");
                 }
             }
         }

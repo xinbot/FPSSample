@@ -4,6 +4,7 @@ using Unity.Entities;
 using UnityEngine.Profiling;
 using UnityEngine.Ucg.Matchmaking;
 using System;
+using Networking;
 using Networking.Socket;
 
 public class NullSnapshotConsumer : ISnapshotConsumer
@@ -360,12 +361,12 @@ public class ThinClient : INetworkCallbacks, INetworkClientCallbacks
     unsafe public void OnEvent(int clientId, NetworkEvent info)
     {
         Profiler.BeginSample("-ProcessEvent");
-        switch ((GameNetworkEvents.EventType)info.type.typeId)
+        switch ((GameNetworkEvents.EventType)info.Type.TypeId)
         {
             case GameNetworkEvents.EventType.Chat:
-                fixed(uint* data = info.data)
+                fixed(uint* data = info.Data)
                 {
-                    var reader = new NetworkReader(data, info.type.schema);
+                    var reader = new NetworkReader(data, info.Type.Schema);
                     //m_ChatSystem.ReceiveMessage(reader.ReadString(256));
                 }
                 break;
