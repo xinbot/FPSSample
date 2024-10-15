@@ -79,7 +79,7 @@ namespace NetcodeTests
             var schema = new NetworkSchema(0);
             schema.AddField(new FieldInfo()
                 {Name = "field_0", FieldType = FieldType.Float, Bits = 32, Delta = true, Precision = 3});
-            schema.Finalize();
+            schema.ResetPredictPlan();
             var values = new List<object>() {0.123f};
             TestDelta<TInputStream, TOutputStream>(schema, values, null);
         }
@@ -91,7 +91,7 @@ namespace NetcodeTests
             var schema = new NetworkSchema(0);
             schema.AddField(new FieldInfo()
                 {Name = "field_0", FieldType = FieldType.Float, Bits = 32, Delta = true, Precision = 3});
-            schema.Finalize();
+            schema.ResetPredictPlan();
 
             var values = new List<object>() {0.637160838f};
             var baseline = new List<object>() {0.538469732f};
@@ -105,7 +105,7 @@ namespace NetcodeTests
             var schema = new NetworkSchema(0);
             schema.AddField(new FieldInfo()
                 {Name = "field_0", FieldType = FieldType.Float, Bits = 32, Delta = true, Precision = 3});
-            schema.Finalize();
+            schema.ResetPredictPlan();
 
             var values = new List<object>(1);
             var baseline = new List<object>(1);
@@ -128,7 +128,7 @@ namespace NetcodeTests
             var schema = new NetworkSchema(0);
             schema.AddField(new FieldInfo()
                 {Name = "field_0", FieldType = FieldType.Vector3, Bits = 32, Delta = true, Precision = 3});
-            schema.Finalize();
+            schema.ResetPredictPlan();
 
             var values = new List<object>() {new Vector3() {x = 0.07870922f, y = 0.0479902327f, z = 0.16897355f}};
             var baseline = new List<object>() {new Vector3() {x = -122.123f, y = 112.32112f, z = 0.0235f}};

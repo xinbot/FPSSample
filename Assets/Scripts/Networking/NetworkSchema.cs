@@ -5,13 +5,13 @@ namespace Networking
 {
     public unsafe class NetworkSchema
     {
-        public uint[] predictPlan;
-        public FieldInfo[] fields;
-        public int numFields;
-        public int id;
+        public uint[] PredictPlan;
+        public FieldInfo[] Fields;
+        public int NumFields;
+        public int ID;
 
-        private int nextFieldOffset = 0;
-        private List<FieldInfo> fieldsInternal = new List<FieldInfo>();
+        private int _nextFieldOffset;
+        private readonly List<FieldInfo> _fieldsInternal = new List<FieldInfo>();
 
         // Functions for updating stats on a field that can be conditionally excluded from the build
         [Conditional("UNITY_EDITOR")]
@@ -68,7 +68,7 @@ namespace Networking
         }
 
         [Conditional("UNITY_EDITOR")]
-        public static unsafe void AddStatsToFieldString(FieldInfo fieldInfo, byte* value, int valueLength, int numBits)
+        public static void AddStatsToFieldString(FieldInfo fieldInfo, byte* value, int valueLength, int numBits)
         {
             ((FieldStats<FieldValueString>) fieldInfo.Stats).Add(
                 new FieldValueString(value, valueLength), FieldValueString.EmptyStringValue,
@@ -76,27 +76,28 @@ namespace Networking
         }
 
         [Conditional("UNITY_EDITOR")]
-        public static unsafe void AddStatsToFieldByteArray(FieldInfo fieldInfo, byte* value, int valueLength,
+        public static void AddStatsToFieldByteArray(FieldInfo fieldInfo, byte* value, int valueLength,
             int numBits)
         {
             ((FieldStats<FieldValueByteArray>) fieldInfo.Stats).Add(
-                new FieldValueByteArray(value, valueLength),
-                FieldValueByteArray.EmptyByteArrayValue, numBits);
+                new FieldValueByteArray(value, valueLength), FieldValueByteArray.EmptyByteArrayValue,
+                numBits);
         }
 
-        // 0bAAAAAAAABBBBBBBBCCCCCCCC0000MMDA   ABC: length of array, MM: mask, D: delta, A: array
-        public void Finalize()
+        // 0bAAAAAAAABBBBBBBBCCCCCCCC0000MMDA
+        // ABC: length of array, MM: mask, D: delta, A: array
+        public void ResetPredictPlan()
         {
-            GameDebug.Assert(predictPlan == null);
+            GameDebug.Assert(PredictPlan == null);
 
-            predictPlan = new uint[fieldsInternal.Count];
-            for (int i = 0, c = fieldsInternal.Count; i < c; ++i)
+            PredictPlan = new uint[_fieldsInternal.Count];
+            for (var i = 0; i < _fieldsInternal.Count; ++i)
             {
-                var f = fieldsInternal[i];
-                uint arraycount = 0;
+                var f = _fieldsInternal[i];
+                uint arrayCount = 0;
                 uint mask = f.FieldMask;
                 uint flags = (ushort) (
-                    (fieldsInternal[i].Delta ? 2 : 0) |
+                    (_fieldsInternal[i].Delta ? 2 : 0) |
                     (f.FieldType == FieldType.String || f.FieldType == FieldType.ByteArray ? 1 : 0));
                 switch (f.FieldType)
                 {
@@ -104,49 +105,49 @@ namespace Networking
                     case FieldType.Int:
                     case FieldType.UInt:
                     case FieldType.Float:
-                        arraycount = 1;
+                        arrayCount = 1;
                         break;
                     case FieldType.Vector2:
-                        arraycount = 2;
+                        arrayCount = 2;
                         break;
                     case FieldType.Vector3:
-                        arraycount = 3;
+                        arrayCount = 3;
                         break;
                     case FieldType.Quaternion:
-                        arraycount = 4;
+                        arrayCount = 4;
                         break;
                     case FieldType.String:
                     case FieldType.ByteArray:
-                        arraycount = (ushort) (f.ArraySize / 4 + 1);
+                        arrayCount = (ushort) (f.ArraySize / 4 + 1);
                         break;
                 }
 
-                predictPlan[i] = (uint) (arraycount << 8) | (uint) (mask << 2) | (uint) flags;
+                PredictPlan[i] = (arrayCount << 8) | (mask << 2) | flags;
             }
 
-            numFields = fieldsInternal.Count;
-            fields = fieldsInternal.ToArray();
+            NumFields = _fieldsInternal.Count;
+            Fields = _fieldsInternal.ToArray();
         }
 
         public NetworkSchema(int id)
         {
             GameDebug.Assert(id >= 0 && id < NetworkConfig.maxSchemaIds);
-            this.id = id;
+            ID = id;
         }
 
         // TODO (peter) Should this be in words?
         public int GetByteSize()
         {
-            return nextFieldOffset;
+            return _nextFieldOffset;
         }
 
         public void AddField(FieldInfo field)
         {
-            GameDebug.Assert(fieldsInternal.Count < NetworkConfig.maxFieldsPerSchema);
-            field.ByteOffset = nextFieldOffset;
+            GameDebug.Assert(_fieldsInternal.Count < NetworkConfig.maxFieldsPerSchema);
+            field.ByteOffset = _nextFieldOffset;
             field.Stats = FieldStatsBase.CreateFieldStats(field);
-            fieldsInternal.Add(field);
-            nextFieldOffset += CalculateFieldByteSize(field);
+            _fieldsInternal.Add(field);
+            _nextFieldOffset += CalculateFieldByteSize(field);
         }
 
         public static int CalculateFieldByteSize(FieldInfo field)
@@ -197,42 +198,41 @@ namespace Networking
                 field.Bits = (int) input.ReadPackedUInt(NetworkConfig.miscContext);
                 field.Precision = (int) input.ReadPackedUInt(NetworkConfig.miscContext);
                 field.ArraySize = (int) input.ReadPackedUInt(NetworkConfig.miscContext);
-                field.StartContext = schema.fieldsInternal.Count * NetworkConfig.maxContextsPerField +
-                                     schema.id * NetworkConfig.maxContextsPerSchema + NetworkConfig.firstSchemaContext;
+                field.StartContext = schema._fieldsInternal.Count * NetworkConfig.maxContextsPerField +
+                                     schema.ID * NetworkConfig.maxContextsPerSchema + NetworkConfig.firstSchemaContext;
                 field.FieldMask = (byte) input.ReadPackedUInt(NetworkConfig.miscContext);
                 schema.AddField(field);
             }
 
-            schema.Finalize();
+            schema.ResetPredictPlan();
             return schema;
         }
 
         public static void WriteSchema<TOutputStream>(NetworkSchema schema, ref TOutputStream output)
             where TOutputStream : NetworkCompression.IOutputStream
         {
-            output.WritePackedUInt((uint) schema.fieldsInternal.Count, NetworkConfig.miscContext);
-            output.WritePackedUInt((uint) schema.id, NetworkConfig.miscContext);
-            for (int i = 0; i < schema.numFields; ++i)
+            output.WritePackedUInt((uint) schema._fieldsInternal.Count, NetworkConfig.miscContext);
+            output.WritePackedUInt((uint) schema.ID, NetworkConfig.miscContext);
+            for (int i = 0; i < schema.NumFields; ++i)
             {
-                var field = schema.fields[i];
+                var field = schema.Fields[i];
                 output.WritePackedNibble((uint) field.FieldType, NetworkConfig.miscContext);
                 output.WriteRawBits(field.Delta ? 1U : 0, 1);
                 output.WritePackedUInt((uint) field.Bits, NetworkConfig.miscContext);
                 output.WritePackedUInt((uint) field.Precision, NetworkConfig.miscContext);
                 output.WritePackedUInt((uint) field.ArraySize, NetworkConfig.miscContext);
-                output.WritePackedUInt((uint) field.FieldMask, NetworkConfig.miscContext);
+                output.WritePackedUInt(field.FieldMask, NetworkConfig.miscContext);
             }
         }
 
-        unsafe public static void CopyFieldsFromBuffer<TOutputStream>(NetworkSchema schema, uint* inputBuffer,
+        public static void CopyFieldsFromBuffer<TOutputStream>(NetworkSchema schema, uint* inputBuffer,
             ref TOutputStream output) where TOutputStream : NetworkCompression.IOutputStream
         {
             int index = 0;
-
             int fieldIndex = 0;
-            for (; fieldIndex < schema.fieldsInternal.Count; ++fieldIndex)
+            for (; fieldIndex < schema._fieldsInternal.Count; ++fieldIndex)
             {
-                var field = schema.fieldsInternal[fieldIndex];
+                var field = schema._fieldsInternal[fieldIndex];
                 switch (field.FieldType)
                 {
                     case FieldType.Bool:
@@ -262,13 +262,10 @@ namespace Networking
 
                     case FieldType.String:
                     case FieldType.ByteArray:
-                    {
                         uint dataSize = inputBuffer[index++];
-
                         output.WritePackedUInt(dataSize, field.StartContext);
                         output.WriteRawBytes((byte*) (inputBuffer + index), (int) dataSize);
                         index += field.ArraySize / 4;
-                    }
                         break;
 
                     default:
@@ -278,13 +275,13 @@ namespace Networking
             }
         }
 
-        unsafe public static void CopyFieldsToBuffer<TInputStream>(NetworkSchema schema, ref TInputStream input,
+        public static void CopyFieldsToBuffer<TInputStream>(NetworkSchema schema, ref TInputStream input,
             uint[] outputBuffer) where TInputStream : NetworkCompression.IInputStream
         {
             var index = 0;
-            for (var fieldIndex = 0; fieldIndex < schema.fieldsInternal.Count; ++fieldIndex)
+            for (var fieldIndex = 0; fieldIndex < schema._fieldsInternal.Count; ++fieldIndex)
             {
-                var field = schema.fieldsInternal[fieldIndex];
+                var field = schema._fieldsInternal[fieldIndex];
                 switch (field.FieldType)
                 {
                     case FieldType.Bool:
@@ -340,9 +337,9 @@ namespace Networking
         public static void SkipFields<TInputStream>(NetworkSchema schema, ref TInputStream input)
             where TInputStream : NetworkCompression.IInputStream
         {
-            for (var fieldIndex = 0; fieldIndex < schema.fieldsInternal.Count; ++fieldIndex)
+            for (var fieldIndex = 0; fieldIndex < schema._fieldsInternal.Count; ++fieldIndex)
             {
-                var field = schema.fieldsInternal[fieldIndex];
+                var field = schema._fieldsInternal[fieldIndex];
                 switch (field.FieldType)
                 {
                     case FieldType.Bool:

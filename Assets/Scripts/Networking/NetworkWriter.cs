@@ -47,13 +47,13 @@ unsafe public struct NetworkWriter
                 Precision = precision,
                 ArraySize = arraySize,
                 FieldMask = m_FieldMask,
-                StartContext = m_Schema.numFields * NetworkConfig.maxContextsPerField +
-                               m_Schema.id * NetworkConfig.maxContextsPerSchema + NetworkConfig.firstSchemaContext
+                StartContext = m_Schema.NumFields * NetworkConfig.maxContextsPerField +
+                               m_Schema.ID * NetworkConfig.maxContextsPerSchema + NetworkConfig.firstSchemaContext
             });
         }
         else if (m_Schema != null)
         {
-            m_CurrentField = m_Schema.fields[m_NextFieldIndex];
+            m_CurrentField = m_Schema.Fields[m_NextFieldIndex];
             GameDebug.Assert(m_CurrentField.Name == name);
             GameDebug.Assert(m_CurrentField.FieldType == type);
             GameDebug.Assert(m_CurrentField.Bits == bits);
@@ -279,7 +279,7 @@ unsafe public struct NetworkWriter
     public void Flush()
     {
         if (m_GenerateSchema)
-            m_Schema.Finalize();
+            m_Schema.ResetPredictPlan();
     }
 
     static byte[] s_ByteBuffer = new byte[1024 * 32];

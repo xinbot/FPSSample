@@ -10,7 +10,7 @@ public struct DeltaWriter
     {
         GameDebug.Assert(baselineData != null);
 
-        int numFields = schema.numFields;
+        int numFields = schema.NumFields;
         GameDebug.Assert(fieldsChangedPrediction.Length >= numFields / 8,
             "Not enough bits in fieldsChangedPrediction for all fields");
 
@@ -22,7 +22,7 @@ public struct DeltaWriter
         // calculate bitmask of fields that need to be encoded
         for (int fieldIndex = 0; fieldIndex < numFields; ++fieldIndex)
         {
-            var field = schema.fields[fieldIndex];
+            var field = schema.Fields[fieldIndex];
 
             // Skip fields that are masked out
             bool masked = (field.FieldMask & fieldMask) != 0;
@@ -220,7 +220,7 @@ public struct DeltaWriter
 
         index = 0;
 
-        int skipContext = schema.id * NetworkConfig.maxContextsPerSchema + NetworkConfig.firstSchemaContext;
+        int skipContext = schema.ID * NetworkConfig.maxContextsPerSchema + NetworkConfig.firstSchemaContext;
 
         // Client needs fieldsNotPredicted. We send the delta between it and fieldsChangedPrediction
         {
@@ -235,7 +235,7 @@ public struct DeltaWriter
         int startBitPosition = 0;
         for (int fieldIndex = 0; fieldIndex < numFields; ++fieldIndex)
         {
-            var field = schema.fields[fieldIndex];
+            var field = schema.Fields[fieldIndex];
             int fieldStartContext = field.StartContext;
             startBitPosition = output.GetBitPosition2();
 

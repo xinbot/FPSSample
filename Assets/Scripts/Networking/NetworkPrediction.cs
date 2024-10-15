@@ -31,10 +31,10 @@ public class NetworkPrediction
         long frac0 = 16 * (timel0 - timel2) / (timel1 - timel2);
         long frac = 16 * (timel - timel1) / (timel0 - timel1);
 
-        fixed(uint* plans = schema.predictPlan)
+        fixed(uint* plans = schema.PredictPlan)
         {
             int index = 0;
-            for(int i = 0, c = schema.numFields; i<c; ++i)
+            for(int i = 0, c = schema.NumFields; i<c; ++i)
             {
                 var plan = plans[i];
                 bool masked = ((fieldMask<<2) & plan) != 0;

@@ -12,9 +12,9 @@ public struct DeltaReader
 
         var index = 0;
 
-        int numFields = schema.numFields;
+        int numFields = schema.NumFields;
 
-        int skipContext = schema.id * NetworkConfig.maxContextsPerSchema + NetworkConfig.firstSchemaContext;
+        int skipContext = schema.ID * NetworkConfig.maxContextsPerSchema + NetworkConfig.firstSchemaContext;
 
         for (int i = 0; i * 8 < numFields; i++)
         {
@@ -25,7 +25,7 @@ public struct DeltaReader
 
         for (int i = 0; i < numFields; ++i)
         {
-            var field = schema.fields[i];
+            var field = schema.Fields[i];
 
             GameDebug.Assert(field.ByteOffset == index * 4);
             int fieldStartContext = field.StartContext;

@@ -113,7 +113,7 @@ namespace NetcodeTests
                 }
             }
 
-            schema.Finalize();
+            schema.ResetPredictPlan();
             return schema;
         }
 
@@ -121,9 +121,9 @@ namespace NetcodeTests
         {
             var random = new System.Random(seed);
             var values = new List<object>();
-            for (var i = 0; i < schema.numFields; ++i)
+            for (var i = 0; i < schema.NumFields; ++i)
             {
-                var field = schema.fields[i];
+                var field = schema.Fields[i];
                 switch (field.FieldType)
                 {
                     case FieldType.Bool:
@@ -208,7 +208,7 @@ namespace NetcodeTests
                 for (int j = 0; j < values.Count; ++j)
                 {
                     var value = values[j];
-                    var field = schema.fields[j];
+                    var field = schema.Fields[j];
                     string fieldName = "field_" + j;
                     if (value is bool)
                         writer.WriteBoolean(fieldName, (bool) value);
@@ -267,10 +267,10 @@ namespace NetcodeTests
             fixed (uint* buf = buffer)
             {
                 NetworkReader reader = new NetworkReader(buf, schema);
-                for (int j = 0; j < schema.numFields; ++j)
+                for (int j = 0; j < schema.NumFields; ++j)
                 {
                     var value = values[j];
-                    var field = schema.fields[j];
+                    var field = schema.Fields[j];
                     if (value is bool)
                         Assert.AreEqual(value, reader.ReadBoolean());
                     else if (value is byte)

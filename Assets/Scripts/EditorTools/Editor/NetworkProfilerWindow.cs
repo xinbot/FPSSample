@@ -107,10 +107,10 @@ public class NetworkProfiler : EditorWindow
             }
 
             int totalSchemaSize = 0;
-            int numFields = schema.numFields;
+            int numFields = schema.NumFields;
             for (int i = 0; i < numFields; i++)
             {
-                var field = schema.fields[i];
+                var field = schema.Fields[i];
                 FieldStatsBase stats = field.Stats;
 
                 string typeDesc;

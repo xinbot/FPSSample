@@ -166,7 +166,7 @@ public unsafe struct NetworkReader
         if (m_Schema == null)
             return;
 
-        m_CurrentField = m_Schema.fields[m_NextFieldIndex];
+        m_CurrentField = m_Schema.Fields[m_NextFieldIndex];
         GameDebug.Assert(type == m_CurrentField.FieldType, "Property:{0} has unexpected field type:{1} Expected:{2}",
             m_CurrentField.Name, type, m_CurrentField.FieldType);
         GameDebug.Assert(bits == m_CurrentField.Bits);
