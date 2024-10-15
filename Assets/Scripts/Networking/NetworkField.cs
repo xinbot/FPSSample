@@ -80,16 +80,16 @@
 
         public int GetNumWrites()
         {
-            return m_NumWrites;
+            return NumWrites;
         }
 
         public int GetNumBitsWritten()
         {
-            return m_NumBitsWritten;
+            return NumBitsWritten;
         }
 
-        protected int m_NumWrites;
-        protected int m_NumBitsWritten;
+        protected int NumWrites;
+        protected int NumBitsWritten;
     }
 
     public interface IFieldValue<T>
@@ -103,246 +103,248 @@
 
     public class FieldStats<T> : FieldStatsBase where T : IFieldValue<T>
     {
-        public T value;
-        public T valueMin;
-        public T valueMax;
-        public T prediction;
-        public T predictionMin;
-        public T predictionMax;
+        private T _value;
+        private T _valueMin;
+        private T _valueMax;
 
-        public T delta;
-        public T deltaMin;
-        public T deltaMax;
+        private T _prediction;
+        private T _predictionMin;
+        private T _predictionMax;
 
-        FieldInfo m_FieldInfo;
+        private T _delta;
+        private T _deltaMin;
+        private T _deltaMax;
+
+        private readonly FieldInfo _fieldInfo;
 
         public FieldStats(FieldInfo fieldInfo)
         {
-            m_FieldInfo = fieldInfo;
+            _fieldInfo = fieldInfo;
         }
 
         public void Add(T value, T prediction, int bitsWritten)
         {
-            this.value = value;
-            this.prediction = prediction;
-            this.delta = (T) value.Sub(prediction);
+            _value = value;
+            _prediction = prediction;
+            _delta = value.Sub(prediction);
 
-            if (m_NumWrites > 0)
+            if (NumWrites > 0)
             {
-                valueMin = (T) valueMin.Min(value);
-                valueMax = (T) valueMin.Max(value);
-                predictionMin = (T) predictionMin.Min(prediction);
-                predictionMax = (T) predictionMax.Max(prediction);
-                deltaMin = (T) deltaMin.Min(delta);
-                deltaMax = (T) deltaMax.Max(delta);
+                _valueMin = _valueMin.Min(value);
+                _valueMax = _valueMin.Max(value);
+                _predictionMin = _predictionMin.Min(prediction);
+                _predictionMax = _predictionMax.Max(prediction);
+                _deltaMin = _deltaMin.Min(_delta);
+                _deltaMax = _deltaMax.Max(_delta);
             }
             else
             {
-                valueMin = value;
-                valueMax = value;
-                predictionMin = prediction;
-                predictionMax = prediction;
+                _valueMin = value;
+                _valueMax = value;
+                _predictionMin = prediction;
+                _predictionMax = prediction;
             }
 
-            this.m_NumBitsWritten += bitsWritten;
-            this.m_NumWrites++;
+            NumBitsWritten += bitsWritten;
+            NumWrites++;
         }
 
         public override string GetValue(bool showRaw)
         {
-            return ((T) value).ToString(m_FieldInfo, showRaw);
+            return _value.ToString(_fieldInfo, showRaw);
         }
 
         public override string GetValueMin(bool showRaw)
         {
-            return ((T) valueMin).ToString(m_FieldInfo, showRaw);
+            return _valueMin.ToString(_fieldInfo, showRaw);
         }
 
         public override string GetValueMax(bool showRaw)
         {
-            return ((T) valueMax).ToString(m_FieldInfo, showRaw);
+            return _valueMax.ToString(_fieldInfo, showRaw);
         }
 
         public override string GetPrediction(bool showRaw)
         {
-            return ((T) prediction).ToString(m_FieldInfo, showRaw);
+            return _prediction.ToString(_fieldInfo, showRaw);
         }
 
         public override string GetPredictionMin(bool showRaw)
         {
-            return ((T) predictionMin).ToString(m_FieldInfo, showRaw);
+            return _predictionMin.ToString(_fieldInfo, showRaw);
         }
 
         public override string GetPredictionMax(bool showRaw)
         {
-            return ((T) predictionMax).ToString(m_FieldInfo, showRaw);
+            return _predictionMax.ToString(_fieldInfo, showRaw);
         }
 
         public override string GetDelta(bool showRaw)
         {
-            return ((T) delta).ToString(m_FieldInfo, showRaw);
+            return _delta.ToString(_fieldInfo, showRaw);
         }
 
         public override string GetDeltaMin(bool showRaw)
         {
-            return ((T) deltaMin).ToString(m_FieldInfo, showRaw);
+            return _deltaMin.ToString(_fieldInfo, showRaw);
         }
 
         public override string GetDeltaMax(bool showRaw)
         {
-            return ((T) deltaMax).ToString(m_FieldInfo, showRaw);
+            return _deltaMax.ToString(_fieldInfo, showRaw);
         }
     }
 
-
     public struct FieldValueBool : IFieldValue<FieldValueBool>
     {
+        private bool _value;
+
         public FieldValueBool(bool value)
         {
-            m_Value = value;
+            _value = value;
         }
 
         public FieldValueBool Min(FieldValueBool other)
         {
-            bool otherValue = ((FieldValueBool) other).m_Value;
-            return new FieldValueBool(m_Value && otherValue);
+            bool otherValue = other._value;
+            return new FieldValueBool(_value && otherValue);
         }
 
         public FieldValueBool Max(FieldValueBool other)
         {
-            bool otherValue = ((FieldValueBool) other).m_Value;
-            return new FieldValueBool(m_Value || otherValue);
+            bool otherValue = other._value;
+            return new FieldValueBool(_value || otherValue);
         }
 
         public FieldValueBool Sub(FieldValueBool other)
         {
-            bool otherValue = ((FieldValueBool) other).m_Value;
-            return new FieldValueBool(m_Value != otherValue);
+            bool otherValue = other._value;
+            return new FieldValueBool(_value != otherValue);
         }
 
         public string ToString(FieldInfo fieldInfo, bool showRaw)
         {
-            return "" + m_Value;
+            return "" + _value;
         }
-
-        bool m_Value;
     }
 
     public struct FieldValueInt : IFieldValue<FieldValueInt>
     {
+        private int _value;
+
         public FieldValueInt(int value)
         {
-            m_Value = value;
+            _value = value;
         }
 
         public FieldValueInt Min(FieldValueInt other)
         {
-            int otherValue = ((FieldValueInt) other).m_Value;
-            return new FieldValueInt(m_Value < otherValue ? m_Value : otherValue);
+            int otherValue = other._value;
+            return new FieldValueInt(_value < otherValue ? _value : otherValue);
         }
 
         public FieldValueInt Max(FieldValueInt other)
         {
-            int otherValue = ((FieldValueInt) other).m_Value;
-            return new FieldValueInt(m_Value > otherValue ? m_Value : otherValue);
+            int otherValue = other._value;
+            return new FieldValueInt(_value > otherValue ? _value : otherValue);
         }
 
         public FieldValueInt Sub(FieldValueInt other)
         {
-            int otherValue = ((FieldValueInt) other).m_Value;
-            return new FieldValueInt(m_Value - otherValue);
+            int otherValue = other._value;
+            return new FieldValueInt(_value - otherValue);
         }
 
         public string ToString(FieldInfo fieldInfo, bool showRaw)
         {
-            return "" + m_Value;
+            return "" + _value;
         }
-
-        public int m_Value;
     }
 
     public struct FieldValueUInt : IFieldValue<FieldValueUInt>
     {
+        private uint _value;
+
         public FieldValueUInt(uint value)
         {
-            m_Value = value;
+            _value = value;
         }
 
         public FieldValueUInt Min(FieldValueUInt other)
         {
-            uint otherValue = ((FieldValueUInt) other).m_Value;
-            return new FieldValueUInt(m_Value < otherValue ? m_Value : otherValue);
+            uint otherValue = other._value;
+            return new FieldValueUInt(_value < otherValue ? _value : otherValue);
         }
 
         public FieldValueUInt Max(FieldValueUInt other)
         {
-            uint otherValue = ((FieldValueUInt) other).m_Value;
-            return new FieldValueUInt(m_Value > otherValue ? m_Value : otherValue);
+            uint otherValue = other._value;
+            return new FieldValueUInt(_value > otherValue ? _value : otherValue);
         }
 
         public FieldValueUInt Sub(FieldValueUInt other)
         {
-            uint otherValue = ((FieldValueUInt) other).m_Value;
-            return new FieldValueUInt(m_Value - otherValue);
+            uint otherValue = other._value;
+            return new FieldValueUInt(_value - otherValue);
         }
 
         public string ToString(FieldInfo fieldInfo, bool showRaw)
         {
-            return "" + m_Value;
+            return "" + _value;
         }
-
-        public uint m_Value;
     }
 
     public struct FieldValueFloat : IFieldValue<FieldValueFloat>
     {
+        private uint _value;
+
         public FieldValueFloat(uint value)
         {
-            m_Value = value;
+            _value = value;
         }
 
         public FieldValueFloat Min(FieldValueFloat other)
         {
-            uint otherValue = ((FieldValueFloat) other).m_Value;
-            return new FieldValueFloat(m_Value < otherValue ? m_Value : otherValue);
+            uint otherValue = other._value;
+            return new FieldValueFloat(_value < otherValue ? _value : otherValue);
         }
 
         public FieldValueFloat Max(FieldValueFloat other)
         {
-            uint otherValue = ((FieldValueFloat) other).m_Value;
-            return new FieldValueFloat(m_Value > otherValue ? m_Value : otherValue);
+            uint otherValue = other._value;
+            return new FieldValueFloat(_value > otherValue ? _value : otherValue);
         }
 
         public FieldValueFloat Sub(FieldValueFloat other)
         {
-            uint otherValue = ((FieldValueFloat) other).m_Value;
-            return new FieldValueFloat(m_Value - otherValue);
+            uint otherValue = other._value;
+            return new FieldValueFloat(_value - otherValue);
         }
 
         public string ToString(FieldInfo fieldInfo, bool showRaw)
         {
             if (showRaw)
             {
-                return "" + m_Value;
+                return "" + _value;
             }
-            else
-            {
-                if (fieldInfo.Delta)
-                    return "" + ((int) m_Value * NetworkConfig.decoderPrecisionScales[fieldInfo.Precision]);
-                else
-                    return "" + ConversionUtility.UInt32ToFloat(m_Value);
-            }
-        }
 
-        public uint m_Value;
+            if (fieldInfo.Delta)
+            {
+                return "" + ((int) _value * NetworkConfig.decoderPrecisionScales[fieldInfo.Precision]);
+            }
+
+            return "" + ConversionUtility.UInt32ToFloat(_value);
+        }
     }
 
     public struct FieldValueVector2 : IFieldValue<FieldValueVector2>
     {
+        private uint _valueX, _valueY;
+
         public FieldValueVector2(uint x, uint y)
         {
-            m_ValueX = x;
-            m_ValueY = y;
+            _valueX = x;
+            _valueY = y;
         }
 
         public FieldValueVector2 Min(FieldValueVector2 other)
@@ -357,8 +359,8 @@
 
         public FieldValueVector2 Sub(FieldValueVector2 other)
         {
-            var o = (FieldValueVector2) other;
-            return new FieldValueVector2(m_ValueX - o.m_ValueX, m_ValueX - o.m_ValueY);
+            var o = other;
+            return new FieldValueVector2(_valueX - o._valueX, _valueX - o._valueY);
         }
 
         public string ToString(FieldInfo fieldInfo, bool showRaw)
@@ -366,24 +368,23 @@
             if (fieldInfo.Delta)
             {
                 float scale = NetworkConfig.decoderPrecisionScales[fieldInfo.Precision];
-                return "(" + ((int) m_ValueX * scale) + ", " + ((int) m_ValueY * scale) + ")";
+                return "(" + ((int) _valueX * scale) + ", " + ((int) _valueY * scale) + ")";
             }
 
-            else
-                return "(" + ConversionUtility.UInt32ToFloat(m_ValueX) + ", " +
-                       ConversionUtility.UInt32ToFloat(m_ValueY) + ")";
+            return "(" + ConversionUtility.UInt32ToFloat(_valueX) + ", " + ConversionUtility.UInt32ToFloat(_valueY) +
+                   ")";
         }
-
-        uint m_ValueX, m_ValueY;
     }
 
     public struct FieldValueVector3 : IFieldValue<FieldValueVector3>
     {
+        private uint _valueX, _valueY, _valueZ;
+
         public FieldValueVector3(uint x, uint y, uint z)
         {
-            m_ValueX = x;
-            m_ValueY = y;
-            m_ValueZ = z;
+            _valueX = x;
+            _valueY = y;
+            _valueZ = z;
         }
 
         public FieldValueVector3 Min(FieldValueVector3 other)
@@ -398,8 +399,8 @@
 
         public FieldValueVector3 Sub(FieldValueVector3 other)
         {
-            var o = (FieldValueVector3) other;
-            return new FieldValueVector3(m_ValueX - o.m_ValueX, m_ValueY - o.m_ValueY, m_ValueZ - o.m_ValueZ);
+            var o = other;
+            return new FieldValueVector3(_valueX - o._valueX, _valueY - o._valueY, _valueZ - o._valueZ);
         }
 
         public string ToString(FieldInfo fieldInfo, bool showRaw)
@@ -407,27 +408,26 @@
             if (fieldInfo.Delta)
             {
                 float scale = NetworkConfig.decoderPrecisionScales[fieldInfo.Precision];
-                return "(" + ((int) m_ValueX * scale) + ", " + ((int) m_ValueY * scale) + ", " +
-                       ((int) m_ValueZ * scale) + ")";
+                return "(" + ((int) _valueX * scale) + ", " + ((int) _valueY * scale) + ", " +
+                       ((int) _valueZ * scale) + ")";
             }
 
-            else
-                return "(" + ConversionUtility.UInt32ToFloat(m_ValueX) + ", " +
-                       ConversionUtility.UInt32ToFloat(m_ValueY) + ", " +
-                       ConversionUtility.UInt32ToFloat(m_ValueZ) + ")";
+            return "(" + ConversionUtility.UInt32ToFloat(_valueX) + ", " +
+                   ConversionUtility.UInt32ToFloat(_valueY) + ", " +
+                   ConversionUtility.UInt32ToFloat(_valueZ) + ")";
         }
-
-        public uint m_ValueX, m_ValueY, m_ValueZ;
     }
 
     public struct FieldValueQuaternion : IFieldValue<FieldValueQuaternion>
     {
+        private uint _valueX, _valueY, _valueZ, _valueW;
+
         public FieldValueQuaternion(uint x, uint y, uint z, uint w)
         {
-            m_ValueX = x;
-            m_ValueY = y;
-            m_ValueZ = z;
-            m_ValueW = w;
+            _valueX = x;
+            _valueY = y;
+            _valueZ = z;
+            _valueW = w;
         }
 
         public FieldValueQuaternion Min(FieldValueQuaternion other)
@@ -442,9 +442,9 @@
 
         public FieldValueQuaternion Sub(FieldValueQuaternion other)
         {
-            var o = (FieldValueQuaternion) other;
-            return new FieldValueQuaternion(m_ValueX - o.m_ValueX, m_ValueY - o.m_ValueY, m_ValueZ - o.m_ValueZ,
-                m_ValueW - o.m_ValueW);
+            var o = other;
+            return new FieldValueQuaternion(_valueX - o._valueX, _valueY - o._valueY, _valueZ - o._valueZ,
+                _valueW - o._valueW);
         }
 
         public string ToString(FieldInfo fieldInfo, bool showRaw)
@@ -452,41 +452,43 @@
             if (fieldInfo.Delta)
             {
                 float scale = NetworkConfig.decoderPrecisionScales[fieldInfo.Precision];
-                return "(" + ((int) m_ValueX * scale) + ", " + ((int) m_ValueY * scale) + ", " +
-                       ((int) m_ValueZ * scale) + ", " + ((int) m_ValueW * scale) + ")";
+                return "(" + ((int) _valueX * scale) + ", " + ((int) _valueY * scale) + ", " +
+                       ((int) _valueZ * scale) + ", " + ((int) _valueW * scale) + ")";
             }
 
-            else
-                return "(" + ConversionUtility.UInt32ToFloat(m_ValueX) + ", " +
-                       ConversionUtility.UInt32ToFloat(m_ValueY) + ", " +
-                       ConversionUtility.UInt32ToFloat(m_ValueZ) + ", " +
-                       ConversionUtility.UInt32ToFloat(m_ValueW) + ")";
+            return "(" + ConversionUtility.UInt32ToFloat(_valueX) + ", " +
+                   ConversionUtility.UInt32ToFloat(_valueY) + ", " +
+                   ConversionUtility.UInt32ToFloat(_valueZ) + ", " +
+                   ConversionUtility.UInt32ToFloat(_valueW) + ")";
         }
-
-        uint m_ValueX, m_ValueY, m_ValueZ, m_ValueW;
     }
 
     public struct FieldValueString : IFieldValue<FieldValueString>
     {
+        public static readonly FieldValueString EmptyStringValue = new FieldValueString("");
+
+        private string _value;
+        private static char[] _charBuffer = new char[1024 * 32];
+
         public FieldValueString(string value)
         {
-            m_Value = value;
+            _value = value;
         }
 
-        unsafe public FieldValueString(byte* valueBuffer, int valueLength)
+        public unsafe FieldValueString(byte* valueBuffer, int valueLength)
         {
             if (valueBuffer != null)
             {
-                fixed (char* dest = s_CharBuffer)
+                fixed (char* dest = _charBuffer)
                 {
                     int numChars =
-                        NetworkConfig.encoding.GetChars(valueBuffer, valueLength, dest, s_CharBuffer.Length);
-                    m_Value = new string(s_CharBuffer, 0, numChars);
+                        NetworkConfig.encoding.GetChars(valueBuffer, valueLength, dest, _charBuffer.Length);
+                    _value = new string(_charBuffer, 0, numChars);
                 }
             }
             else
             {
-                m_Value = "";
+                _value = "";
             }
         }
 
@@ -507,29 +509,29 @@
 
         public string ToString(FieldInfo fieldInfo, bool showRaw)
         {
-            return m_Value;
+            return _value;
         }
-
-
-        public readonly static FieldValueString EmptyStringValue = new FieldValueString("");
-
-        string m_Value;
-        static char[] s_CharBuffer = new char[1024 * 32];
     }
 
     public struct FieldValueByteArray : IFieldValue<FieldValueByteArray>
     {
-        unsafe public FieldValueByteArray(byte* value, int valueLength)
+        public static readonly unsafe FieldValueByteArray EmptyByteArrayValue = new FieldValueByteArray(null, 0);
+
+        private readonly byte[] _value;
+
+        public unsafe FieldValueByteArray(byte* value, int valueLength)
         {
             if (value != null)
             {
-                m_Value = new byte[valueLength];
-                for (int i = 0; i < valueLength; i++)
-                    m_Value[i] = value[i];
+                _value = new byte[valueLength];
+                for (var i = 0; i < valueLength; i++)
+                {
+                    _value[i] = value[i];
+                }
             }
             else
             {
-                m_Value = null;
+                _value = null;
             }
         }
 
@@ -550,12 +552,7 @@
 
         public string ToString(FieldInfo fieldInfo, bool showRaw)
         {
-            return "";
+            return _value != null ? _value.ToString() : "";
         }
-
-
-        unsafe public readonly static FieldValueByteArray EmptyByteArrayValue = new FieldValueByteArray(null, 0);
-
-        byte[] m_Value;
     }
 }
