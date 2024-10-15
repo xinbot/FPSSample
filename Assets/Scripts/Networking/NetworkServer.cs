@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
 using NetworkCompression;
+using Networking;
 using Networking.Compression;
 using UnityEngine.Profiling;
 using Unity.Collections.LowLevel.Unsafe;

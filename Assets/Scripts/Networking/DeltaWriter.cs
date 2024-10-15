@@ -1,16 +1,18 @@
-﻿using Unity.Collections.LowLevel.Unsafe;
-using UnityEngine;
-
+﻿using Networking;
 
 public struct DeltaWriter
 {
     static byte[] fieldsNotPredicted = new byte[(NetworkConfig.maxFieldsPerSchema + 7) / 8];
-    unsafe static public void Write<TOutputStream>(ref TOutputStream output, NetworkSchema schema, uint* inputData, uint* baselineData, byte[] fieldsChangedPrediction, byte fieldMask, ref uint entity_hash) where TOutputStream : NetworkCompression.IOutputStream
+
+    unsafe static public void Write<TOutputStream>(ref TOutputStream output, NetworkSchema schema, uint* inputData,
+        uint* baselineData, byte[] fieldsChangedPrediction, byte fieldMask, ref uint entity_hash)
+        where TOutputStream : NetworkCompression.IOutputStream
     {
         GameDebug.Assert(baselineData != null);
 
         int numFields = schema.numFields;
-        GameDebug.Assert(fieldsChangedPrediction.Length >= numFields / 8, "Not enough bits in fieldsChangedPrediction for all fields");
+        GameDebug.Assert(fieldsChangedPrediction.Length >= numFields / 8,
+            "Not enough bits in fieldsChangedPrediction for all fields");
 
         for (int i = 0, l = fieldsNotPredicted.Length; i < l; ++i)
             fieldsNotPredicted[i] = 0;
@@ -23,187 +25,195 @@ public struct DeltaWriter
             var field = schema.fields[fieldIndex];
 
             // Skip fields that are masked out
-            bool masked = (field.fieldMask & fieldMask) != 0;
+            bool masked = (field.FieldMask & fieldMask) != 0;
 
-            byte fieldByteOffset = (byte)((uint)fieldIndex >> 3);
-            byte fieldBitOffset = (byte)((uint)fieldIndex & 0x7);
+            byte fieldByteOffset = (byte) ((uint) fieldIndex >> 3);
+            byte fieldBitOffset = (byte) ((uint) fieldIndex & 0x7);
 
-            switch (field.fieldType)
+            switch (field.FieldType)
             {
-                case NetworkSchema.FieldType.Bool:
-                    {
-                        uint value = inputData[index];
-                        uint baseline = baselineData[index];
-                        index++;
+                case FieldType.Bool:
+                {
+                    uint value = inputData[index];
+                    uint baseline = baselineData[index];
+                    index++;
 
-                        if(!masked)
+                    if (!masked)
+                    {
+                        entity_hash = NetworkUtils.SimpleHashStreaming(entity_hash, value);
+                        if (value != baseline)
                         {
-                            entity_hash = NetworkUtils.SimpleHashStreaming(entity_hash, value);
-                            if (value != baseline)
+                            fieldsNotPredicted[fieldByteOffset] |= (byte) (1 << fieldBitOffset);
+                        }
+                    }
+
+                    break;
+                }
+
+                case FieldType.Int:
+                {
+                    uint value = inputData[index];
+                    uint baseline = baselineData[index];
+                    index++;
+
+                    if (!masked)
+                    {
+                        entity_hash = NetworkUtils.SimpleHashStreaming(entity_hash, value);
+                        if (value != baseline)
+                        {
+                            fieldsNotPredicted[fieldByteOffset] |= (byte) (1 << fieldBitOffset);
+                        }
+                    }
+
+                    break;
+                }
+                case FieldType.UInt:
+                {
+                    uint value = inputData[index];
+                    uint baseline = baselineData[index];
+                    index++;
+
+                    if (!masked)
+                    {
+                        entity_hash = NetworkUtils.SimpleHashStreaming(entity_hash, value);
+                        if (value != baseline)
+                        {
+                            fieldsNotPredicted[fieldByteOffset] |= (byte) (1 << fieldBitOffset);
+                        }
+                    }
+
+                    break;
+                }
+                case FieldType.Float:
+                {
+                    uint value = inputData[index];
+                    uint baseline = baselineData[index];
+                    index++;
+
+                    if (!masked)
+                    {
+                        entity_hash = NetworkUtils.SimpleHashStreaming(entity_hash, value);
+                        if (value != baseline)
+                        {
+                            fieldsNotPredicted[fieldByteOffset] |= (byte) (1 << fieldBitOffset);
+                        }
+                    }
+
+                    break;
+                }
+
+                case FieldType.Vector2:
+                {
+                    uint vx = inputData[index];
+                    uint bx = baselineData[index];
+                    index++;
+
+                    uint vy = inputData[index];
+                    uint by = baselineData[index];
+                    index++;
+
+                    if (!masked)
+                    {
+                        entity_hash = NetworkUtils.SimpleHashStreaming(entity_hash, vx);
+                        entity_hash = NetworkUtils.SimpleHashStreaming(entity_hash, vy);
+                        if (vx != bx || vy != by)
+                        {
+                            fieldsNotPredicted[fieldByteOffset] |= (byte) (1 << fieldBitOffset);
+                        }
+                    }
+
+                    break;
+                }
+
+                case FieldType.Vector3:
+                {
+                    uint vx = inputData[index];
+                    uint bx = baselineData[index];
+                    index++;
+
+                    uint vy = inputData[index];
+                    uint by = baselineData[index];
+                    index++;
+
+                    uint vz = inputData[index];
+                    uint bz = baselineData[index];
+                    index++;
+
+                    if (!masked)
+                    {
+                        entity_hash = NetworkUtils.SimpleHashStreaming(entity_hash, vx);
+                        entity_hash = NetworkUtils.SimpleHashStreaming(entity_hash, vy);
+                        entity_hash = NetworkUtils.SimpleHashStreaming(entity_hash, vz);
+                        if (vx != bx || vy != by || vz != bz)
+                        {
+                            fieldsNotPredicted[fieldByteOffset] |= (byte) (1 << fieldBitOffset);
+                        }
+                    }
+
+                    break;
+                }
+
+
+                case FieldType.Quaternion:
+                {
+                    uint vx = inputData[index];
+                    uint bx = baselineData[index];
+                    index++;
+
+                    uint vy = inputData[index];
+                    uint by = baselineData[index];
+                    index++;
+
+                    uint vz = inputData[index];
+                    uint bz = baselineData[index];
+                    index++;
+
+                    uint vw = inputData[index];
+                    uint bw = baselineData[index];
+                    index++;
+
+
+                    if (!masked)
+                    {
+                        entity_hash = NetworkUtils.SimpleHashStreaming(entity_hash, vx);
+                        entity_hash = NetworkUtils.SimpleHashStreaming(entity_hash, vy);
+                        entity_hash = NetworkUtils.SimpleHashStreaming(entity_hash, vz);
+                        entity_hash = NetworkUtils.SimpleHashStreaming(entity_hash, vw);
+                        if (vx != bx || vy != by || vz != bz || vw != bw)
+                        {
+                            fieldsNotPredicted[fieldByteOffset] |= (byte) (1 << fieldBitOffset);
+                        }
+                    }
+
+                    break;
+                }
+
+
+                case FieldType.String:
+                case FieldType.ByteArray:
+                {
+                    if (!masked)
+                    {
+                        entity_hash +=
+                            0; // TODO client side has no easy way to hash strings. enable this when possible: NetworkUtils.SimpleHash(valueBuffer, valueLength);
+                        bool same = true;
+                        for (int i = 0; i < field.ArraySize; i++)
+                        {
+                            if (inputData[index + i] != baselineData[index + i])
                             {
-                                fieldsNotPredicted[fieldByteOffset] |= (byte)(1 << fieldBitOffset);
+                                same = false;
+                                break;
                             }
                         }
 
-                        break;
-                    }
-
-                case NetworkSchema.FieldType.Int:
-                    {
-                        uint value = inputData[index];
-                        uint baseline = baselineData[index];
-                        index++;
-
-                        if (!masked)
+                        if (!same)
                         {
-                            entity_hash = NetworkUtils.SimpleHashStreaming(entity_hash, value);
-                            if (value != baseline)
-                            {
-                                fieldsNotPredicted[fieldByteOffset] |= (byte)(1 << fieldBitOffset);
-                            }
+                            fieldsNotPredicted[fieldByteOffset] |= (byte) (1 << fieldBitOffset);
                         }
-                        break;
-                    }
-                case NetworkSchema.FieldType.UInt:
-                    {
-                        uint value = inputData[index];
-                        uint baseline = baselineData[index];
-                        index++;
-
-                        if (!masked)
-                        {
-                            entity_hash = NetworkUtils.SimpleHashStreaming(entity_hash, value);
-                            if (value != baseline)
-                            {
-                                fieldsNotPredicted[fieldByteOffset] |= (byte)(1 << fieldBitOffset);
-                            }
-                        }
-                        break;
-                    }
-                case NetworkSchema.FieldType.Float:
-                    {
-                        uint value = inputData[index];
-                        uint baseline = baselineData[index];
-                        index++;
-
-                        if (!masked)
-                        {
-                            entity_hash = NetworkUtils.SimpleHashStreaming(entity_hash, value);
-                            if (value != baseline)
-                            {
-                                fieldsNotPredicted[fieldByteOffset] |= (byte)(1 << fieldBitOffset);
-                            }
-                        }
-                        break;
                     }
 
-                case NetworkSchema.FieldType.Vector2:
-                    {
-                        uint vx = inputData[index];
-                        uint bx = baselineData[index];
-                        index++;
-
-                        uint vy = inputData[index];
-                        uint by = baselineData[index];
-                        index++;
-
-                        if (!masked)
-                        {
-                            entity_hash = NetworkUtils.SimpleHashStreaming(entity_hash, vx);
-                            entity_hash = NetworkUtils.SimpleHashStreaming(entity_hash, vy);
-                            if (vx != bx || vy != by)
-                            {
-                                fieldsNotPredicted[fieldByteOffset] |= (byte)(1 << fieldBitOffset);
-                            }
-                        }
-                        break;
-                    }
-
-                case NetworkSchema.FieldType.Vector3:
-                    {
-                        uint vx = inputData[index];
-                        uint bx = baselineData[index];
-                        index++;
-
-                        uint vy = inputData[index];
-                        uint by = baselineData[index];
-                        index++;
-
-                        uint vz = inputData[index];
-                        uint bz = baselineData[index];
-                        index++;
-
-                        if (!masked)
-                        {
-                            entity_hash = NetworkUtils.SimpleHashStreaming(entity_hash, vx);
-                            entity_hash = NetworkUtils.SimpleHashStreaming(entity_hash, vy);
-                            entity_hash = NetworkUtils.SimpleHashStreaming(entity_hash, vz);
-                            if (vx != bx || vy != by || vz != bz)
-                            {
-                                fieldsNotPredicted[fieldByteOffset] |= (byte)(1 << fieldBitOffset);
-                            }
-                        }
-                        break;
-                    }
-
-
-                case NetworkSchema.FieldType.Quaternion:
-                    {
-                        uint vx = inputData[index];
-                        uint bx = baselineData[index];
-                        index++;
-
-                        uint vy = inputData[index];
-                        uint by = baselineData[index];
-                        index++;
-
-                        uint vz = inputData[index];
-                        uint bz = baselineData[index];
-                        index++;
-
-                        uint vw = inputData[index];
-                        uint bw = baselineData[index];
-                        index++;
-
-
-
-                        if (!masked)
-                        {
-                            entity_hash = NetworkUtils.SimpleHashStreaming(entity_hash, vx);
-                            entity_hash = NetworkUtils.SimpleHashStreaming(entity_hash, vy);
-                            entity_hash = NetworkUtils.SimpleHashStreaming(entity_hash, vz);
-                            entity_hash = NetworkUtils.SimpleHashStreaming(entity_hash, vw);
-                            if (vx != bx || vy != by || vz != bz || vw != bw)
-                            {
-                                fieldsNotPredicted[fieldByteOffset] |= (byte)(1 << fieldBitOffset);
-                            }
-                        }
-                        break;
-                    }
-
-
-                case NetworkSchema.FieldType.String:
-                case NetworkSchema.FieldType.ByteArray:
-                    {
-                        if (!masked)
-                        {
-                            entity_hash += 0; // TODO client side has no easy way to hash strings. enable this when possible: NetworkUtils.SimpleHash(valueBuffer, valueLength);
-                            bool same = true;
-                            for(int i = 0; i < field.arraySize; i++)
-                            {
-                                if(inputData[index+i] != baselineData[index+i])
-                                {
-                                    same = false;
-                                    break;
-                                }
-                            }
-                            if (!same)
-                            {
-                                fieldsNotPredicted[fieldByteOffset] |= (byte)(1 << fieldBitOffset);
-                            }
-                        }
-                        index += field.arraySize/4 + 1;
-                    }
+                    index += field.ArraySize / 4 + 1;
+                }
                     break;
             }
         }
@@ -214,232 +224,255 @@ public struct DeltaWriter
 
         // Client needs fieldsNotPredicted. We send the delta between it and fieldsChangedPrediction
         {
-            for(int i = 0; i * 8 < numFields; i++)
+            for (int i = 0; i * 8 < numFields; i++)
             {
                 byte deltaFields = (byte) (fieldsNotPredicted[i] ^ fieldsChangedPrediction[i]);
-                output.WritePackedNibble((uint)(deltaFields & 0xF), skipContext + i*2);
-                output.WritePackedNibble((uint)((deltaFields>>4) & 0xF), skipContext + i*2 + 1);
+                output.WritePackedNibble((uint) (deltaFields & 0xF), skipContext + i * 2);
+                output.WritePackedNibble((uint) ((deltaFields >> 4) & 0xF), skipContext + i * 2 + 1);
             }
         }
-        
+
         int startBitPosition = 0;
         for (int fieldIndex = 0; fieldIndex < numFields; ++fieldIndex)
         {
             var field = schema.fields[fieldIndex];
-            int fieldStartContext = field.startContext;
+            int fieldStartContext = field.StartContext;
             startBitPosition = output.GetBitPosition2();
 
-            byte fieldByteOffset = (byte)((uint)fieldIndex >> 3);
-            byte fieldBitOffset = (byte)((uint)fieldIndex & 0x7);
+            byte fieldByteOffset = (byte) ((uint) fieldIndex >> 3);
+            byte fieldBitOffset = (byte) ((uint) fieldIndex & 0x7);
             var notPredicted = ((fieldsNotPredicted[fieldByteOffset] & (1 << fieldBitOffset)) != 0);
 
-            switch (field.fieldType)
+            switch (field.FieldType)
             {
-                case NetworkSchema.FieldType.Bool:
-                    {
-                        uint value = inputData[index];
-                        index++;
+                case FieldType.Bool:
+                {
+                    uint value = inputData[index];
+                    index++;
 
-                        if(notPredicted)
-                        {
-                            output.WriteRawBits(value, 1);
-                            NetworkSchema.AddStatsToFieldBool(field, (value != 0), false, output.GetBitPosition2() - startBitPosition);
-                        }
-                        break;
+                    if (notPredicted)
+                    {
+                        output.WriteRawBits(value, 1);
+                        NetworkSchema.AddStatsToFieldBool(field, (value != 0), false,
+                            output.GetBitPosition2() - startBitPosition);
                     }
 
-                case NetworkSchema.FieldType.Int:
-                    {
-                        uint value = inputData[index];
-                        uint baseline = baselineData[index];
-                        index++;
+                    break;
+                }
 
-                        if(notPredicted)
-                        {
-                            if (field.delta)
-                            {
-                                output.WritePackedUIntDelta(value, baseline, fieldStartContext);
-                                NetworkSchema.AddStatsToFieldInt(field, (int)value, (int)baseline, output.GetBitPosition2() - startBitPosition);
-                            }
-                            else
-                            {
-                                output.WriteRawBits(value, field.bits);
-                                NetworkSchema.AddStatsToFieldInt(field, (int)value, 0, output.GetBitPosition2() - startBitPosition);
-                            }
-                        }
-                        break;
-                    }
-                case NetworkSchema.FieldType.UInt:
-                    {
-                        uint value = inputData[index];
-                        uint baseline = baselineData[index];
-                        index++;
+                case FieldType.Int:
+                {
+                    uint value = inputData[index];
+                    uint baseline = baselineData[index];
+                    index++;
 
-                        if(notPredicted)
-                        {
-                            if (field.delta)
-                            {
-                                output.WritePackedUIntDelta(value, baseline, fieldStartContext);
-                                NetworkSchema.AddStatsToFieldUInt(field, value, baseline, output.GetBitPosition2() - startBitPosition);
-                            }
-                            else
-                            {
-                                output.WriteRawBits(value, field.bits);
-                                NetworkSchema.AddStatsToFieldUInt(field, value, 0, output.GetBitPosition2() - startBitPosition);
-                            }
-                        }
-                        break;
-                    }
-                case NetworkSchema.FieldType.Float:
+                    if (notPredicted)
                     {
-                        uint value = inputData[index];
-                        uint baseline = baselineData[index];
-                        index++;
-
-                        if(notPredicted)
+                        if (field.Delta)
                         {
-                            if (field.delta)
-                            {
-                                output.WritePackedUIntDelta(value, baseline, fieldStartContext);
-                                NetworkSchema.AddStatsToFieldFloat(field, value, baseline, output.GetBitPosition2() - startBitPosition);
-                            }
-                            else
-                            {
-                                output.WriteRawBits(value, field.bits);
-                                NetworkSchema.AddStatsToFieldFloat(field, value, 0, output.GetBitPosition2() - startBitPosition);
-                            }
+                            output.WritePackedUIntDelta(value, baseline, fieldStartContext);
+                            NetworkSchema.AddStatsToFieldInt(field, (int) value, (int) baseline,
+                                output.GetBitPosition2() - startBitPosition);
                         }
-                        break;
+                        else
+                        {
+                            output.WriteRawBits(value, field.Bits);
+                            NetworkSchema.AddStatsToFieldInt(field, (int) value, 0,
+                                output.GetBitPosition2() - startBitPosition);
+                        }
                     }
 
-                case NetworkSchema.FieldType.Vector2:
+                    break;
+                }
+                case FieldType.UInt:
+                {
+                    uint value = inputData[index];
+                    uint baseline = baselineData[index];
+                    index++;
+
+                    if (notPredicted)
                     {
-                        uint vx = inputData[index];
-                        uint bx = baselineData[index];
-                        index++;
-
-                        uint vy = inputData[index];
-                        uint by = baselineData[index];
-                        index++;
-
-                        if(notPredicted)
+                        if (field.Delta)
                         {
-                            if (field.delta)
-                            {
-                                output.WritePackedUIntDelta(vx, bx, fieldStartContext + 0);
-                                output.WritePackedUIntDelta(vy, by, fieldStartContext + 1);
-                                NetworkSchema.AddStatsToFieldVector2(field, vx, vy, bx, by, output.GetBitPosition2() - startBitPosition);
-                            }
-                            else
-                            {
-                                output.WriteRawBits(vx, field.bits);
-                                output.WriteRawBits(vy, field.bits);
-                                NetworkSchema.AddStatsToFieldVector2(field, vx, vy, 0, 0, output.GetBitPosition2() - startBitPosition);
-                            }
+                            output.WritePackedUIntDelta(value, baseline, fieldStartContext);
+                            NetworkSchema.AddStatsToFieldUInt(field, value, baseline,
+                                output.GetBitPosition2() - startBitPosition);
                         }
-                        break;
+                        else
+                        {
+                            output.WriteRawBits(value, field.Bits);
+                            NetworkSchema.AddStatsToFieldUInt(field, value, 0,
+                                output.GetBitPosition2() - startBitPosition);
+                        }
                     }
 
-                case NetworkSchema.FieldType.Vector3:
+                    break;
+                }
+                case FieldType.Float:
+                {
+                    uint value = inputData[index];
+                    uint baseline = baselineData[index];
+                    index++;
+
+                    if (notPredicted)
                     {
-                        uint vx = inputData[index];
-                        uint bx = baselineData[index];
-                        index++;
-
-                        uint vy = inputData[index];
-                        uint by = baselineData[index];
-                        index++;
-
-                        uint vz = inputData[index];
-                        uint bz = baselineData[index];
-                        index++;
-
-                        if(notPredicted)
+                        if (field.Delta)
                         {
-                            if (field.delta)
-                            {
-                                output.WritePackedUIntDelta(vx, bx, fieldStartContext + 0);
-                                output.WritePackedUIntDelta(vy, by, fieldStartContext + 1);
-                                output.WritePackedUIntDelta(vz, bz, fieldStartContext + 2);
-                                NetworkSchema.AddStatsToFieldVector3(field, vx, vy, vz, bx, by, bz, output.GetBitPosition2() - startBitPosition);
-                            }
-                            else
-                            {
-                                output.WriteRawBits(vx, field.bits);
-                                output.WriteRawBits(vy, field.bits);
-                                output.WriteRawBits(vz, field.bits);
-                                NetworkSchema.AddStatsToFieldVector3(field, vx, vy, vz, 0, 0, 0, output.GetBitPosition2() - startBitPosition);
-                            }
+                            output.WritePackedUIntDelta(value, baseline, fieldStartContext);
+                            NetworkSchema.AddStatsToFieldFloat(field, value, baseline,
+                                output.GetBitPosition2() - startBitPosition);
                         }
-                        break;
+                        else
+                        {
+                            output.WriteRawBits(value, field.Bits);
+                            NetworkSchema.AddStatsToFieldFloat(field, value, 0,
+                                output.GetBitPosition2() - startBitPosition);
+                        }
                     }
 
+                    break;
+                }
 
-                case NetworkSchema.FieldType.Quaternion:
+                case FieldType.Vector2:
+                {
+                    uint vx = inputData[index];
+                    uint bx = baselineData[index];
+                    index++;
+
+                    uint vy = inputData[index];
+                    uint by = baselineData[index];
+                    index++;
+
+                    if (notPredicted)
                     {
-                        // TODO : Figure out what to do with quaternions
-                        uint vx = inputData[index];
-                        uint bx = baselineData[index];
-                        index++;
-
-                        uint vy = inputData[index];
-                        uint by = baselineData[index];
-                        index++;
-
-                        uint vz = inputData[index];
-                        uint bz = baselineData[index];
-                        index++;
-
-                        uint vw = inputData[index];
-                        uint bw = baselineData[index];
-                        index++;
-
-                        if(notPredicted)
+                        if (field.Delta)
                         {
-                            if(field.delta)
-                            {
-                                output.WritePackedUIntDelta(vx, bx, fieldStartContext + 0);
-                                output.WritePackedUIntDelta(vy, by, fieldStartContext + 1);
-                                output.WritePackedUIntDelta(vz, bz, fieldStartContext + 2);
-                                output.WritePackedUIntDelta(vw, bw, fieldStartContext + 3);
-                                NetworkSchema.AddStatsToFieldQuaternion(field, vx, vy, vz, vw, bx, by, bz, bw, output.GetBitPosition2() - startBitPosition);
-                            }
-                            else
-                            {
-                                output.WriteRawBits(vx, field.bits);
-                                output.WriteRawBits(vy, field.bits);
-                                output.WriteRawBits(vz, field.bits);
-                                output.WriteRawBits(vw, field.bits);
-                                NetworkSchema.AddStatsToFieldQuaternion(field, vx, vy, vz, vw, 0, 0, 0, 0, output.GetBitPosition2() - startBitPosition);
-                            }
+                            output.WritePackedUIntDelta(vx, bx, fieldStartContext + 0);
+                            output.WritePackedUIntDelta(vy, by, fieldStartContext + 1);
+                            NetworkSchema.AddStatsToFieldVector2(field, vx, vy, bx, by,
+                                output.GetBitPosition2() - startBitPosition);
                         }
-                        break;
+                        else
+                        {
+                            output.WriteRawBits(vx, field.Bits);
+                            output.WriteRawBits(vy, field.Bits);
+                            NetworkSchema.AddStatsToFieldVector2(field, vx, vy, 0, 0,
+                                output.GetBitPosition2() - startBitPosition);
+                        }
                     }
 
+                    break;
+                }
 
-                case NetworkSchema.FieldType.String:
-                case NetworkSchema.FieldType.ByteArray:
+                case FieldType.Vector3:
+                {
+                    uint vx = inputData[index];
+                    uint bx = baselineData[index];
+                    index++;
+
+                    uint vy = inputData[index];
+                    uint by = baselineData[index];
+                    index++;
+
+                    uint vz = inputData[index];
+                    uint bz = baselineData[index];
+                    index++;
+
+                    if (notPredicted)
                     {
-                        uint valueLength = inputData[index];
-                        index++;
-
-                        if(notPredicted)
+                        if (field.Delta)
                         {
-                            output.WritePackedUInt(valueLength, fieldStartContext);
-                            byte* bytes = (byte*)(inputData + index);
-                            output.WriteRawBytes(bytes, (int)valueLength);
-
-                            if(field.fieldType == NetworkSchema.FieldType.String)
-                            {
-                                NetworkSchema.AddStatsToFieldString(field, bytes, (int)valueLength, output.GetBitPosition2() - startBitPosition);
-                            }
-                            else
-                            {
-                                NetworkSchema.AddStatsToFieldByteArray(field, bytes, (int)valueLength, output.GetBitPosition2() - startBitPosition);
-                            }
+                            output.WritePackedUIntDelta(vx, bx, fieldStartContext + 0);
+                            output.WritePackedUIntDelta(vy, by, fieldStartContext + 1);
+                            output.WritePackedUIntDelta(vz, bz, fieldStartContext + 2);
+                            NetworkSchema.AddStatsToFieldVector3(field, vx, vy, vz, bx, by, bz,
+                                output.GetBitPosition2() - startBitPosition);
                         }
-                        index += field.arraySize / 4;
+                        else
+                        {
+                            output.WriteRawBits(vx, field.Bits);
+                            output.WriteRawBits(vy, field.Bits);
+                            output.WriteRawBits(vz, field.Bits);
+                            NetworkSchema.AddStatsToFieldVector3(field, vx, vy, vz, 0, 0, 0,
+                                output.GetBitPosition2() - startBitPosition);
+                        }
                     }
+
+                    break;
+                }
+
+
+                case FieldType.Quaternion:
+                {
+                    // TODO : Figure out what to do with quaternions
+                    uint vx = inputData[index];
+                    uint bx = baselineData[index];
+                    index++;
+
+                    uint vy = inputData[index];
+                    uint by = baselineData[index];
+                    index++;
+
+                    uint vz = inputData[index];
+                    uint bz = baselineData[index];
+                    index++;
+
+                    uint vw = inputData[index];
+                    uint bw = baselineData[index];
+                    index++;
+
+                    if (notPredicted)
+                    {
+                        if (field.Delta)
+                        {
+                            output.WritePackedUIntDelta(vx, bx, fieldStartContext + 0);
+                            output.WritePackedUIntDelta(vy, by, fieldStartContext + 1);
+                            output.WritePackedUIntDelta(vz, bz, fieldStartContext + 2);
+                            output.WritePackedUIntDelta(vw, bw, fieldStartContext + 3);
+                            NetworkSchema.AddStatsToFieldQuaternion(field, vx, vy, vz, vw, bx, by, bz, bw,
+                                output.GetBitPosition2() - startBitPosition);
+                        }
+                        else
+                        {
+                            output.WriteRawBits(vx, field.Bits);
+                            output.WriteRawBits(vy, field.Bits);
+                            output.WriteRawBits(vz, field.Bits);
+                            output.WriteRawBits(vw, field.Bits);
+                            NetworkSchema.AddStatsToFieldQuaternion(field, vx, vy, vz, vw, 0, 0, 0, 0,
+                                output.GetBitPosition2() - startBitPosition);
+                        }
+                    }
+
+                    break;
+                }
+
+
+                case FieldType.String:
+                case FieldType.ByteArray:
+                {
+                    uint valueLength = inputData[index];
+                    index++;
+
+                    if (notPredicted)
+                    {
+                        output.WritePackedUInt(valueLength, fieldStartContext);
+                        byte* bytes = (byte*) (inputData + index);
+                        output.WriteRawBytes(bytes, (int) valueLength);
+
+                        if (field.FieldType == FieldType.String)
+                        {
+                            NetworkSchema.AddStatsToFieldString(field, bytes, (int) valueLength,
+                                output.GetBitPosition2() - startBitPosition);
+                        }
+                        else
+                        {
+                            NetworkSchema.AddStatsToFieldByteArray(field, bytes, (int) valueLength,
+                                output.GetBitPosition2() - startBitPosition);
+                        }
+                    }
+
+                    index += field.ArraySize / 4;
+                }
                     break;
             }
         }

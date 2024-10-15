@@ -1,5 +1,6 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using Networking;
 using UnityEngine;
 using UnityEditor;
 using UnityEngine.Profiling;
@@ -21,7 +22,7 @@ public class NetworkProfiler : EditorWindow
     {
         GetWindow<NetworkProfiler>(false, "Network Profiler", true);
     }
-    
+
     private string SizeToString(int size)
     {
         if (m_ShowByteSizes)
@@ -83,7 +84,7 @@ public class NetworkProfiler : EditorWindow
 
         GUILayout.Space(10.0f);
         GUILayout.Label("Schemas:", leftAlignStyle);
-        
+
         // fields
         m_ScrollPos1 = GUILayout.BeginScrollView(m_ScrollPos1);
         foreach (var entityTypePair in networkServer.GetEntityTypes())
@@ -110,43 +111,49 @@ public class NetworkProfiler : EditorWindow
             for (int i = 0; i < numFields; i++)
             {
                 var field = schema.fields[i];
-                NetworkSchema.FieldStatsBase stats = field.stats;
+                FieldStatsBase stats = field.Stats;
 
                 string typeDesc;
                 string valueDesc = stats != null ? stats.GetValue(m_ShowRawData) : "";
-                if(field.fieldType == NetworkSchema.FieldType.String || field.fieldType == NetworkSchema.FieldType.ByteArray)
+                if (field.FieldType == FieldType.String || field.FieldType == FieldType.ByteArray)
                 {
-                    typeDesc = field.arraySize + "byte " + field.fieldType;
+                    typeDesc = field.ArraySize + "byte " + field.FieldType;
                 }
                 else
                 {
-                    typeDesc = field.bits + "bit " + field.fieldType;
+                    typeDesc = field.Bits + "bit " + field.FieldType;
                 }
 
                 GUILayout.BeginHorizontal();
 
                 GUILayout.Label("" + i, GUILayout.Width(fieldIdWidth));
-                GUILayout.Label(field.name, GUILayout.Width(fieldNameWidth));
+                GUILayout.Label(field.Name, GUILayout.Width(fieldNameWidth));
                 GUILayout.Label(typeDesc, GUILayout.Width(fieldTypeDesc));
-                
+
                 GUILayout.Label(valueDesc, GUILayout.Width(fieldValueDesc));
-                if (Event.current.type == EventType.Repaint && GUILayoutUtility.GetLastRect().Contains(Event.current.mousePosition))
+                if (Event.current.type == EventType.Repaint &&
+                    GUILayoutUtility.GetLastRect().Contains(Event.current.mousePosition))
                 {
-                    tooltip = string.Format("Value: {0}\nRange: ({1}-{2})", stats.GetValue(m_ShowRawData), stats.GetValueMin(m_ShowRawData), stats.GetValueMax(m_ShowRawData));
+                    tooltip = string.Format("Value: {0}\nRange: ({1}-{2})", stats.GetValue(m_ShowRawData),
+                        stats.GetValueMin(m_ShowRawData), stats.GetValueMax(m_ShowRawData));
                 }
-                
-                if(field.delta)
+
+                if (field.Delta)
                 {
                     GUILayout.Label(stats.GetPrediction(m_ShowRawData), GUILayout.Width(fieldPredictionDesc));
-                    if (Event.current.type == EventType.Repaint && GUILayoutUtility.GetLastRect().Contains(Event.current.mousePosition))
+                    if (Event.current.type == EventType.Repaint &&
+                        GUILayoutUtility.GetLastRect().Contains(Event.current.mousePosition))
                     {
-                        tooltip = string.Format("Prediction: {0}\nRange: ({1}-{2})", stats.GetPrediction(m_ShowRawData), stats.GetPredictionMin(m_ShowRawData), stats.GetPredictionMax(m_ShowRawData));
+                        tooltip = string.Format("Prediction: {0}\nRange: ({1}-{2})", stats.GetPrediction(m_ShowRawData),
+                            stats.GetPredictionMin(m_ShowRawData), stats.GetPredictionMax(m_ShowRawData));
                     }
-                    
+
                     GUILayout.Label(stats.GetDelta(m_ShowRawData), GUILayout.Width(fieldDeltaDesc));
-                    if (Event.current.type == EventType.Repaint && GUILayoutUtility.GetLastRect().Contains(Event.current.mousePosition))
+                    if (Event.current.type == EventType.Repaint &&
+                        GUILayoutUtility.GetLastRect().Contains(Event.current.mousePosition))
                     {
-                        tooltip = string.Format("Delta: {0}\nRange: ({1}-{2})", stats.GetDelta(m_ShowRawData), stats.GetDeltaMin(m_ShowRawData), stats.GetDeltaMax(m_ShowRawData));
+                        tooltip = string.Format("Delta: {0}\nRange: ({1}-{2})", stats.GetDelta(m_ShowRawData),
+                            stats.GetDeltaMin(m_ShowRawData), stats.GetDeltaMax(m_ShowRawData));
                     }
                 }
                 else
@@ -154,29 +161,31 @@ public class NetworkProfiler : EditorWindow
                     GUILayout.Label("", GUILayout.Width(fieldPredictionDesc));
                     GUILayout.Label("", GUILayout.Width(fieldDeltaDesc));
                 }
-                
+
                 GUILayout.Label(SizeToString(stats.GetNumBitsWritten()), GUILayout.Width(fieldSentSize));
-                if(Event.current.type == EventType.Repaint && GUILayoutUtility.GetLastRect().Contains(Event.current.mousePosition))
+                if (Event.current.type == EventType.Repaint &&
+                    GUILayoutUtility.GetLastRect().Contains(Event.current.mousePosition))
                 {
                     if (m_ShowByteSizes)
                     {
                         tooltip = string.Format("Sent: {0:0.00} bytes\n" +
                                                 "Sends: {1}\n" +
-                                                "Bytes per send: {2:0.00}", stats.GetNumBitsWritten() / 8.0f, stats.GetNumWrites(), stats.GetNumBitsWritten() / ((float)stats.GetNumWrites() * 8.0f));
+                                                "Bytes per send: {2:0.00}", stats.GetNumBitsWritten() / 8.0f,
+                            stats.GetNumWrites(), stats.GetNumBitsWritten() / ((float) stats.GetNumWrites() * 8.0f));
                     }
                     else
                     {
                         tooltip = string.Format("Sent: {0} bits\n" +
                                                 "Sends: {1}\n" +
-                                                "Bits per send: {2:0.00}", stats.GetNumBitsWritten(), stats.GetNumWrites(), stats.GetNumBitsWritten() / (float)stats.GetNumWrites());
+                                                "Bits per send: {2:0.00}", stats.GetNumBitsWritten(),
+                            stats.GetNumWrites(), stats.GetNumBitsWritten() / (float) stats.GetNumWrites());
                     }
-                    
                 }
 
                 totalSchemaSize += stats.GetNumBitsWritten();
 
 
-                GUILayout.EndHorizontal();  
+                GUILayout.EndHorizontal();
             }
 
             // Total row
@@ -190,11 +199,12 @@ public class NetworkProfiler : EditorWindow
             GUILayout.Label(SizeToString(totalSchemaSize), GUILayout.Width(fieldSentSize));
             GUILayout.EndHorizontal();
         }
+
         GUILayout.EndScrollView();
         GUILayout.EndScrollView();
         GUILayout.EndVertical();
-        
-        if(tooltip != "")
+
+        if (tooltip != "")
         {
             var content = new GUIContent(tooltip);
             Vector2 size = m_TooltipStyle.CalcSize(content);
