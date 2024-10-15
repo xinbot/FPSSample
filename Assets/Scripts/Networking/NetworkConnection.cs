@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using Networking.Compression;
 using UnityEngine.Profiling;
 
 namespace Networking
@@ -598,14 +599,14 @@ namespace Networking
         }
 
         public void ReadEvents<TInputStream>(ref TInputStream input, INetworkCallbacks networkConsumer)
-            where TInputStream : NetworkCompression.IInputStream
+            where TInputStream : IInputStream
         {
             var numEvents = NetworkEvent.ReadEvents(_eventTypesIn, ConnectionId, ref input, networkConsumer);
             counters.EventsIn += numEvents;
         }
 
         public void WriteEvents<TOutputStream>(TPackageInfo info, ref TOutputStream output)
-            where TOutputStream : NetworkCompression.IOutputStream
+            where TOutputStream : IOutputStream
         {
             if (EventsOut.Count == 0)
             {

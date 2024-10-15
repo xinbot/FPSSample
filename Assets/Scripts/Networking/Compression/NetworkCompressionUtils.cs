@@ -1,13 +1,11 @@
-﻿using UnityEngine;
-
-namespace NetworkCompression
+﻿namespace Networking.Compression
 {
     public static class NetworkCompressionUtils
     {
         public static int CalculateBucket(uint value)
         {
             int bucketIndex = 0;
-            while (bucketIndex + 1 < NetworkCompressionConstants.k_NumBuckets && value >= NetworkCompressionConstants.k_BucketOffsets[bucketIndex + 1]) // TODO: use CountLeadingZeros to do this in constant time
+            while (bucketIndex + 1 < NetworkCompressionConstants.KNumBuckets && value >= NetworkCompressionConstants.KBucketOffsets[bucketIndex + 1]) // TODO: use CountLeadingZeros to do this in constant time
                 bucketIndex++;
 
             return bucketIndex;

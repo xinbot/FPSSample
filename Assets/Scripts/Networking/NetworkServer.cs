@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
-using NetworkCompression;
 using Networking;
 using Networking.Compression;
 using UnityEngine.Profiling;
@@ -397,10 +396,10 @@ unsafe public class NetworkServer
 #pragma warning disable 0162 // unreachable code
             switch (NetworkConfig.IOStreamType)
             {
-                case NetworkCompression.IOStreamType.Raw:
+                case IOStreamType.Raw:
                     pair.Value.SendPackage<RawOutputStream>(m_NetworkCompressionCapture);
                     break;
-                case NetworkCompression.IOStreamType.Huffman:
+                case IOStreamType.Huffman:
                     pair.Value.SendPackage<HuffmanOutputStream>(m_NetworkCompressionCapture);
                     break;
                 default:
@@ -480,12 +479,12 @@ unsafe public class NetworkServer
 #pragma warning disable 0162 // unreachable code
         switch (NetworkConfig.IOStreamType)
         {
-            case NetworkCompression.IOStreamType.Raw:
+            case IOStreamType.Raw:
                 {
                     m_Connections[connectionId].ReadPackage<RawInputStream>(data, size, NetworkCompressionModel.DefaultModel, loop);
                     break;
                 }
-            case NetworkCompression.IOStreamType.Huffman:
+            case IOStreamType.Huffman:
                 {
                     m_Connections[connectionId].ReadPackage<HuffmanInputStream>(data, size, NetworkCompressionModel.DefaultModel, loop);
                     break;
@@ -670,7 +669,7 @@ unsafe public class NetworkServer
             }
         }
 
-        public void ReadPackage<TInputStream>(byte[] packageData, int packageSize, NetworkCompressionModel model, INetworkCallbacks loop) where TInputStream : struct, NetworkCompression.IInputStream
+        public void ReadPackage<TInputStream>(byte[] packageData, int packageSize, NetworkCompressionModel model, INetworkCallbacks loop) where TInputStream : struct, IInputStream
         {
             counters.BytesIn += packageSize;
 
@@ -697,7 +696,7 @@ unsafe public class NetworkServer
                 ReadEvents(ref input, loop);
         }
 
-        public void SendPackage<TOutputStream>(NetworkCompressionCapture networkCompressionCapture) where TOutputStream : struct, NetworkCompression.IOutputStream
+        public void SendPackage<TOutputStream>(NetworkCompressionCapture networkCompressionCapture) where TOutputStream : struct, IOutputStream
         {
             // Check if we can and should send new package
 
@@ -789,7 +788,7 @@ unsafe public class NetworkServer
         }
         int lastClearedAck = 0;
 
-        void WriteClientInfo<TOutputStream>(ref TOutputStream output) where TOutputStream : NetworkCompression.IOutputStream
+        void WriteClientInfo<TOutputStream>(ref TOutputStream output) where TOutputStream : IOutputStream
         {
             AddMessageContentFlag(NetworkMessage.ClientInfo);
             output.WriteRawBits((uint)ConnectionId, 8);
@@ -807,7 +806,7 @@ unsafe public class NetworkServer
             }
         }
 
-        unsafe void WriteMapInfo<TOutputStream>(ref TOutputStream output) where TOutputStream : NetworkCompression.IOutputStream
+        unsafe void WriteMapInfo<TOutputStream>(ref TOutputStream output) where TOutputStream : IOutputStream
         {
             AddMessageContentFlag(NetworkMessage.MapInfo);
 
@@ -822,7 +821,7 @@ unsafe public class NetworkServer
             NetworkSchema.CopyFieldsFromBuffer(server.m_MapInfo.schema, server.m_MapInfo.data, ref output);
         }
 
-        unsafe void WriteSnapshot<TOutputStream>(ref TOutputStream output) where TOutputStream : NetworkCompression.IOutputStream
+        unsafe void WriteSnapshot<TOutputStream>(ref TOutputStream output) where TOutputStream : IOutputStream
         {
             server.statsSentUpdates++;
 
@@ -1203,7 +1202,7 @@ unsafe public class NetworkServer
             Profiler.EndSample();
         }
 
-        void ReadClientConfig<TInputStream>(ref TInputStream input) where TInputStream : NetworkCompression.IInputStream
+        void ReadClientConfig<TInputStream>(ref TInputStream input) where TInputStream : IInputStream
         {
             maxBPS = (int)input.ReadRawBits(32);
             var snapshotInterval = (int)input.ReadRawBits(16);
@@ -1215,7 +1214,7 @@ unsafe public class NetworkServer
             }
         }
 
-        void ReadCommands<TInputStream>(ref TInputStream input) where TInputStream : NetworkCompression.IInputStream
+        void ReadCommands<TInputStream>(ref TInputStream input) where TInputStream : IInputStream
         {
             counters.commandsIn++;
             var schema = input.ReadRawBits(1) != 0;

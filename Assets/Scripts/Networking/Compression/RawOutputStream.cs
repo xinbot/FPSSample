@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-namespace NetworkCompression
+namespace Networking.Compression
 {
     public struct RawOutputStream : IOutputStream
     {
@@ -12,16 +12,17 @@ namespace NetworkCompression
             m_Capture = capture;
         }
 
-        public void Initialize(NetworkCompressionModel model, byte[] buffer, int bufferOffset, NetworkCompressionCapture capture)
+        public void Initialize(NetworkCompressionModel model, byte[] buffer, int bufferOffset,
+            NetworkCompressionCapture capture)
         {
             this = new RawOutputStream(buffer, bufferOffset, capture);
         }
-        
+
         public void WriteRawBits(uint value, int numbits)
         {
-            for(int i = 0; i < numbits; i += 8)
+            for (int i = 0; i < numbits; i += 8)
             {
-                m_Buffer[m_CurrentByteIndex++] = (byte)value;
+                m_Buffer[m_CurrentByteIndex++] = (byte) value;
                 value >>= 8;
             }
         }
@@ -39,7 +40,7 @@ namespace NetworkCompression
             if (m_Capture != null)
                 m_Capture.AddNibble(context, value);
 
-            m_Buffer[m_CurrentByteIndex++] = (byte)value;
+            m_Buffer[m_CurrentByteIndex++] = (byte) value;
         }
 
         public void WritePackedUInt(uint value, int context)
@@ -47,22 +48,24 @@ namespace NetworkCompression
             if (m_Capture != null)
                 m_Capture.AddUInt(context, value);
 
-            m_Buffer[m_CurrentByteIndex + 0] = (byte)value;
-            m_Buffer[m_CurrentByteIndex + 1] = (byte)(value >> 8);
-            m_Buffer[m_CurrentByteIndex + 2] = (byte)(value >> 16);
-            m_Buffer[m_CurrentByteIndex + 3] = (byte)(value >> 24);
+            m_Buffer[m_CurrentByteIndex + 0] = (byte) value;
+            m_Buffer[m_CurrentByteIndex + 1] = (byte) (value >> 8);
+            m_Buffer[m_CurrentByteIndex + 2] = (byte) (value >> 16);
+            m_Buffer[m_CurrentByteIndex + 3] = (byte) (value >> 24);
             m_CurrentByteIndex += 4;
         }
 
         public void WritePackedIntDelta(int value, int baseline, int context)
         {
-            WritePackedUIntDelta((uint)value, (uint)baseline, context);
+            WritePackedUIntDelta((uint) value, (uint) baseline, context);
         }
 
         public void WritePackedUIntDelta(uint value, uint baseline, int context)
         {
-            int diff = (int)(baseline - value);
-            uint interleaved = (uint)((diff >> 31) ^ (diff << 1));      // interleave negative values between positive values: 0, -1, 1, -2, 2
+            int diff = (int) (baseline - value);
+            uint interleaved =
+                (uint) ((diff >> 31) ^
+                        (diff << 1)); // interleave negative values between positive values: 0, -1, 1, -2, 2
             WritePackedUInt(interleaved, context);
         }
 
@@ -80,7 +83,7 @@ namespace NetworkCompression
         {
             return m_CurrentByteIndex - m_BufferOffset;
         }
-        
+
         NetworkCompressionCapture m_Capture;
         byte[] m_Buffer;
         int m_BufferOffset;

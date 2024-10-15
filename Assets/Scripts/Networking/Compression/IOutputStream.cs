@@ -1,4 +1,4 @@
-﻿namespace NetworkCompression
+﻿namespace Networking.Compression
 {
     public interface IOutputStream
     {

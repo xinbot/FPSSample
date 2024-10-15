@@ -1,4 +1,5 @@
 ﻿using Networking;
+using Networking.Compression;
 
 public struct DeltaWriter
 {
@@ -6,7 +7,7 @@ public struct DeltaWriter
 
     unsafe static public void Write<TOutputStream>(ref TOutputStream output, NetworkSchema schema, uint* inputData,
         uint* baselineData, byte[] fieldsChangedPrediction, byte fieldMask, ref uint entity_hash)
-        where TOutputStream : NetworkCompression.IOutputStream
+        where TOutputStream : IOutputStream
     {
         GameDebug.Assert(baselineData != null);
 

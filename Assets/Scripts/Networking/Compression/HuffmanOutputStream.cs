@@ -1,5 +1,4 @@
-﻿using NetworkCompression;
-using UnityEngine;
+﻿using UnityEngine;
 
 namespace Networking.Compression
 {
@@ -71,14 +70,14 @@ namespace Networking.Compression
             }
 
             int bucket = 0;
-            while (bucket + 1 < NetworkCompressionConstants.k_NumBuckets &&
-                   value >= NetworkCompressionConstants.k_BucketOffsets[bucket + 1])
+            while (bucket + 1 < NetworkCompressionConstants.KNumBuckets &&
+                   value >= NetworkCompressionConstants.KBucketOffsets[bucket + 1])
             {
                 bucket++;
             }
 
-            uint offset = NetworkCompressionConstants.k_BucketOffsets[bucket];
-            int bits = NetworkCompressionConstants.k_BucketSizes[bucket];
+            uint offset = NetworkCompressionConstants.KBucketOffsets[bucket];
+            int bits = NetworkCompressionConstants.KBucketSizes[bucket];
             ushort encodeEntry = _model.encodeTable[context, bucket];
             WriteRawBitsInternal((uint) (encodeEntry >> 8), encodeEntry & 0xFF);
             WriteRawBitsInternal(value - offset, bits);

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
 
-namespace NetworkCompression
+namespace Networking.Compression
 {
     public class NetworkCompressionCapture
     {
@@ -41,7 +41,7 @@ namespace NetworkCompression
             int alphabetSize = 16;
             var model = m_Model;
             int numContexts = uintData.Length;
-            const int numBuckets = NetworkCompressionConstants.k_NumBuckets;
+            const int numBuckets = NetworkCompressionConstants.KNumBuckets;
 
             var stringWriter = new StringWriter();
 
@@ -160,7 +160,7 @@ namespace NetworkCompression
 
 
                 byte[] optimizedSymbolLengths = new byte[alphabetSize];
-                NetworkCompressionUtils.GenerateLengthLimitedHuffmanCodeLengths(optimizedSymbolLengths, 0, safeHistogram, alphabetSize, NetworkCompressionConstants.k_MaxHuffmanSymbolLength);
+                NetworkCompressionUtils.GenerateLengthLimitedHuffmanCodeLengths(optimizedSymbolLengths, 0, safeHistogram, alphabetSize, NetworkCompressionConstants.KMaxHuffmanSymbolLength);
                 modelData.Add((byte)(context & 0xFF));
                 modelData.Add((byte)(context >> 8));
                 modelData.Add((byte)alphabetSize);
@@ -184,9 +184,9 @@ namespace NetworkCompression
                         entropyCost += n * -Math.Log(p, 2.0);
                         if (isUInt)
                         {
-                            currentCost += n * NetworkCompressionConstants.k_BucketSizes[i];
-                            optimizedCost += n * NetworkCompressionConstants.k_BucketSizes[i];
-                            entropyCost += n * NetworkCompressionConstants.k_BucketSizes[i];
+                            currentCost += n * NetworkCompressionConstants.KBucketSizes[i];
+                            optimizedCost += n * NetworkCompressionConstants.KBucketSizes[i];
+                            entropyCost += n * NetworkCompressionConstants.KBucketSizes[i];
                         }
                     }
                 }
@@ -214,7 +214,7 @@ namespace NetworkCompression
                             double p = n / (double)total;
                             entropy2Cost += n * -Math.Log(p, 2.0);
                             if (isUInt)
-                                entropy2Cost += n * NetworkCompressionConstants.k_BucketSizes[j];
+                                entropy2Cost += n * NetworkCompressionConstants.KBucketSizes[j];
                         }
                     }
                 }

@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using NUnit.Framework;
 using UnityEngine;
-using NetworkCompression;
 using Networking;
 using Networking.Compression;
 
@@ -73,8 +72,8 @@ namespace NetcodeTests
         }
 
         public void Delta_FloatCompressedNoBaseline<TInputStream, TOutputStream>()
-            where TInputStream : NetworkCompression.IInputStream, new()
-            where TOutputStream : NetworkCompression.IOutputStream, new()
+            where TInputStream : IInputStream, new()
+            where TOutputStream : IOutputStream, new()
         {
             var schema = new NetworkSchema(0);
             schema.AddField(new FieldInfo()
@@ -85,8 +84,8 @@ namespace NetcodeTests
         }
 
         public void Delta_FloatCompressed<TInputStream, TOutputStream>()
-            where TInputStream : NetworkCompression.IInputStream, new()
-            where TOutputStream : NetworkCompression.IOutputStream, new()
+            where TInputStream : IInputStream, new()
+            where TOutputStream : IOutputStream, new()
         {
             var schema = new NetworkSchema(0);
             schema.AddField(new FieldInfo()
@@ -99,8 +98,8 @@ namespace NetcodeTests
         }
 
         public void Delta_FloatCompressedNoDrift<TInputStream, TOutputStream>()
-            where TInputStream : NetworkCompression.IInputStream, new()
-            where TOutputStream : NetworkCompression.IOutputStream, new()
+            where TInputStream : IInputStream, new()
+            where TOutputStream : IOutputStream, new()
         {
             var schema = new NetworkSchema(0);
             schema.AddField(new FieldInfo()
@@ -122,8 +121,8 @@ namespace NetcodeTests
         }
 
         public void Delta_Vector3Compressed<TInputStream, TOutputStream>()
-            where TInputStream : NetworkCompression.IInputStream, new()
-            where TOutputStream : NetworkCompression.IOutputStream, new()
+            where TInputStream : IInputStream, new()
+            where TOutputStream : IOutputStream, new()
         {
             var schema = new NetworkSchema(0);
             schema.AddField(new FieldInfo()
@@ -136,8 +135,8 @@ namespace NetcodeTests
         }
 
         public void Delta_RandomBaseline<TInputStream, TOutputStream>()
-            where TInputStream : NetworkCompression.IInputStream, new()
-            where TOutputStream : NetworkCompression.IOutputStream, new()
+            where TInputStream : IInputStream, new()
+            where TOutputStream : IOutputStream, new()
         {
             var random = new System.Random(12091);
             for (int i = 0; i < 1024; ++i)
@@ -151,8 +150,8 @@ namespace NetcodeTests
         }
 
         unsafe static void TestDelta<TInputStream, TOutputStream>(NetworkSchema schema, List<object> values,
-            List<object> baselineValues) where TInputStream : NetworkCompression.IInputStream, new()
-            where TOutputStream : NetworkCompression.IOutputStream, new()
+            List<object> baselineValues) where TInputStream : IInputStream, new()
+            where TOutputStream : IOutputStream, new()
         {
             var inputBuffer = new uint[1024 * 64];
             var baselineBuffer = new uint[1024 * 64];

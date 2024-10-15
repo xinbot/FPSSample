@@ -1,4 +1,5 @@
 ﻿using Networking;
+using Networking.Compression;
 
 public struct DeltaReader
 {
@@ -6,7 +7,7 @@ public struct DeltaReader
 
     unsafe public static int Read<TInputStream>(ref TInputStream input, NetworkSchema schema, uint[] outputData,
         uint[] baselineData, byte[] fieldsChangedPrediction, byte fieldMask, ref uint hash)
-        where TInputStream : NetworkCompression.IInputStream
+        where TInputStream : IInputStream
     {
         GameDebug.Assert(baselineData != null);
 

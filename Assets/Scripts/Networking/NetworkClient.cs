@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using System.Net;
-using NetworkCompression;
 using Networking.Compression;
 using UnityEngine;
 using UnityEngine.Profiling;
@@ -335,10 +334,10 @@ namespace Networking
 #pragma warning disable 0162
             switch (NetworkConfig.IOStreamType)
             {
-                case NetworkCompression.IOStreamType.Raw:
+                case IOStreamType.Raw:
                     _clientConnection.SendPackage<RawOutputStream>();
                     break;
-                case NetworkCompression.IOStreamType.Huffman:
+                case IOStreamType.Huffman:
                     _clientConnection.SendPackage<HuffmanOutputStream>();
                     break;
                 default:
@@ -405,13 +404,13 @@ namespace Networking
 #pragma warning disable 0162
             switch (NetworkConfig.IOStreamType)
             {
-                case NetworkCompression.IOStreamType.Raw:
+                case IOStreamType.Raw:
                 {
                     _clientConnection.ReadPackage<RawInputStream>(data, size, _clientConnection.CompressionModel,
                         networkClientConsumer, snapshotConsumer);
                     break;
                 }
-                case NetworkCompression.IOStreamType.Huffman:
+                case IOStreamType.Huffman:
                 {
                     _clientConnection.ReadPackage<HuffmanInputStream>(data, size, _clientConnection.CompressionModel,
                         networkClientConsumer, snapshotConsumer);

@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using Networking.Compression;
 
 namespace Networking
 {
@@ -85,7 +86,7 @@ namespace Networking
 
         public static int ReadEvents<TInputStream>(Dictionary<ushort, NetworkEventType> eventTypesIn, int connectionId,
             ref TInputStream input, INetworkCallbacks networkConsumer)
-            where TInputStream : NetworkCompression.IInputStream
+            where TInputStream : IInputStream
         {
             var eventCount = input.ReadPackedUInt(NetworkConfig.EventCountContext);
             for (var eventCounter = 0; eventCounter < eventCount; ++eventCounter)
@@ -123,7 +124,7 @@ namespace Networking
 
         public static unsafe void WriteEvents<TOutputStream>(List<NetworkEvent> events,
             List<NetworkEventType> knownEventTypes, ref TOutputStream output)
-            where TOutputStream : NetworkCompression.IOutputStream
+            where TOutputStream : IOutputStream
         {
             output.WritePackedUInt((uint) events.Count, NetworkConfig.EventCountContext);
             foreach (var info in events)

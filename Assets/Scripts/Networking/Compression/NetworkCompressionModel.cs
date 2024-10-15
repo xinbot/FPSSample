@@ -1,7 +1,6 @@
-﻿using Networking;
-using UnityEngine;
+﻿using UnityEngine;
 
-namespace NetworkCompression
+namespace Networking.Compression
 {
     public class NetworkCompressionModel
     {
@@ -49,10 +48,10 @@ namespace NetworkCompression
 
             // generate tables
             encodeTable = new ushort[numContexts, alphabetSize];
-            decodeTable = new ushort[numContexts, 1 << NetworkCompressionConstants.k_MaxHuffmanSymbolLength];
+            decodeTable = new ushort[numContexts, 1 << NetworkCompressionConstants.KMaxHuffmanSymbolLength];
 
             var tmpSymbolLengths = new byte[alphabetSize];
-            var tmpSymbolDecodeTable = new ushort[1 << NetworkCompressionConstants.k_MaxHuffmanSymbolLength];
+            var tmpSymbolDecodeTable = new ushort[1 << NetworkCompressionConstants.KMaxHuffmanSymbolLength];
             var symbolCodes = new byte[alphabetSize];
 
             for (int context = 0; context < numContexts; context++)
@@ -60,13 +59,13 @@ namespace NetworkCompression
                 for (int i = 0; i < alphabetSize; i++)
                     tmpSymbolLengths[i] = symbolLengths[context, i];
 
-                NetworkCompressionUtils.GenerateHuffmanCodes(symbolCodes, 0, tmpSymbolLengths, 0, alphabetSize, NetworkCompressionConstants.k_MaxHuffmanSymbolLength);
-                NetworkCompressionUtils.GenerateHuffmanDecodeTable(tmpSymbolDecodeTable, 0, tmpSymbolLengths, symbolCodes, alphabetSize, NetworkCompressionConstants.k_MaxHuffmanSymbolLength);
+                NetworkCompressionUtils.GenerateHuffmanCodes(symbolCodes, 0, tmpSymbolLengths, 0, alphabetSize, NetworkCompressionConstants.KMaxHuffmanSymbolLength);
+                NetworkCompressionUtils.GenerateHuffmanDecodeTable(tmpSymbolDecodeTable, 0, tmpSymbolLengths, symbolCodes, alphabetSize, NetworkCompressionConstants.KMaxHuffmanSymbolLength);
                 for (int i = 0; i < alphabetSize; i++)
                 {
                     encodeTable[context, i] = (ushort)((symbolCodes[i] << 8) | symbolLengths[context, i]);
                 }
-                for (int i = 0; i < (1 << NetworkCompressionConstants.k_MaxHuffmanSymbolLength); i++)
+                for (int i = 0; i < (1 << NetworkCompressionConstants.KMaxHuffmanSymbolLength); i++)
                 {
                     decodeTable[context, i] = tmpSymbolDecodeTable[i];
                 }

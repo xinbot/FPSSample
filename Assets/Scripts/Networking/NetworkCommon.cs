@@ -1,4 +1,5 @@
 ﻿using System;
+using Networking.Compression;
 using Unity.Networking.Transport;
 
 namespace Networking
@@ -136,7 +137,7 @@ namespace Networking
         public static readonly float[] DecoderPrecisionScales = new float[] {1.0f, 0.1f, 0.01f, 0.001f};
 
         // compression //TODO: make this dynamic
-        public const NetworkCompression.IOStreamType IOStreamType = NetworkCompression.IOStreamType.Huffman;
+        public const IOStreamType IOStreamType = Compression.IOStreamType.Huffman;
 
         public const int MAXFixedSchemaIds = 2;
         public const int MAXEventTypeSchemaIds = 8;

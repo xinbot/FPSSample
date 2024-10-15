@@ -1,5 +1,4 @@
-﻿using NetworkCompression;
-using UnityEngine;
+﻿using UnityEngine;
 
 namespace Networking.Compression
 {
@@ -59,7 +58,7 @@ namespace Networking.Compression
         public uint ReadPackedNibble(int context)
         {
             FillBitBuffer();
-            uint peekMask = (1u << NetworkCompressionConstants.k_MaxHuffmanSymbolLength) - 1u;
+            uint peekMask = (1u << NetworkCompressionConstants.KMaxHuffmanSymbolLength) - 1u;
             uint peekBits = (uint) _bitBuffer & peekMask;
             ushort huffmanEntry = _model.decodeTable[context, peekBits];
             int symbol = huffmanEntry >> 8;
@@ -74,7 +73,7 @@ namespace Networking.Compression
         public uint ReadPackedUInt(int context)
         {
             FillBitBuffer();
-            uint peekMask = (1u << NetworkCompressionConstants.k_MaxHuffmanSymbolLength) - 1u;
+            uint peekMask = (1u << NetworkCompressionConstants.KMaxHuffmanSymbolLength) - 1u;
             uint peekBits = (uint) _bitBuffer & peekMask;
             ushort huffmanEntry = _model.decodeTable[context, peekBits];
             int symbol = huffmanEntry >> 8;
@@ -84,8 +83,8 @@ namespace Networking.Compression
             _bitBuffer >>= length;
             _currentBitIndex -= length;
 
-            uint offset = NetworkCompressionConstants.k_BucketOffsets[symbol];
-            int bits = NetworkCompressionConstants.k_BucketSizes[symbol];
+            uint offset = NetworkCompressionConstants.KBucketOffsets[symbol];
+            int bits = NetworkCompressionConstants.KBucketSizes[symbol];
             return ReadRawBitsInternal(bits) + offset;
         }
 

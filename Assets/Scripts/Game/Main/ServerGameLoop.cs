@@ -1,8 +1,8 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
 using Unity.Entities;
-using NetworkCompression;
 using Networking;
+using Networking.Compression;
 using Networking.Socket;
 using UnityEngine.Profiling;
 using SQP;

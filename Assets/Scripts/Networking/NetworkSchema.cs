@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Diagnostics;
+using Networking.Compression;
 
 namespace Networking
 {
@@ -185,7 +186,7 @@ namespace Networking
         }
 
         public static NetworkSchema ReadSchema<TInputStream>(ref TInputStream input)
-            where TInputStream : NetworkCompression.IInputStream
+            where TInputStream : IInputStream
         {
             int count = (int) input.ReadPackedUInt(NetworkConfig.MiscContext);
             int id = (int) input.ReadPackedUInt(NetworkConfig.MiscContext);
@@ -209,7 +210,7 @@ namespace Networking
         }
 
         public static void WriteSchema<TOutputStream>(NetworkSchema schema, ref TOutputStream output)
-            where TOutputStream : NetworkCompression.IOutputStream
+            where TOutputStream : IOutputStream
         {
             output.WritePackedUInt((uint) schema._fieldsInternal.Count, NetworkConfig.MiscContext);
             output.WritePackedUInt((uint) schema.ID, NetworkConfig.MiscContext);
@@ -226,7 +227,7 @@ namespace Networking
         }
 
         public static void CopyFieldsFromBuffer<TOutputStream>(NetworkSchema schema, uint* inputBuffer,
-            ref TOutputStream output) where TOutputStream : NetworkCompression.IOutputStream
+            ref TOutputStream output) where TOutputStream : IOutputStream
         {
             int index = 0;
             int fieldIndex = 0;
@@ -276,7 +277,7 @@ namespace Networking
         }
 
         public static void CopyFieldsToBuffer<TInputStream>(NetworkSchema schema, ref TInputStream input,
-            uint[] outputBuffer) where TInputStream : NetworkCompression.IInputStream
+            uint[] outputBuffer) where TInputStream : IInputStream
         {
             var index = 0;
             for (var fieldIndex = 0; fieldIndex < schema._fieldsInternal.Count; ++fieldIndex)
@@ -335,7 +336,7 @@ namespace Networking
         }
 
         public static void SkipFields<TInputStream>(NetworkSchema schema, ref TInputStream input)
-            where TInputStream : NetworkCompression.IInputStream
+            where TInputStream : IInputStream
         {
             for (var fieldIndex = 0; fieldIndex < schema._fieldsInternal.Count; ++fieldIndex)
             {
