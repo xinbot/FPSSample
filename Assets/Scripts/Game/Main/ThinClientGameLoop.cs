@@ -9,7 +9,7 @@ using Networking.Socket;
 
 public class NullSnapshotConsumer : ISnapshotConsumer
 {
-    public void ProcessEntityDespawns(int serverTime, List<int> despawns)
+    public void ProcessEntityDeSpawn(int serverTime, List<int> despawns)
     {
     }
 

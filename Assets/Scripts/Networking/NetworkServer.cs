@@ -701,7 +701,7 @@ unsafe public class NetworkServer
         {
             // Check if we can and should send new package
 
-            var rawOutputStream = new BitOutputStream(m_PackageBuffer);
+            var rawOutputStream = new BitOutputStream(PackageBuffer);
 
             var canSendPackage = CanSendPackage(ref rawOutputStream);
             if (!canSendPackage)
@@ -724,7 +724,7 @@ unsafe public class NetworkServer
 
             int endOfHeaderPos = rawOutputStream.Align();
             var output = default(TOutputStream);// new TOutputStream();  Due to bug new generates garbage here
-            output.Initialize(server.serverInfo.compressionModel, m_PackageBuffer, endOfHeaderPos, networkCompressionCapture);
+            output.Initialize(server.serverInfo.compressionModel, PackageBuffer, endOfHeaderPos, networkCompressionCapture);
 
 
             // We store the server sequence in the package info to be able to map back to 

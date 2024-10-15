@@ -165,7 +165,7 @@ namespace NetcodeTests
             return "";
         }
 
-        public void ProcessEntityDespawns(int serverTime, List<int> despawns)
+        public void ProcessEntityDeSpawn(int serverTime, List<int> despawns)
         {
             foreach(int id in despawns)
             {

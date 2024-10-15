@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using Networking;
 using Unity.Entities;
 using UnityEngine;
 using UnityEngine.Profiling;
@@ -108,7 +109,7 @@ public class ReplicatedEntityModuleClient : ISnapshotConsumer
         m_entityCollection.ProcessEntityUpdate(serverTick, id, ref reader);
     }
 
-    public void ProcessEntityDespawns(int serverTime, List<int> despawns)
+    public void ProcessEntityDeSpawn(int serverTime, List<int> despawns)
     {
         if (m_showInfo.IntValue > 0)
             GameDebug.Log("ProcessEntityDespawns. Server tick:" + serverTime + " ids:" + string.Join(",", despawns));
