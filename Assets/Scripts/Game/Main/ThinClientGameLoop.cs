@@ -200,7 +200,7 @@ public class ThinClientGameWorld
         // If predicted time has entered a new tick the stored commands should be sent to server 
         if (m_PredictedTime.tick > prevTick)
         {
-            var oldestCommandToSend = Mathf.Max(prevTick, m_PredictedTime.tick - NetworkConfig.commandClientBufferSize);
+            var oldestCommandToSend = Mathf.Max(prevTick, m_PredictedTime.tick - NetworkConfig.CommandClientBufferSize);
             for (int tick = oldestCommandToSend; tick < m_PredictedTime.tick; tick++)
             {
                 PlayerModuleClient.StoreCommand(m_localPlayer, tick);

@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using Networking;
+using UnityEngine;
 
 namespace NetworkCompression
 {
@@ -9,7 +10,7 @@ namespace NetworkCompression
             if (modelData == null)
                 modelData = m_DefaultModelData;
 
-            int numContexts = NetworkConfig.maxContexts;
+            int numContexts = NetworkConfig.MAXContexts;
             int alphabetSize = 16;
             byte[,] symbolLengths = new byte[numContexts, alphabetSize];
 

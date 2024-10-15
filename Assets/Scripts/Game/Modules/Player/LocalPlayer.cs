@@ -1,4 +1,5 @@
 ﻿using System;
+using Networking;
 using UnityEngine;
 using Unity.Entities;
 
@@ -18,7 +19,7 @@ public class LocalPlayer : MonoBehaviour
     public NetworkClient networkClient;
 
     public UserCommand command = UserCommand.defaultCommand;     
-    public TickStateDenseBuffer<UserCommand> commandBuffer = new TickStateDenseBuffer<UserCommand>(NetworkConfig.commandClientBufferSize); 
+    public TickStateDenseBuffer<UserCommand> commandBuffer = new TickStateDenseBuffer<UserCommand>(NetworkConfig.CommandClientBufferSize); 
     public Entity controlledEntity;   
 
     [System.NonSerialized] public float m_debugMoveDuration;

@@ -47,21 +47,21 @@ namespace Networking.Tests
             // Pass back connects, disconnects and data
             if (_connects.Count > 0)
             {
-                e.type = TransportEvent.Type.Connect;
-                e.connectionId = _connects.Dequeue();
+                e.EventType = TransportEvent.Type.Connect;
+                e.ConnectionId = _connects.Dequeue();
             }
             else if (_disconnects.Count > 0)
             {
-                e.type = TransportEvent.Type.Disconnect;
-                e.connectionId = _disconnects.Dequeue();
+                e.EventType = TransportEvent.Type.Disconnect;
+                e.ConnectionId = _disconnects.Dequeue();
             }
             else if (_incomingPackages.Count > 0)
             {
                 var p = _incomingPackages.Dequeue();
-                e.type = TransportEvent.Type.Data;
-                e.connectionId = p.From;
-                e.data = p.Data;
-                e.dataSize = p.Size;
+                e.EventType = TransportEvent.Type.Data;
+                e.ConnectionId = p.From;
+                e.Data = p.Data;
+                e.DataSize = p.Size;
             }
             else
             {

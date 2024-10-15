@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using Networking;
+using UnityEngine;
 
 internal class NetworkStatisticsServer
 {
@@ -60,16 +61,16 @@ internal class NetworkStatisticsServer
         m_PackageLossPctOut.Update(m_PackagesLostPctOut);
         */
 
-        switch (NetworkConfig.netStats.IntValue)
+        switch (NetworkConfig.NetStats.IntValue)
         {
             case 1: DrawStats(); break;
             case 2: DrawCounters(); break;
         }
 
-        if(NetworkConfig.netPrintStats.IntValue > 0)
+        if(NetworkConfig.NetPrintStats.IntValue > 0)
         {
             UpdateStats();
-            if(Time.frameCount % NetworkConfig.netPrintStats.IntValue == 0)
+            if(Time.frameCount % NetworkConfig.NetPrintStats.IntValue == 0)
             {
                 PrintStats();
             }
@@ -117,7 +118,7 @@ internal class NetworkStatisticsServer
             Console.Write("Avg bytes out: " + (byteOutSum / byteOutCount));
 
         Console.Write("-------------------");
-        var freq = NetworkConfig.netPrintStats.IntValue;
+        var freq = NetworkConfig.NetPrintStats.IntValue;
         GameDebug.Log("Entity snapshots generated /frame : " + m_NetworkServer.statsGeneratedEntitySnapshots / freq);
         GameDebug.Log("Generated worldsnapsize    /frame : " + m_NetworkServer.statsGeneratedSnapshotSize / freq);
         GameDebug.Log("Entity snapshots total size/frame : " + m_NetworkServer.statsSnapshotData / freq);

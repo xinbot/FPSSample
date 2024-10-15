@@ -2,7 +2,7 @@
 
 public struct DeltaReader
 {
-    static byte[] fieldsNotPredicted = new byte[(NetworkConfig.maxFieldsPerSchema + 7) / 8];
+    static byte[] fieldsNotPredicted = new byte[(NetworkConfig.MAXFieldsPerSchema + 7) / 8];
 
     unsafe public static int Read<TInputStream>(ref TInputStream input, NetworkSchema schema, uint[] outputData,
         uint[] baselineData, byte[] fieldsChangedPrediction, byte fieldMask, ref uint hash)
@@ -14,7 +14,7 @@ public struct DeltaReader
 
         int numFields = schema.NumFields;
 
-        int skipContext = schema.ID * NetworkConfig.maxContextsPerSchema + NetworkConfig.firstSchemaContext;
+        int skipContext = schema.ID * NetworkConfig.MAXContextsPerSchema + NetworkConfig.FirstSchemaContext;
 
         for (int i = 0; i * 8 < numFields; i++)
         {

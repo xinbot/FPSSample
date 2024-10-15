@@ -185,6 +185,6 @@ namespace NetcodeTests
             NetworkTestUtils.ReadAndAssertValues(values, outputBuffer, schema);
         }
 
-        static byte[] zeroFieldsChanged = new byte[(NetworkConfig.maxFieldsPerSchema + 7) / 8];
+        static byte[] zeroFieldsChanged = new byte[(NetworkConfig.MAXFieldsPerSchema + 7) / 8];
     }
 }

@@ -1,178 +1,178 @@
 ﻿using System;
 using Unity.Networking.Transport;
-using NetworkEvent = Networking.NetworkEvent;
 
-public enum ConnectionState
+namespace Networking
 {
-    Disconnected,
-    Connecting,
-    Connected
-}
-
-public struct TransportEvent
-{
-    public enum Type
+    public enum ConnectionState
     {
-        Data,
-        Connect,
-        Disconnect
+        Disconnected,
+        Connecting,
+        Connected
     }
 
-    public Type type;
-    public int connectionId;
-    public byte[] data;
-    public int dataSize;
-}
+    public struct TransportEvent
+    {
+        public enum Type
+        {
+            Data,
+            Connect,
+            Disconnect
+        }
 
-public interface INetworkTransport
-{
-    int Connect(string ip, int port);
+        public Type EventType;
+        public int ConnectionId;
+        public byte[] Data;
+        public int DataSize;
+    }
 
-    void Disconnect(int connectionId);
+    public interface INetworkTransport
+    {
+        int Connect(string ip, int port);
 
-    bool NextEvent(ref TransportEvent e);
+        void Disconnect(int connectionId);
 
-    void SendData(int connectionId, byte[] data, int sendSize);
+        bool NextEvent(ref TransportEvent e);
 
-    string GetConnectionDescription(int connectionId);
+        void SendData(int connectionId, byte[] data, int sendSize);
 
-    void Update();
+        string GetConnectionDescription(int connectionId);
 
-    void Shutdown();
-}
+        void Update();
 
-public interface INetworkCallbacks
-{
-    void OnConnect(int clientId);
+        void Shutdown();
+    }
 
-    void OnDisconnect(int clientId);
+    public interface INetworkCallbacks
+    {
+        void OnConnect(int clientId);
 
-    void OnEvent(int clientId, NetworkEvent info);
-}
+        void OnDisconnect(int clientId);
 
-[Flags]
-public enum NetworkMessage
-{
-    // Shared messages
-    Events = 1 << 0,
+        void OnEvent(int clientId, NetworkEvent info);
+    }
 
-    // Server -> Client messages
-    ClientInfo = 1 << 1,
+    [Flags]
+    public enum NetworkMessage
+    {
+        // Shared messages
+        Events = 1 << 0,
 
-    MapInfo = 1 << 2,
+        // Server -> Client messages
+        ClientInfo = 1 << 1,
 
-    Snapshot = 1 << 3,
+        MapInfo = 1 << 2,
 
-    // Client -> Server messages
-    ClientConfig = 1 << 1,
+        Snapshot = 1 << 3,
 
-    Commands = 1 << 2,
+        // Client -> Server messages
+        ClientConfig = 1 << 1,
 
-    // Special flag used when package has been fragmented into several packages and needs reassembly
-    Fragment = 1 << 7,
-}
+        Commands = 1 << 2,
 
-public static class NetworkConfig
-{
-    [ConfigVar(Name = "net.stats", DefaultValue = "0", Description = "Show net statistics")]
-    public static ConfigVar netStats;
+        // Special flag used when package has been fragmented into several packages and needs reassembly
+        Fragment = 1 << 7,
+    }
 
-    [ConfigVar(Name = "net.printstats", DefaultValue = "0", Description = "Print stats to console every N frame")]
-    public static ConfigVar netPrintStats;
+    public static class NetworkConfig
+    {
+        [ConfigVar(Name = "net.stats", DefaultValue = "0", Description = "Show net statistics")]
+        public static ConfigVar NetStats;
 
-    [ConfigVar(Name = "net.debug", DefaultValue = "0", Description = "Dump lots of debug info about network")]
-    public static ConfigVar netDebug;
+        [ConfigVar(Name = "net.printstats", DefaultValue = "0", Description = "Print stats to console every N frame")]
+        public static ConfigVar NetPrintStats;
 
-    [ConfigVar(Name = "server.port", DefaultValue = "7913", Description = "Port listened to by server")]
-    public static ConfigVar serverPort;
+        [ConfigVar(Name = "net.debug", DefaultValue = "0", Description = "Dump lots of debug info about network")]
+        public static ConfigVar NetDebug;
 
-    [ConfigVar(Name = "server.sqp_port", DefaultValue = "0",
-        Description = "Port used for server query protocol. server.port + 1 if not set")]
-    public static ConfigVar serverSQPPort;
+        [ConfigVar(Name = "server.port", DefaultValue = "7913", Description = "Port listened to by server")]
+        public static ConfigVar ServerPort;
 
-    [ConfigVar(Name = "net.chokesendinterval", DefaultValue = "0.3",
-        Description = "If connection is choked, send tiny keep alive packs at this interval")]
-    public static ConfigVar netChokeSendInterval;
+        [ConfigVar(Name = "server.sqp_port", DefaultValue = "0",
+            Description = "Port used for server query protocol. server.port + 1 if not set")]
+        public static ConfigVar ServerSqpPort;
 
-    // Increase this when you make a change to the protocol
-    public const uint protocolVersion = 4;
+        [ConfigVar(Name = "net.chokesendinterval", DefaultValue = "0.3",
+            Description = "If connection is choked, send tiny keep alive packs at this interval")]
+        public static ConfigVar NetChokeSendInterval;
 
-    public const int defaultServerPort = 7913;
+        // Increase this when you make a change to the protocol
+        public const uint ProtocolVersion = 4;
 
-    // By default (if not specified) the SQP be at the server port + this number
-    public static int sqpPortOffset = 10;
+        public const int DefaultServerPort = 7913;
 
-    public const int commandServerQueueSize = 32;
+        // By default (if not specified) the SQP be at the server port + this number
+        public static int SqpPortOffset = 10;
 
-    // Number of commands the client stores - also maximum number of predictive steps the client can take
-    public const int commandClientBufferSize = 32;
+        public const int CommandServerQueueSize = 32;
 
-    public const int maxFragments = 16;
+        // Number of commands the client stores - also maximum number of predictive steps the client can take
+        public const int CommandClientBufferSize = 32;
 
-    public const int
-        packageFragmentSize = NetworkParameterConstants.MTU - 128; // 128 is just a random safety distance to MTU
+        public const int MAXFragments = 16;
 
-    public const int maxPackageSize = maxFragments * packageFragmentSize;
+        // 128 is just a random safety distance to MTU
+        public const int PackageFragmentSize = NetworkParameterConstants.MTU - 128;
 
-    // Number of serialized snapshots kept on server. Each server tick generate a snapshot. 
-    public const int snapshotDeltaCacheSize = 128; // Number of snapshots to cache for deltas
+        public const int MAXPackageSize = MAXFragments * PackageFragmentSize;
 
-    // Size of client ack buffers. These buffers are used to keep track of ack'ed baselines
-    // from clients. Theoretically the 'right' size is snapshotDeltaCacheSize / (server.tickrate / client.updaterate)
-    // e.g. 128 / (60 / 20) = 128 / 3, but since client.updaterate <= server.tickrate we use
-    public const int clientAckCacheSize = snapshotDeltaCacheSize;
+        // Number of serialized snapshots kept on server. Each server tick generate a snapshot. 
+        public const int SnapshotDeltaCacheSize = 128; // Number of snapshots to cache for deltas
 
-    public const int maxEventDataSize = 512;
-    public const int maxCommandDataSize = 128;
-    public const int maxEntitySnapshotDataSize = 512;
+        // Size of client ack buffers. These buffers are used to keep track of ack'ed baselines
+        // from clients. Theoretically the 'right' size is snapshotDeltaCacheSize / (server.tickrate / client.updaterate)
+        // e.g. 128 / (60 / 20) = 128 / 3, but since client.updaterate <= server.tickrate we use
+        public const int ClientAckCacheSize = SnapshotDeltaCacheSize;
 
-    public const int
-        maxWorldSnapshotDataSize = 64 * 1024; // The entire world snapshot has to fit in this number of bytes
+        public const int MAXEventDataSize = 512;
+        public const int MAXCommandDataSize = 128;
+        public const int MAXEntitySnapshotDataSize = 512;
 
-    public readonly static System.Text.UTF8Encoding encoding = new System.Text.UTF8Encoding();
+        // The entire world snapshot has to fit in this number of bytes
+        public const int MAXWorldSnapshotDataSize = 64 * 1024;
 
-    public readonly static float[] encoderPrecisionScales = new float[] {1.0f, 10.0f, 100.0f, 1000.0f};
-    public readonly static float[] decoderPrecisionScales = new float[] {1.0f, 0.1f, 0.01f, 0.001f};
+        public static readonly System.Text.UTF8Encoding Encoding = new System.Text.UTF8Encoding();
 
+        public static readonly float[] EncoderPrecisionScales = new float[] {1.0f, 10.0f, 100.0f, 1000.0f};
+        public static readonly float[] DecoderPrecisionScales = new float[] {1.0f, 0.1f, 0.01f, 0.001f};
 
-    // compression
-    public const NetworkCompression.IOStreamType
-        ioStreamType = NetworkCompression.IOStreamType.Huffman; //TODO: make this dynamic
+        // compression //TODO: make this dynamic
+        public const NetworkCompression.IOStreamType IOStreamType = NetworkCompression.IOStreamType.Huffman;
 
-    public const int maxFixedSchemaIds = 2;
-    public const int maxEventTypeSchemaIds = 8;
-    public const int maxEntityTypeSchemaIds = 40;
+        public const int MAXFixedSchemaIds = 2;
+        public const int MAXEventTypeSchemaIds = 8;
+        public const int MAXEntityTypeSchemaIds = 40;
 
-    public const int networkClientQueueCommandSchemaId = 0;
-    public const int mapSchemaId = 1;
-    public const int firstEventTypeSchemaId = maxFixedSchemaIds;
-    public const int firstEntitySchemaId = maxFixedSchemaIds + maxEventTypeSchemaIds;
+        public const int NetworkClientQueueCommandSchemaId = 0;
+        public const int MapSchemaId = 1;
+        public const int FirstEventTypeSchemaId = MAXFixedSchemaIds;
+        public const int FirstEntitySchemaId = MAXFixedSchemaIds + MAXEventTypeSchemaIds;
 
-    public const int maxSchemaIds = maxFixedSchemaIds + maxEventTypeSchemaIds + maxEntityTypeSchemaIds;
+        public const int MAXSchemaIds = MAXFixedSchemaIds + MAXEventTypeSchemaIds + MAXEntityTypeSchemaIds;
 
-    public const int maxFieldsPerSchema = 128;
-    public const int maxContextsPerField = 4;
-    public const int maxSkipContextsPerSchema = maxFieldsPerSchema / 4;
-    public const int maxContextsPerSchema = maxSkipContextsPerSchema + maxFieldsPerSchema * maxContextsPerField;
+        public const int MAXFieldsPerSchema = 128;
+        public const int MAXContextsPerField = 4;
+        public const int MAXSkipContextsPerSchema = MAXFieldsPerSchema / 4;
+        public const int MAXContextsPerSchema = MAXSkipContextsPerSchema + MAXFieldsPerSchema * MAXContextsPerField;
 
-    public const int miscContext = 0;
-    public const int baseSequenceContext = 1;
-    public const int baseSequence1Context = 2;
-    public const int baseSequence2Context = 3;
-    public const int serverTimeContext = 4;
-    public const int schemaCountContext = 5;
-    public const int schemaTypeIdContext = 6;
-    public const int spawnCountContext = 7;
-    public const int idContext = 8;
-    public const int spawnTypeIdContext = 9;
-    public const int despawnCountContext = 10;
-    public const int updateCountContext = 11;
-    public const int commandTimeContext = 12;
-    public const int eventCountContext = 13;
-    public const int eventTypeIdContext = 14;
-    public const int skipContext = 15;
+        public const int MiscContext = 0;
+        public const int BaseSequenceContext = 1;
+        public const int BaseSequence1Context = 2;
+        public const int BaseSequence2Context = 3;
+        public const int ServerTimeContext = 4;
+        public const int SchemaCountContext = 5;
+        public const int SchemaTypeIdContext = 6;
+        public const int SpawnCountContext = 7;
+        public const int IDContext = 8;
+        public const int SpawnTypeIdContext = 9;
+        public const int DespawnCountContext = 10;
+        public const int UpdateCountContext = 11;
+        public const int CommandTimeContext = 12;
+        public const int EventCountContext = 13;
+        public const int EventTypeIdContext = 14;
+        public const int SkipContext = 15;
 
-    public const int firstSchemaContext = 16;
+        public const int FirstSchemaContext = 16;
 
-    public const int maxContexts = firstSchemaContext + maxSchemaIds * maxContextsPerSchema;
+        public const int MAXContexts = FirstSchemaContext + MAXSchemaIds * MAXContextsPerSchema;
+    }
 }

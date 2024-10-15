@@ -14,7 +14,7 @@ namespace Networking.Socket
 
         public SocketTransport(int port = 0, int maxConnections = 16)
         {
-            var networkDataStreamParameter = new NetworkDataStreamParameter {size = 10 * NetworkConfig.maxPackageSize};
+            var networkDataStreamParameter = new NetworkDataStreamParameter {size = 10 * NetworkConfig.MAXPackageSize};
             var networkConfigParameter = new NetworkConfigParameter
                 {disconnectTimeout = ServerGameLoop.serverDisconnectTimeout.IntValue};
             _socket = new UdpNetworkDriver(networkDataStreamParameter, networkConfigParameter);
@@ -51,8 +51,8 @@ namespace Networking.Socket
             NetworkConnection connection = _socket.Accept();
             if (connection.IsCreated)
             {
-                e.type = TransportEvent.Type.Connect;
-                e.connectionId = connection.InternalId;
+                e.EventType = TransportEvent.Type.Connect;
+                e.ConnectionId = connection.InternalId;
                 _idToConnection[connection.InternalId] = connection;
                 return true;
             }
@@ -76,19 +76,19 @@ namespace Networking.Socket
             switch (eventType)
             {
                 case EventType.Data:
-                    e.type = TransportEvent.Type.Data;
-                    e.data = _buffer;
-                    e.dataSize = size;
-                    e.connectionId = connection.InternalId;
+                    e.EventType = TransportEvent.Type.Data;
+                    e.Data = _buffer;
+                    e.DataSize = size;
+                    e.ConnectionId = connection.InternalId;
                     break;
                 case EventType.Connect:
-                    e.type = TransportEvent.Type.Connect;
-                    e.connectionId = connection.InternalId;
+                    e.EventType = TransportEvent.Type.Connect;
+                    e.ConnectionId = connection.InternalId;
                     _idToConnection[connection.InternalId] = connection;
                     break;
                 case EventType.Disconnect:
-                    e.type = TransportEvent.Type.Disconnect;
-                    e.connectionId = connection.InternalId;
+                    e.EventType = TransportEvent.Type.Disconnect;
+                    e.ConnectionId = connection.InternalId;
                     break;
                 default:
                     return false;

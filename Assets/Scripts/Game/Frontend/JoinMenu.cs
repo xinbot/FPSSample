@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using Networking;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
@@ -147,7 +148,7 @@ public class JoinMenu : MonoBehaviour
         int port;
         NetworkUtils.EndpointParse(server.hostname, out addr, out port, 0);
         // SQP Port is sqpPortOffset after whatever port we are using for the game itself
-        port = (port == 0 ? NetworkConfig.serverPort.IntValue : port) + NetworkConfig.sqpPortOffset;
+        port = (port == 0 ? NetworkConfig.ServerPort.IntValue : port) + NetworkConfig.SqpPortOffset;
         server.sqpQuery = Game.game.sqpClient.GetSQPQuery(new System.Net.IPEndPoint(addr, port));
 
         UpdateItem(server);

@@ -203,7 +203,7 @@ public class NetworkClient
 
         IPAddress ipAddress;
         int port;
-        if (!NetworkUtils.EndpointParse(endpoint, out ipAddress, out port, NetworkConfig.defaultServerPort))
+        if (!NetworkUtils.EndpointParse(endpoint, out ipAddress, out port, NetworkConfig.DefaultServerPort))
         {
             GameDebug.Log("Invalid endpoint: " + endpoint);
             return false;
@@ -275,7 +275,7 @@ public class NetworkClient
         _transport.Update();
 
         // Debug tracking of outstanding events
-        if (NetworkConfig.netDebug.IntValue > 1 && _clientConnection != null)
+        if (NetworkConfig.NetDebug.IntValue > 1 && _clientConnection != null)
         {
             var outstandingPackages = _clientConnection.outstandingPackages;
             for (var i = 0; i < outstandingPackages.m_Elements.Length; i++)
@@ -293,16 +293,16 @@ public class NetworkClient
         var e = new TransportEvent();
         while (_transport.NextEvent(ref e))
         {
-            switch (e.type)
+            switch (e.EventType)
             {
                 case TransportEvent.Type.Connect:
-                    OnConnect(e.connectionId);
+                    OnConnect(e.ConnectionId);
                     break;
                 case TransportEvent.Type.Disconnect:
-                    OnDisconnect(e.connectionId);
+                    OnDisconnect(e.ConnectionId);
                     break;
                 case TransportEvent.Type.Data:
-                    OnData(e.connectionId, e.data, e.dataSize, clientNetworkConsumer, snapshotConsumer);
+                    OnData(e.ConnectionId, e.Data, e.DataSize, clientNetworkConsumer, snapshotConsumer);
                     break;
             }
         }
@@ -326,7 +326,7 @@ public class NetworkClient
         Profiler.BeginSample("NetworkClient.SendData");
 
 #pragma warning disable 0162 // unreachable code
-        switch (NetworkConfig.ioStreamType)
+        switch (NetworkConfig.IOStreamType)
         {
             case NetworkCompression.IOStreamType.Raw:
                 _clientConnection.SendPackage<RawOutputStream>();
@@ -395,7 +395,7 @@ public class NetworkClient
         }
 
 #pragma warning disable 0162 // unreached code
-        switch (NetworkConfig.ioStreamType)
+        switch (NetworkConfig.IOStreamType)
         {
             case NetworkCompression.IOStreamType.Raw:
             {
@@ -428,9 +428,9 @@ public class NetworkClient
 
         private byte[] _modelData = new byte[32];
 
-        private readonly uint[] _tempSnapshotBuffer = new uint[NetworkConfig.maxEntitySnapshotDataSize];
+        private readonly uint[] _tempSnapshotBuffer = new uint[NetworkConfig.MAXEntitySnapshotDataSize];
 
-        private readonly byte[] _zeroFieldsChanged = new byte[(NetworkConfig.maxFieldsPerSchema + 7) / 8];
+        private readonly byte[] _zeroFieldsChanged = new byte[(NetworkConfig.MAXFieldsPerSchema + 7) / 8];
 
         public ClientConnection(int connectionId, INetworkTransport transport, ClientConfig clientConfig) : base(
             connectionId, transport)
@@ -458,7 +458,7 @@ public class NetworkClient
             var generateSchema = _commandSchema == null;
             if (generateSchema)
             {
-                _commandSchema = new NetworkSchema(NetworkConfig.networkClientQueueCommandSchemaId);
+                _commandSchema = new NetworkSchema(NetworkConfig.NetworkClientQueueCommandSchemaId);
             }
 
             var info = _commandsOut.Acquire(++_commandSequence);
@@ -629,7 +629,7 @@ public class NetworkClient
                 return;
             }
 
-            uint ourProtocol = NetworkConfig.protocolVersion;
+            uint ourProtocol = NetworkConfig.ProtocolVersion;
             GameDebug.Log($"Client protocol id: {ourProtocol}");
             GameDebug.Log($"Server protocol id: {serverProtocol}");
             if (ourProtocol != serverProtocol)
@@ -690,7 +690,7 @@ public class NetworkClient
             // Snapshot may be delta compressed against one or more baselines
             // Baselines are indicated by sequence number of the package it was in
             var haveBaseline = input.ReadRawBits(1) == 1;
-            var baseSequence = input.ReadPackedIntDelta(sequence - 1, NetworkConfig.baseSequenceContext);
+            var baseSequence = input.ReadPackedIntDelta(sequence - 1, NetworkConfig.BaseSequenceContext);
 
             bool enableNetworkPrediction = input.ReadRawBits(1) != 0;
             bool enableHashing = input.ReadRawBits(1) != 0;
@@ -699,8 +699,8 @@ public class NetworkClient
             int baseSequence2 = 0;
             if (enableNetworkPrediction)
             {
-                baseSequence1 = input.ReadPackedIntDelta(baseSequence - 1, NetworkConfig.baseSequence1Context);
-                baseSequence2 = input.ReadPackedIntDelta(baseSequence1 - 1, NetworkConfig.baseSequence2Context);
+                baseSequence1 = input.ReadPackedIntDelta(baseSequence - 1, NetworkConfig.BaseSequence1Context);
+                baseSequence2 = input.ReadPackedIntDelta(baseSequence1 - 1, NetworkConfig.BaseSequence2Context);
             }
 
             if (ClientDebug.IntValue > 2)
@@ -723,12 +723,12 @@ public class NetworkClient
 
             GameDebug.Assert(!haveBaseline ||
                              (sequence > baseSequence &&
-                              sequence - baseSequence < NetworkConfig.snapshotDeltaCacheSize),
+                              sequence - baseSequence < NetworkConfig.SnapshotDeltaCacheSize),
                 "Attempting snapshot encoding with invalid baseline: {0}:{1}", sequence, baseSequence);
 
             var snapshotInfo = _snapshots.Acquire(sequence);
             snapshotInfo.ServerTime = input.ReadPackedIntDelta(haveBaseline ? _snapshots[baseSequence].ServerTime : 0,
-                NetworkConfig.serverTimeContext);
+                NetworkConfig.ServerTimeContext);
 
             var temp = (int) input.ReadRawBits(8);
             ServerSimTime = temp * 0.1f;
@@ -756,16 +756,16 @@ public class NetworkClient
             }
 
             // Read schemas
-            var schemaCount = input.ReadPackedUInt(NetworkConfig.schemaCountContext);
+            var schemaCount = input.ReadPackedUInt(NetworkConfig.SchemaCountContext);
             for (var schemaIndex = 0; schemaIndex < schemaCount; ++schemaIndex)
             {
-                var typeId = (ushort) input.ReadPackedUInt(NetworkConfig.schemaTypeIdContext);
+                var typeId = (ushort) input.ReadPackedUInt(NetworkConfig.SchemaTypeIdContext);
 
                 var entityType = new EntityTypeInfo {TypeId = typeId};
                 entityType.Schema = NetworkSchema.ReadSchema(ref input);
                 counters.AddSectionStats("snapShotSchemas", input.GetBitPosition2(),
                     new Color(0.0f, (schemaIndex & 1) == 1 ? 0.5f : 1.0f, 1.0f));
-                entityType.Baseline = new uint[NetworkConfig.maxEntitySnapshotDataSize];
+                entityType.Baseline = new uint[NetworkConfig.MAXEntitySnapshotDataSize];
                 NetworkSchema.CopyFieldsToBuffer(entityType.Schema, ref input, entityType.Baseline);
 
                 if (!_entityTypes.ContainsKey(typeId))
@@ -795,15 +795,15 @@ public class NetworkClient
             // Read new spawns
             _tempSpawnList.Clear();
             var previousId = 1;
-            var spawnCount = input.ReadPackedUInt(NetworkConfig.spawnCountContext);
+            var spawnCount = input.ReadPackedUInt(NetworkConfig.SpawnCountContext);
             for (var spawnIndex = 0; spawnIndex < spawnCount; ++spawnIndex)
             {
-                var id = input.ReadPackedIntDelta(previousId, NetworkConfig.idContext);
+                var id = input.ReadPackedIntDelta(previousId, NetworkConfig.IDContext);
                 previousId = id;
 
                 // Register the entity
                 var typeId =
-                    (ushort) input.ReadPackedUInt(NetworkConfig.spawnTypeIdContext); //TODO: use another encoding
+                    (ushort) input.ReadPackedUInt(NetworkConfig.SpawnTypeIdContext); //TODO: use another encoding
                 GameDebug.Assert(_entityTypes.ContainsKey(typeId), "Spawn request with unknown type id {0}", typeId);
 
                 var fieldMask = (byte) input.ReadRawBits(8);
@@ -842,7 +842,7 @@ public class NetworkClient
             counters.AddSectionStats("snapShotSpawns", input.GetBitPosition2(), new Color(0, 0.58f, 0));
 
             // Read despawns
-            var despawnCount = input.ReadPackedUInt(NetworkConfig.despawnCountContext);
+            var despawnCount = input.ReadPackedUInt(NetworkConfig.DespawnCountContext);
 
             // If we have no baseline, we need to clear all entities that are not being spawned
             if (!haveBaseline)
@@ -869,7 +869,7 @@ public class NetworkClient
 
             for (var despawnIndex = 0; despawnIndex < despawnCount; ++despawnIndex)
             {
-                var id = input.ReadPackedIntDelta(previousId, NetworkConfig.idContext);
+                var id = input.ReadPackedIntDelta(previousId, NetworkConfig.IDContext);
                 previousId = id;
 
                 // we may see despawns many times, only handle if we still have the entity
@@ -967,7 +967,7 @@ public class NetworkClient
                         info.FieldsChangedPrediction[i] = 0;
                     }
 
-                    for (int i = 0; i < NetworkConfig.maxEntitySnapshotDataSize; i++)
+                    for (int i = 0; i < NetworkConfig.MAXEntitySnapshotDataSize; i++)
                     {
                         info.Prediction[i] = 0;
                     }
@@ -991,10 +991,10 @@ public class NetworkClient
             }
 
             // Read updates
-            var updateCount = input.ReadPackedUInt(NetworkConfig.updateCountContext);
+            var updateCount = input.ReadPackedUInt(NetworkConfig.UpdateCountContext);
             for (var updateIndex = 0; updateIndex < updateCount; ++updateIndex)
             {
-                var id = input.ReadPackedIntDelta(previousId, NetworkConfig.idContext);
+                var id = input.ReadPackedIntDelta(previousId, NetworkConfig.IDContext);
                 previousId = id;
 
                 var info = _entities[id];
@@ -1196,7 +1196,7 @@ public class NetworkClient
             {
                 // 1 bit to tell there is a command 
                 output.WriteRawBits(1, 1);
-                output.WritePackedIntDelta(command.Time, previous.Time, NetworkConfig.commandTimeContext);
+                output.WritePackedIntDelta(command.Time, previous.Time, NetworkConfig.CommandTimeContext);
                 uint hash = 0;
                 fixed (uint* data = command.Data, baseline = previous.Data)
                 {
@@ -1274,12 +1274,12 @@ public class NetworkClient
             public int LastUpdateSequence;
             public int DespawnSequence;
 
-            public readonly uint[] LastUpdate = new uint[NetworkConfig.maxEntitySnapshotDataSize];
-            public readonly uint[] Prediction = new uint[NetworkConfig.maxEntitySnapshotDataSize];
-            public readonly byte[] FieldsChangedPrediction = new byte[(NetworkConfig.maxFieldsPerSchema + 7) / 8];
+            public readonly uint[] LastUpdate = new uint[NetworkConfig.MAXEntitySnapshotDataSize];
+            public readonly uint[] Prediction = new uint[NetworkConfig.MAXEntitySnapshotDataSize];
+            public readonly byte[] FieldsChangedPrediction = new byte[(NetworkConfig.MAXFieldsPerSchema + 7) / 8];
 
             public readonly SparseSequenceBuffer Baselines = new SparseSequenceBuffer(
-                NetworkConfig.snapshotDeltaCacheSize, NetworkConfig.maxEntitySnapshotDataSize);
+                NetworkConfig.SnapshotDeltaCacheSize, NetworkConfig.MAXEntitySnapshotDataSize);
 
             public void Reset()
             {
@@ -1313,7 +1313,7 @@ public class NetworkClient
             new SequenceBuffer<CommandInfo>(3, () => new CommandInfo());
 
         private readonly SequenceBuffer<SnapshotInfo> _snapshots =
-            new SequenceBuffer<SnapshotInfo>(NetworkConfig.snapshotDeltaCacheSize, () => new SnapshotInfo());
+            new SequenceBuffer<SnapshotInfo>(NetworkConfig.SnapshotDeltaCacheSize, () => new SnapshotInfo());
 
         private readonly List<int> _despawns = new List<int>();
         private readonly List<int> _spawns = new List<int>();

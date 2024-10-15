@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using Networking;
 using UnityEngine;
 using UnityEngine.Profiling;
 
@@ -85,7 +86,7 @@ public class NetworkStatisticsClient
         m_PackageLossPctIn.Update(m_PackagesLostPctIn);
         m_PackageLossPctOut.Update(m_PackagesLostPctOut);
 
-        switch (NetworkConfig.netStats.IntValue)
+        switch (NetworkConfig.NetStats.IntValue)
         {
             case 1: DrawCompactStats(); break;
             case 2: DrawStats(); break;
@@ -93,9 +94,9 @@ public class NetworkStatisticsClient
             case 4: DrawPackageStatistics(); break;
         }
 
-        if (NetworkConfig.netPrintStats.IntValue > 0)
+        if (NetworkConfig.NetPrintStats.IntValue > 0)
         {
-            if (Time.frameCount % NetworkConfig.netPrintStats.IntValue == 0)
+            if (Time.frameCount % NetworkConfig.NetPrintStats.IntValue == 0)
             {
                 PrintStats();
             }

@@ -330,7 +330,7 @@
 
             if (fieldInfo.Delta)
             {
-                return "" + ((int) _value * NetworkConfig.decoderPrecisionScales[fieldInfo.Precision]);
+                return "" + ((int) _value * NetworkConfig.DecoderPrecisionScales[fieldInfo.Precision]);
             }
 
             return "" + ConversionUtility.UInt32ToFloat(_value);
@@ -367,7 +367,7 @@
         {
             if (fieldInfo.Delta)
             {
-                float scale = NetworkConfig.decoderPrecisionScales[fieldInfo.Precision];
+                float scale = NetworkConfig.DecoderPrecisionScales[fieldInfo.Precision];
                 return "(" + ((int) _valueX * scale) + ", " + ((int) _valueY * scale) + ")";
             }
 
@@ -407,7 +407,7 @@
         {
             if (fieldInfo.Delta)
             {
-                float scale = NetworkConfig.decoderPrecisionScales[fieldInfo.Precision];
+                float scale = NetworkConfig.DecoderPrecisionScales[fieldInfo.Precision];
                 return "(" + ((int) _valueX * scale) + ", " + ((int) _valueY * scale) + ", " +
                        ((int) _valueZ * scale) + ")";
             }
@@ -451,7 +451,7 @@
         {
             if (fieldInfo.Delta)
             {
-                float scale = NetworkConfig.decoderPrecisionScales[fieldInfo.Precision];
+                float scale = NetworkConfig.DecoderPrecisionScales[fieldInfo.Precision];
                 return "(" + ((int) _valueX * scale) + ", " + ((int) _valueY * scale) + ", " +
                        ((int) _valueZ * scale) + ", " + ((int) _valueW * scale) + ")";
             }
@@ -482,7 +482,7 @@
                 fixed (char* dest = _charBuffer)
                 {
                     int numChars =
-                        NetworkConfig.encoding.GetChars(valueBuffer, valueLength, dest, _charBuffer.Length);
+                        NetworkConfig.Encoding.GetChars(valueBuffer, valueLength, dest, _charBuffer.Length);
                     _value = new string(_charBuffer, 0, numChars);
                 }
             }

@@ -191,7 +191,7 @@ public class NetworkConnection<TCounters, TPackageInfo> where TCounters : Networ
 
             if (Game.frameTime >= _chokedTimeToNextPackage)
             {
-                _chokedTimeToNextPackage = Game.frameTime + NetworkConfig.netChokeSendInterval.FloatValue;
+                _chokedTimeToNextPackage = Game.frameTime + NetworkConfig.NetChokeSendInterval.FloatValue;
 
                 // Treat the last package as lost
                 var info = outstandingPackages.TryGetByIndex(OutSequence % outstandingPackages.Capacity,
@@ -250,7 +250,7 @@ public class NetworkConnection<TCounters, TPackageInfo> where TCounters : Networ
                     counters.FragmentedPackagesLostIn++;
                 }
                 
-                GameDebug.Assert(numFragments <= NetworkConfig.maxFragments);
+                GameDebug.Assert(numFragments <= NetworkConfig.MAXFragments);
 
                 assembly = m_FragmentReassembly.Acquire(fragmentPackageSequence);
                 assembly.numFragments = numFragments;
@@ -272,7 +272,7 @@ public class NetworkConnection<TCounters, TPackageInfo> where TCounters : Networ
             assembly.receivedMask |= 1U << fragmentIndex;
             assembly.receivedCount++;
 
-            input.ReadBytes(assembly.data, fragmentIndex * NetworkConfig.packageFragmentSize, fragmentSize);
+            input.ReadBytes(assembly.data, fragmentIndex * NetworkConfig.PackageFragmentSize, fragmentSize);
 
             if (assembly.receivedCount < assembly.numFragments)
             {
@@ -281,7 +281,7 @@ public class NetworkConnection<TCounters, TPackageInfo> where TCounters : Networ
 
             // Continue processing package as we have now reassembled the package
             assembledData = assembly.data;
-            assembledSize = fragmentIndex * NetworkConfig.packageFragmentSize + fragmentSize;
+            assembledSize = fragmentIndex * NetworkConfig.PackageFragmentSize + fragmentSize;
             input.Initialize(assembledData);
             headerStartInBits = 0;
             content = (NetworkMessage) input.ReadBits(8);
@@ -463,7 +463,7 @@ public class NetworkConnection<TCounters, TPackageInfo> where TCounters : Networ
         info.Content = (NetworkMessage) m_PackageBuffer[0];
         int packageSize = output.Flush();
 
-        GameDebug.Assert(packageSize < NetworkConfig.maxPackageSize, "packageSize < NetworkConfig.maxPackageSize");
+        GameDebug.Assert(packageSize < NetworkConfig.MAXPackageSize, "packageSize < NetworkConfig.maxPackageSize");
 
         if (DebugSendStreamWriter != null)
         {
@@ -471,20 +471,20 @@ public class NetworkConnection<TCounters, TPackageInfo> where TCounters : Networ
             DebugSendStreamWriter.Write((UInt32) 0xedededed);
         }
 
-        if (packageSize > NetworkConfig.packageFragmentSize)
+        if (packageSize > NetworkConfig.PackageFragmentSize)
         {
             // Package is too big and needs to be sent as fragments
-            var numFragments = packageSize / NetworkConfig.packageFragmentSize;
+            var numFragments = packageSize / NetworkConfig.PackageFragmentSize;
             //GameDebug.Log("FRAGMENTING: " + connectionId + ": " + packageSize + " (" + numFragments + ")");
-            var lastFragmentSize = packageSize % NetworkConfig.packageFragmentSize;
+            var lastFragmentSize = packageSize % NetworkConfig.PackageFragmentSize;
             if (lastFragmentSize != 0)
                 ++numFragments;
             else
-                lastFragmentSize = NetworkConfig.packageFragmentSize;
+                lastFragmentSize = NetworkConfig.PackageFragmentSize;
 
             for (var i = 0; i < numFragments; ++i)
             {
-                var fragmentSize = i < numFragments - 1 ? NetworkConfig.packageFragmentSize : lastFragmentSize;
+                var fragmentSize = i < numFragments - 1 ? NetworkConfig.PackageFragmentSize : lastFragmentSize;
 
                 var fragmentOutput = new BitOutputStream(m_FragmentBuffer);
                 fragmentOutput.WriteBits((uint) NetworkMessage.Fragment, 8); // Package fragment identifier
@@ -492,7 +492,7 @@ public class NetworkConnection<TCounters, TPackageInfo> where TCounters : Networ
                 fragmentOutput.WriteBits((uint) numFragments, 8);
                 fragmentOutput.WriteBits((uint) i, 8);
                 fragmentOutput.WriteBits((uint) fragmentSize, 16);
-                fragmentOutput.WriteBytes(m_PackageBuffer, i * NetworkConfig.packageFragmentSize, fragmentSize);
+                fragmentOutput.WriteBytes(m_PackageBuffer, i * NetworkConfig.PackageFragmentSize, fragmentSize);
                 int fragmentPackageSize = fragmentOutput.Flush();
 
                 Transport.SendData(ConnectionId, m_FragmentBuffer, fragmentPackageSize);

@@ -131,7 +131,7 @@ namespace Networking
 
         public NetworkSchema(int id)
         {
-            GameDebug.Assert(id >= 0 && id < NetworkConfig.maxSchemaIds);
+            GameDebug.Assert(id >= 0 && id < NetworkConfig.MAXSchemaIds);
             ID = id;
         }
 
@@ -143,7 +143,7 @@ namespace Networking
 
         public void AddField(FieldInfo field)
         {
-            GameDebug.Assert(_fieldsInternal.Count < NetworkConfig.maxFieldsPerSchema);
+            GameDebug.Assert(_fieldsInternal.Count < NetworkConfig.MAXFieldsPerSchema);
             field.ByteOffset = _nextFieldOffset;
             field.Stats = FieldStatsBase.CreateFieldStats(field);
             _fieldsInternal.Add(field);
@@ -187,20 +187,20 @@ namespace Networking
         public static NetworkSchema ReadSchema<TInputStream>(ref TInputStream input)
             where TInputStream : NetworkCompression.IInputStream
         {
-            int count = (int) input.ReadPackedUInt(NetworkConfig.miscContext);
-            int id = (int) input.ReadPackedUInt(NetworkConfig.miscContext);
+            int count = (int) input.ReadPackedUInt(NetworkConfig.MiscContext);
+            int id = (int) input.ReadPackedUInt(NetworkConfig.MiscContext);
             var schema = new NetworkSchema(id);
             for (int i = 0; i < count; ++i)
             {
                 var field = new FieldInfo();
-                field.FieldType = (FieldType) input.ReadPackedNibble(NetworkConfig.miscContext);
+                field.FieldType = (FieldType) input.ReadPackedNibble(NetworkConfig.MiscContext);
                 field.Delta = input.ReadRawBits(1) != 0;
-                field.Bits = (int) input.ReadPackedUInt(NetworkConfig.miscContext);
-                field.Precision = (int) input.ReadPackedUInt(NetworkConfig.miscContext);
-                field.ArraySize = (int) input.ReadPackedUInt(NetworkConfig.miscContext);
-                field.StartContext = schema._fieldsInternal.Count * NetworkConfig.maxContextsPerField +
-                                     schema.ID * NetworkConfig.maxContextsPerSchema + NetworkConfig.firstSchemaContext;
-                field.FieldMask = (byte) input.ReadPackedUInt(NetworkConfig.miscContext);
+                field.Bits = (int) input.ReadPackedUInt(NetworkConfig.MiscContext);
+                field.Precision = (int) input.ReadPackedUInt(NetworkConfig.MiscContext);
+                field.ArraySize = (int) input.ReadPackedUInt(NetworkConfig.MiscContext);
+                field.StartContext = schema._fieldsInternal.Count * NetworkConfig.MAXContextsPerField +
+                                     schema.ID * NetworkConfig.MAXContextsPerSchema + NetworkConfig.FirstSchemaContext;
+                field.FieldMask = (byte) input.ReadPackedUInt(NetworkConfig.MiscContext);
                 schema.AddField(field);
             }
 
@@ -211,17 +211,17 @@ namespace Networking
         public static void WriteSchema<TOutputStream>(NetworkSchema schema, ref TOutputStream output)
             where TOutputStream : NetworkCompression.IOutputStream
         {
-            output.WritePackedUInt((uint) schema._fieldsInternal.Count, NetworkConfig.miscContext);
-            output.WritePackedUInt((uint) schema.ID, NetworkConfig.miscContext);
+            output.WritePackedUInt((uint) schema._fieldsInternal.Count, NetworkConfig.MiscContext);
+            output.WritePackedUInt((uint) schema.ID, NetworkConfig.MiscContext);
             for (int i = 0; i < schema.NumFields; ++i)
             {
                 var field = schema.Fields[i];
-                output.WritePackedNibble((uint) field.FieldType, NetworkConfig.miscContext);
+                output.WritePackedNibble((uint) field.FieldType, NetworkConfig.MiscContext);
                 output.WriteRawBits(field.Delta ? 1U : 0, 1);
-                output.WritePackedUInt((uint) field.Bits, NetworkConfig.miscContext);
-                output.WritePackedUInt((uint) field.Precision, NetworkConfig.miscContext);
-                output.WritePackedUInt((uint) field.ArraySize, NetworkConfig.miscContext);
-                output.WritePackedUInt(field.FieldMask, NetworkConfig.miscContext);
+                output.WritePackedUInt((uint) field.Bits, NetworkConfig.MiscContext);
+                output.WritePackedUInt((uint) field.Precision, NetworkConfig.MiscContext);
+                output.WritePackedUInt((uint) field.ArraySize, NetworkConfig.MiscContext);
+                output.WritePackedUInt(field.FieldMask, NetworkConfig.MiscContext);
             }
         }
 
@@ -239,25 +239,25 @@ namespace Networking
                     case FieldType.UInt:
                     case FieldType.Int:
                     case FieldType.Float:
-                        output.WritePackedUInt(inputBuffer[index++], NetworkConfig.miscContext);
+                        output.WritePackedUInt(inputBuffer[index++], NetworkConfig.MiscContext);
                         break;
 
                     case FieldType.Vector2:
-                        output.WritePackedUInt(inputBuffer[index++], NetworkConfig.miscContext);
-                        output.WritePackedUInt(inputBuffer[index++], NetworkConfig.miscContext);
+                        output.WritePackedUInt(inputBuffer[index++], NetworkConfig.MiscContext);
+                        output.WritePackedUInt(inputBuffer[index++], NetworkConfig.MiscContext);
                         break;
 
                     case FieldType.Vector3:
-                        output.WritePackedUInt(inputBuffer[index++], NetworkConfig.miscContext);
-                        output.WritePackedUInt(inputBuffer[index++], NetworkConfig.miscContext);
-                        output.WritePackedUInt(inputBuffer[index++], NetworkConfig.miscContext);
+                        output.WritePackedUInt(inputBuffer[index++], NetworkConfig.MiscContext);
+                        output.WritePackedUInt(inputBuffer[index++], NetworkConfig.MiscContext);
+                        output.WritePackedUInt(inputBuffer[index++], NetworkConfig.MiscContext);
                         break;
 
                     case FieldType.Quaternion:
-                        output.WritePackedUInt(inputBuffer[index++], NetworkConfig.miscContext);
-                        output.WritePackedUInt(inputBuffer[index++], NetworkConfig.miscContext);
-                        output.WritePackedUInt(inputBuffer[index++], NetworkConfig.miscContext);
-                        output.WritePackedUInt(inputBuffer[index++], NetworkConfig.miscContext);
+                        output.WritePackedUInt(inputBuffer[index++], NetworkConfig.MiscContext);
+                        output.WritePackedUInt(inputBuffer[index++], NetworkConfig.MiscContext);
+                        output.WritePackedUInt(inputBuffer[index++], NetworkConfig.MiscContext);
+                        output.WritePackedUInt(inputBuffer[index++], NetworkConfig.MiscContext);
                         break;
 
                     case FieldType.String:
@@ -288,30 +288,30 @@ namespace Networking
                     case FieldType.UInt:
                     case FieldType.Int:
                     case FieldType.Float:
-                        outputBuffer[index++] = input.ReadPackedUInt(NetworkConfig.miscContext);
+                        outputBuffer[index++] = input.ReadPackedUInt(NetworkConfig.MiscContext);
                         break;
 
                     case FieldType.Vector2:
-                        outputBuffer[index++] = (input.ReadPackedUInt(NetworkConfig.miscContext));
-                        outputBuffer[index++] = (input.ReadPackedUInt(NetworkConfig.miscContext));
+                        outputBuffer[index++] = (input.ReadPackedUInt(NetworkConfig.MiscContext));
+                        outputBuffer[index++] = (input.ReadPackedUInt(NetworkConfig.MiscContext));
                         break;
 
                     case FieldType.Vector3:
-                        outputBuffer[index++] = (input.ReadPackedUInt(NetworkConfig.miscContext));
-                        outputBuffer[index++] = (input.ReadPackedUInt(NetworkConfig.miscContext));
-                        outputBuffer[index++] = (input.ReadPackedUInt(NetworkConfig.miscContext));
+                        outputBuffer[index++] = (input.ReadPackedUInt(NetworkConfig.MiscContext));
+                        outputBuffer[index++] = (input.ReadPackedUInt(NetworkConfig.MiscContext));
+                        outputBuffer[index++] = (input.ReadPackedUInt(NetworkConfig.MiscContext));
                         break;
 
                     case FieldType.Quaternion:
-                        outputBuffer[index++] = (input.ReadPackedUInt(NetworkConfig.miscContext));
-                        outputBuffer[index++] = (input.ReadPackedUInt(NetworkConfig.miscContext));
-                        outputBuffer[index++] = (input.ReadPackedUInt(NetworkConfig.miscContext));
-                        outputBuffer[index++] = (input.ReadPackedUInt(NetworkConfig.miscContext));
+                        outputBuffer[index++] = (input.ReadPackedUInt(NetworkConfig.MiscContext));
+                        outputBuffer[index++] = (input.ReadPackedUInt(NetworkConfig.MiscContext));
+                        outputBuffer[index++] = (input.ReadPackedUInt(NetworkConfig.MiscContext));
+                        outputBuffer[index++] = (input.ReadPackedUInt(NetworkConfig.MiscContext));
                         break;
 
                     case FieldType.String:
                     case FieldType.ByteArray:
-                        var dataSize = input.ReadPackedUInt(NetworkConfig.miscContext);
+                        var dataSize = input.ReadPackedUInt(NetworkConfig.MiscContext);
                         outputBuffer[index++] = dataSize;
 
                         fixed (uint* buf = outputBuffer)

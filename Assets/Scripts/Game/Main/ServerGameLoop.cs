@@ -318,11 +318,11 @@ public class ServerGameLoop : Game.IGameLoop, INetworkCallbacks
 
         m_StateMachine.SwitchTo(ServerState.Idle);
 
-        m_NetworkTransport = new SocketTransport(NetworkConfig.serverPort.IntValue, serverMaxClients.IntValue);
+        m_NetworkTransport = new SocketTransport(NetworkConfig.ServerPort.IntValue, serverMaxClients.IntValue);
         var listenAddresses = NetworkUtils.GetLocalInterfaceAddresses();
         if (listenAddresses.Count > 0)
-            Console.SetPrompt(listenAddresses[0] + ":" + NetworkConfig.serverPort.Value + "> ");
-        GameDebug.Log("Listening on " + string.Join(", ", NetworkUtils.GetLocalInterfaceAddresses()) + " on port " + NetworkConfig.serverPort.IntValue);
+            Console.SetPrompt(listenAddresses[0] + ":" + NetworkConfig.ServerPort.Value + "> ");
+        GameDebug.Log("Listening on " + string.Join(", ", NetworkUtils.GetLocalInterfaceAddresses()) + " on port " + NetworkConfig.ServerPort.IntValue);
         m_NetworkServer = new NetworkServer(m_NetworkTransport);
 
         if (Game.game.clientFrontend != null)
@@ -332,7 +332,7 @@ public class ServerGameLoop : Game.IGameLoop, INetworkCallbacks
             serverPanel.serverInfo.text += "Listening on:\n";
             foreach (var a in NetworkUtils.GetLocalInterfaceAddresses())
             {
-                serverPanel.serverInfo.text += a + ":" + NetworkConfig.serverPort.IntValue + "\n";
+                serverPanel.serverInfo.text += a + ":" + NetworkConfig.ServerPort.IntValue + "\n";
             }
         }
 
@@ -342,7 +342,7 @@ public class ServerGameLoop : Game.IGameLoop, INetworkCallbacks
         if (serverServerName.Value == "")
             serverServerName.Value = MakeServername();
 
-        m_ServerQueryProtocolServer = new SQP.SQPServer(NetworkConfig.serverSQPPort.IntValue > 0? NetworkConfig.serverSQPPort.IntValue : NetworkConfig.serverPort.IntValue + NetworkConfig.sqpPortOffset);
+        m_ServerQueryProtocolServer = new SQP.SQPServer(NetworkConfig.ServerSqpPort.IntValue > 0? NetworkConfig.ServerSqpPort.IntValue : NetworkConfig.ServerPort.IntValue + NetworkConfig.SqpPortOffset);
 
 
 #if UNITY_EDITOR        
@@ -512,7 +512,7 @@ public class ServerGameLoop : Game.IGameLoop, INetworkCallbacks
         // Update SQP data with current values
         var sid = m_ServerQueryProtocolServer.ServerInfoData;
         sid.BuildId = Game.game.buildId;
-        sid.Port = (ushort)NetworkConfig.serverPort.IntValue;
+        sid.Port = (ushort)NetworkConfig.ServerPort.IntValue;
         sid.CurrentPlayers = (ushort)m_Clients.Count;
         sid.GameType = GameModeSystemServer.modeName.Value;
         sid.Map = Game.game.levelManager.currentLevel.name;

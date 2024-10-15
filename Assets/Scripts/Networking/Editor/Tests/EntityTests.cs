@@ -2,6 +2,7 @@
 using NUnit.Framework;
 using UnityEngine;
 using System.Collections.Generic;
+using Networking;
 using Networking.Tests;
 
 namespace NetcodeTests
@@ -278,10 +279,10 @@ namespace NetcodeTests
             server.DespawnEntity(entity);
 
             NetworkClient.ClientBlockIn.Value = "-1";
-            NetworkConfig.netChokeSendInterval.Value = "0";
+            NetworkConfig.NetChokeSendInterval.Value = "0";
 
             // Run enough updates so that server consider id for despawned entity reusable
-            for(int i = 0; i < NetworkConfig.snapshotDeltaCacheSize; i++)
+            for(int i = 0; i < NetworkConfig.SnapshotDeltaCacheSize; i++)
             {
                 server.Update();
                 client.Update();
@@ -327,10 +328,10 @@ namespace NetcodeTests
             server.world.AssertReplicatedToClient(client.world, server.clients[0]);
 
             NetworkClient.ClientBlockIn.Value = "-1";
-            NetworkConfig.netChokeSendInterval.Value = "0";
+            NetworkConfig.NetChokeSendInterval.Value = "0";
 
             // Run enough updates so that server consider id for despawned entity reusable
-            for(int i = 0; i < NetworkConfig.snapshotDeltaCacheSize; i++)
+            for(int i = 0; i < NetworkConfig.SnapshotDeltaCacheSize; i++)
             {
                 server.Update();
                 client.Update();
@@ -352,7 +353,7 @@ namespace NetcodeTests
         [Test]
         public void GameTests_StaleBaselineTest()
         {
-            NetworkConfig.netChokeSendInterval.Value = "0";
+            NetworkConfig.NetChokeSendInterval.Value = "0";
             TestTransport.Reset();
 
             TestGameServer server = new TestGameServer();
@@ -393,7 +394,7 @@ namespace NetcodeTests
             server.Update();
             client.Update();
 
-            NetworkConfig.netChokeSendInterval.Value = "0.3";
+            NetworkConfig.NetChokeSendInterval.Value = "0.3";
         }
 
         [Test]
@@ -483,7 +484,7 @@ namespace NetcodeTests
 
             // Run server for enough ticks so that it can assume all despawned entities are too old to be of interest
             // to any client.
-            for (int i = 0; i < NetworkConfig.snapshotDeltaCacheSize + 1; i++)
+            for (int i = 0; i < NetworkConfig.SnapshotDeltaCacheSize + 1; i++)
             {
                 server.Update();
                 client.Update();

@@ -2,7 +2,7 @@
 
 public struct DeltaWriter
 {
-    static byte[] fieldsNotPredicted = new byte[(NetworkConfig.maxFieldsPerSchema + 7) / 8];
+    static byte[] fieldsNotPredicted = new byte[(NetworkConfig.MAXFieldsPerSchema + 7) / 8];
 
     unsafe static public void Write<TOutputStream>(ref TOutputStream output, NetworkSchema schema, uint* inputData,
         uint* baselineData, byte[] fieldsChangedPrediction, byte fieldMask, ref uint entity_hash)
@@ -220,7 +220,7 @@ public struct DeltaWriter
 
         index = 0;
 
-        int skipContext = schema.ID * NetworkConfig.maxContextsPerSchema + NetworkConfig.firstSchemaContext;
+        int skipContext = schema.ID * NetworkConfig.MAXContextsPerSchema + NetworkConfig.FirstSchemaContext;
 
         // Client needs fieldsNotPredicted. We send the delta between it and fieldsChangedPrediction
         {
