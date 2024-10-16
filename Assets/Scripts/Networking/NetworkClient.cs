@@ -529,9 +529,9 @@ namespace Networking
                 counters.AddSectionStats("mapInfo", input.GetBitPosition2(), new Color(0.65f, 0.16f, 0.16f));
 
                 /*
-             * The package was received out of order but older than the last map reset, 
-             * so we ignore the remaining data
-             */
+                 * The package was received out of order but older than the last map reset, 
+                 * so we ignore the remaining data
+                 */
                 if (_mapInfo.AckSequence == 0 || packageSequence < _mapInfo.AckSequence)
                 {
                     return;
@@ -542,10 +542,10 @@ namespace Networking
                     ReadSnapshot(packageSequence, ref input, snapshotConsumer);
 
                     /*
-                 * Make sure the callback actually picked up the snapshot data. It is important that
-                 * every snapshot gets processed by the game so that the spawns, despawns and updates lists
-                 * does not end up containing stuff from different snapshots
-                 */
+                     * Make sure the callback actually picked up the snapshot data. It is important that
+                     * every snapshot gets processed by the game so that the spawns, deSpawns and updates lists
+                     * does not end up containing stuff from different snapshots
+                     */
                     GameDebug.Assert(_spawns.Count == 0 && _despawns.Count == 0 && _updates.Count == 0,
                         "Game did not consume snapshots");
                 }
