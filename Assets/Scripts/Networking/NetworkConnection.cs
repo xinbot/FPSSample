@@ -223,7 +223,7 @@ namespace Networking
                     _chokedTimeToNextPackage = Game.frameTime + NetworkConfig.NetChokeSendInterval.FloatValue;
 
                     // Treat the last package as lost
-                    var info = OutstandingPackages.TryGetByIndex(OutSequence % OutstandingPackages.Capacity,
+                    var info = OutstandingPackages.TryGetByIndex(OutSequence % OutstandingPackages.capacity,
                         out var chokedSequence);
                     GameDebug.Assert(info != null);
 

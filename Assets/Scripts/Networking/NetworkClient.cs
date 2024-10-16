@@ -283,13 +283,13 @@ namespace Networking
             if (NetworkConfig.NetDebug.IntValue > 1 && _clientConnection != null)
             {
                 var outstandingPackages = _clientConnection.OutstandingPackages;
-                for (var i = 0; i < outstandingPackages.m_Elements.Length; i++)
+                for (var i = 0; i < outstandingPackages.Elements.Length; i++)
                 {
-                    if (outstandingPackages.m_Sequences[i] != -1 && outstandingPackages.m_Elements[i].Events.Count > 0)
+                    if (outstandingPackages.Sequences[i] != -1 && outstandingPackages.Elements[i].Events.Count > 0)
                     {
-                        GameDebug.Log("Outstanding Package: " + i + " (idx), " + outstandingPackages.m_Sequences[i] +
-                                      " (seq), " + outstandingPackages.m_Elements[i].Events.Count + " (numevs), " +
-                                      ((GameNetworkEvents.EventType) outstandingPackages.m_Elements[i].Events[0].Type
+                        GameDebug.Log("Outstanding Package: " + i + " (idx), " + outstandingPackages.Sequences[i] +
+                                      " (seq), " + outstandingPackages.Elements[i].Events.Count + " (numevs), " +
+                                      ((GameNetworkEvents.EventType) outstandingPackages.Elements[i].Events[0].Type
                                           .TypeId) + " (ev0)");
                     }
                 }
