@@ -134,7 +134,7 @@ namespace Networking
 
         public int lastAcknowlegdedCommandTime
         {
-            get { return _clientConnection != null ? _clientConnection.LastAcknowlegdedCommandTime : -1; }
+            get { return _clientConnection != null ? _clientConnection.LastAcknowledgedCommandTime : -1; }
         }
 
         public float serverSimTime
@@ -163,7 +163,7 @@ namespace Networking
 
         public delegate void EntitySpawnProcessor(int id, ushort typeId);
 
-        public delegate void EntityDespawnProcessor(int id);
+        public delegate void EntityDeSpawnProcessor(int id);
 
         public delegate void EntityUpdateProcessor(int id, ref NetworkReader data);
 
@@ -451,7 +451,7 @@ namespace Networking
                 ServerTime = 0;
                 _entities.Clear();
                 _spawns.Clear();
-                _despawns.Clear();
+                _deSpawns.Clear();
                 _updates.Clear();
             }
 
@@ -546,7 +546,7 @@ namespace Networking
                      * every snapshot gets processed by the game so that the spawns, deSpawns and updates lists
                      * does not end up containing stuff from different snapshots
                      */
-                    GameDebug.Assert(_spawns.Count == 0 && _despawns.Count == 0 && _updates.Count == 0,
+                    GameDebug.Assert(_spawns.Count == 0 && _deSpawns.Count == 0 && _updates.Count == 0,
                         "Game did not consume snapshots");
                 }
 
@@ -835,7 +835,7 @@ namespace Networking
                         GameDebug.Assert(haveBaseline == false,
                             "Spawning entity but we already have with different type?");
                         GameDebug.Log("REPLACING old entity: " + id + " because snapshot gave us new type for this id");
-                        _despawns.Add(id);
+                        _deSpawns.Add(id);
                         _entities[id].Reset();
                     }
 
@@ -875,7 +875,7 @@ namespace Networking
                         }
 
                         GameDebug.Log("NO BL SO PRUNING Stale entity: " + i);
-                        _despawns.Add(i);
+                        _deSpawns.Add(i);
                         e.Reset();
                     }
                 }
@@ -915,8 +915,8 @@ namespace Networking
                     }
 
                     // Add to despawns list so we can request despawn from game later
-                    GameDebug.Assert(!_despawns.Contains(id), "Double despawn in same snaphot? {0}", id);
-                    _despawns.Add(id);
+                    GameDebug.Assert(!_deSpawns.Contains(id), "Double despawn in same snaphot? {0}", id);
+                    _deSpawns.Add(id);
                 }
 
                 counters.AddSectionStats("snapShotDespawns", input.GetBitPosition2(), new Color(0.49f, 0, 0));
@@ -1108,7 +1108,7 @@ namespace Networking
                                 : (e.DespawnSequence > 0 ? "," + i + "(" + e.DespawnSequence + ")" : "," + i);
                         }
 
-                        string despawnIds = string.Join(",", _despawns);
+                        string despawnIds = string.Join(",", _deSpawns);
                         string spawnIds = string.Join(",", _tempSpawnList);
                         string updateIds = string.Join(",", _updates);
 
@@ -1145,8 +1145,8 @@ namespace Networking
                 // Snapshot reading done. Now pass on resulting pawns/despawns to the snapshotconsumer
                 Profiler.BeginSample("ProcessSnapshot");
 
-                consumer.ProcessEntityDeSpawn(ServerTime, _despawns);
-                _despawns.Clear();
+                consumer.ProcessEntityDeSpawn(ServerTime, _deSpawns);
+                _deSpawns.Clear();
 
                 foreach (var id in _spawns)
                 {
@@ -1237,7 +1237,7 @@ namespace Networking
                     if (info.CommandSequence > _commandSequenceAck)
                     {
                         _commandSequenceAck = info.CommandSequence;
-                        LastAcknowlegdedCommandTime = info.CommandTime;
+                        LastAcknowledgedCommandTime = info.CommandTime;
                     }
                 }
                 else
@@ -1320,7 +1320,7 @@ namespace Networking
             public int ClientId = -1;
             public int ServerTickRate;
             public int ServerTime;
-            public int LastAcknowlegdedCommandTime;
+            public int LastAcknowledgedCommandTime;
             public NetworkCompressionModel CompressionModel;
 
             private int _commandSequence;
@@ -1334,7 +1334,7 @@ namespace Networking
             private readonly SequenceBuffer<SnapshotInfo> _snapshots =
                 new SequenceBuffer<SnapshotInfo>(NetworkConfig.SnapshotDeltaCacheSize, () => new SnapshotInfo());
 
-            private readonly List<int> _despawns = new List<int>();
+            private readonly List<int> _deSpawns = new List<int>();
             private readonly List<int> _spawns = new List<int>();
             private readonly List<int> _updates = new List<int>();
             private readonly List<int> _tempSpawnList = new List<int>();
