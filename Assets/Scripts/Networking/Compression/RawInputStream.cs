@@ -2,11 +2,15 @@
 {
     public struct RawInputStream : IInputStream
     {
+        private byte[] _buffer;
+        private int _bufferOffset;
+        private int _currentByteIndex;
+
         public RawInputStream(byte[] buffer, int bufferOffset)
         {
-            m_Buffer = buffer;
-            m_BufferOffset = bufferOffset;
-            m_CurrentByteIndex = bufferOffset;
+            _buffer = buffer;
+            _bufferOffset = bufferOffset;
+            _currentByteIndex = bufferOffset;
         }
 
         public void Initialize(NetworkCompressionModel model, byte[] buffer, int bufferOffset)
@@ -14,42 +18,48 @@
             this = new RawInputStream(buffer, bufferOffset);
         }
 
-        public uint ReadRawBits(int numbits)
+        public uint ReadRawBits(int numBits)
         {
             uint value = 0;
-            for (int i = 0; i < numbits; i += 8)
-                value |= (uint) m_Buffer[m_CurrentByteIndex++] << i;
+            for (var i = 0; i < numBits; i += 8)
+            {
+                value |= (uint) _buffer[_currentByteIndex++] << i;
+            }
+
             return value;
         }
 
         public void ReadRawBytes(byte[] dstBuffer, int dstIndex, int count)
         {
-            for (int i = 0; i < count; i++)
-                dstBuffer[dstIndex + i] = m_Buffer[m_CurrentByteIndex + i];
-            m_CurrentByteIndex += count;
+            for (var i = 0; i < count; i++)
+            {
+                dstBuffer[dstIndex + i] = _buffer[_currentByteIndex + i];
+            }
+
+            _currentByteIndex += count;
         }
 
-        public void SkipRawBits(int numbits)
+        public void SkipRawBits(int numBits)
         {
-            m_CurrentByteIndex += (numbits + 7) >> 3;
+            _currentByteIndex += (numBits + 7) >> 3;
         }
 
         public void SkipRawBytes(int count)
         {
-            m_CurrentByteIndex += count;
+            _currentByteIndex += count;
         }
 
         public uint ReadPackedNibble(int context)
         {
-            return m_Buffer[m_CurrentByteIndex++];
+            return _buffer[_currentByteIndex++];
         }
 
         public uint ReadPackedUInt(int context)
         {
-            uint value = (uint) m_Buffer[m_CurrentByteIndex + 0] | ((uint) m_Buffer[m_CurrentByteIndex + 1] << 8) |
-                         ((uint) m_Buffer[m_CurrentByteIndex + 2] << 16) |
-                         ((uint) m_Buffer[m_CurrentByteIndex + 3] << 24);
-            m_CurrentByteIndex += 4;
+            uint value = _buffer[_currentByteIndex + 0] | ((uint) _buffer[_currentByteIndex + 1] << 8) |
+                         ((uint) _buffer[_currentByteIndex + 2] << 16) |
+                         ((uint) _buffer[_currentByteIndex + 3] << 24);
+            _currentByteIndex += 4;
             return value;
         }
 
@@ -61,25 +71,19 @@
         public uint ReadPackedUIntDelta(uint baseline, int context)
         {
             uint folded = ReadPackedUInt(context);
-            uint delta =
-                (folded >> 1) ^
-                (uint) -(int) (folded &
-                               1); // Deinterleave values from [0, -1, 1, -2, 2...] to [..., -2, -1, -0, 1, 2, ...]
+            // DeInterleave values from [0, -1, 1, -2, 2...] to [..., -2, -1, -0, 1, 2, ...]
+            uint delta = (folded >> 1) ^ (uint) -(int) (folded & 1);
             return baseline - delta;
         }
 
         public int GetBitPosition2()
         {
-            return (m_CurrentByteIndex - m_BufferOffset) * 8;
+            return (_currentByteIndex - _bufferOffset) * 8;
         }
 
         public NetworkCompressionModel GetModel()
         {
             return null;
         }
-
-        byte[] m_Buffer;
-        int m_BufferOffset;
-        int m_CurrentByteIndex;
     }
 }

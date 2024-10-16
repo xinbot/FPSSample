@@ -4,11 +4,11 @@
     {
         void Initialize(NetworkCompressionModel model, byte[] buffer, int bufferOffset);
 
-        uint ReadRawBits(int numbits);
+        uint ReadRawBits(int numBits);
 
         void ReadRawBytes(byte[] dstBuffer, int dstIndex, int count);
 
-        void SkipRawBits(int numbits);
+        void SkipRawBits(int numBits);
 
         void SkipRawBytes(int count);
 

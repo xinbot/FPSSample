@@ -648,7 +648,7 @@ namespace Networking
                         return;
                     }
 
-                    GameDebug.Log("Ignoring protocol difference client.verifyprotocol is 0");
+                    GameDebug.Log("Ignoring protocol difference client.verify protocol is 0");
                 }
 
                 GameDebug.Assert(ClientId == -1 || newClientId == ClientId,
