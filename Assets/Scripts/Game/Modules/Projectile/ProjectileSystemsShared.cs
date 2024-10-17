@@ -31,7 +31,7 @@ public class CreateProjectileMovementCollisionQueries : BaseComponentSystem
 
             var entity = entityArray[i];
 
-            var collisionTestTick = time.tick - projectileData.collisionCheckTickDelay;
+            var collisionTestTick = time.Tick - projectileData.collisionCheckTickDelay;
 
             var totalMoveDuration = time.DurationSinceTick(projectileData.startTick);
             var totalMoveDist = totalMoveDuration * projectileData.settings.velocity;
@@ -98,7 +98,7 @@ public class HandleProjectileMovementCollisionQuery : BaseComponentSystem
                 projectileData.impacted = 1;
                 projectileData.impactPos = queryResult.hitPoint;
                 projectileData.impactNormal = queryResult.hitNormal;
-                projectileData.impactTick = m_world.worldTime.tick;
+                projectileData.impactTick = m_world.worldTime.Tick;
 
                 // Owner can despawn while projectile is in flight, so we need to make sure we dont send non existing instigator
                 var damageInstigator = EntityManager.Exists(projectileData.projectileOwner) ? projectileData.projectileOwner : Entity.Null;

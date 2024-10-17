@@ -158,7 +158,7 @@ class Melee_Update : BaseComponentDataSystem<CharBehaviour,AbilityControl, Abili
         if (abilityCtrl.active == 0)
         {
             if(predictedState.phase != Ability_Melee.Phase.Idle)
-                predictedState.SetPhase(Ability_Melee.Phase.Idle, time.tick);
+                predictedState.SetPhase(Ability_Melee.Phase.Idle, time.Tick);
             EntityManager.SetComponentData(abilityEntity, predictedState);
             return;
         }
@@ -170,8 +170,8 @@ class Melee_Update : BaseComponentDataSystem<CharBehaviour,AbilityControl, Abili
                     var charPredictedState = EntityManager.GetComponentData<CharacterPredictedData>(charAbility.character);
 
                     abilityCtrl.behaviorState = AbilityControl.State.Active;
-                    predictedState.SetPhase(Ability_Melee.Phase.Punch, time.tick);
-                    charPredictedState.SetAction(settings.punchAction, time.tick);
+                    predictedState.SetPhase(Ability_Melee.Phase.Punch, time.Tick);
+                    charPredictedState.SetAction(settings.punchAction, time.Tick);
                     
                     EntityManager.SetComponentData(abilityEntity, abilityCtrl);
                     EntityManager.SetComponentData(abilityEntity, predictedState);
@@ -190,7 +190,7 @@ class Melee_Update : BaseComponentDataSystem<CharBehaviour,AbilityControl, Abili
                         var viewDir = command.lookDir;
                         var eyePos = charPredictedState.position + Vector3.up*character.eyeHeight;
 
-                        predictedState.SetPhase(Ability_Melee.Phase.Hold, time.tick);
+                        predictedState.SetPhase(Ability_Melee.Phase.Hold, time.Tick);
 
                         var queryReciever = World.GetExistingManager<RaySphereQueryReciever>();
                         localState.rayQueryId = queryReciever.RegisterQuery(new RaySphereQueryReciever.Query()
@@ -220,8 +220,8 @@ class Melee_Update : BaseComponentDataSystem<CharBehaviour,AbilityControl, Abili
                         var charPredictedState = EntityManager.GetComponentData<CharacterPredictedData>(charAbility.character);
 
                         abilityCtrl.behaviorState = AbilityControl.State.Idle;
-                        predictedState.SetPhase(Ability_Melee.Phase.Idle, time.tick);
-                        charPredictedState.SetAction(CharacterPredictedData.Action.None, time.tick);
+                        predictedState.SetPhase(Ability_Melee.Phase.Idle, time.Tick);
+                        charPredictedState.SetAction(CharacterPredictedData.Action.None, time.Tick);
 
                         EntityManager.SetComponentData(abilityEntity, abilityCtrl);
                         EntityManager.SetComponentData(abilityEntity, predictedState);
@@ -267,7 +267,7 @@ class Melee_HandleCollision : BaseComponentDataSystem<Ability_Melee.LocalState>
             DamageEvent.AddEvent(damageEventBuffer, charAbility.character, settings.damage, query.direction, settings.damageImpulse);
 
             var interpolatedState = EntityManager.GetComponentData<Ability_Melee.InterpolatedState>(abilityEntity);
-            interpolatedState.impactTick = m_world.worldTime.tick;            
+            interpolatedState.impactTick = m_world.worldTime.Tick;            
             PostUpdateCommands.SetComponent(abilityEntity, interpolatedState);
         }
         

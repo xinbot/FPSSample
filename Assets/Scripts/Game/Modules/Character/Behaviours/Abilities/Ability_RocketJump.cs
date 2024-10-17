@@ -160,7 +160,7 @@ class RocketJump_Update : BaseComponentDataSystem<CharBehaviour,AbilityControl, 
         if (abilityCtrl.active == 0)
         {
             if(predictedState.phase != Ability_RocketJump.Phase.Idle)
-                predictedState.SetPhase(Ability_RocketJump.Phase.Idle, time.tick);
+                predictedState.SetPhase(Ability_RocketJump.Phase.Idle, time.Tick);
             EntityManager.SetComponentData(abilityEntity, predictedState);
             return;
         }
@@ -170,7 +170,7 @@ class RocketJump_Update : BaseComponentDataSystem<CharBehaviour,AbilityControl, 
             case Ability_RocketJump.Phase.Idle:
                 {
                     abilityCtrl.behaviorState = AbilityControl.State.Active;
-                    predictedState.SetPhase(Ability_RocketJump.Phase.Launch, time.tick);
+                    predictedState.SetPhase(Ability_RocketJump.Phase.Launch, time.Tick);
                     interpolatedState.phase = Ability_RocketJump.Phase.Launch;
                     
                     var command = EntityManager.GetComponentData<UserCommandComponentData>(charAbility.character).command;
@@ -183,7 +183,7 @@ class RocketJump_Update : BaseComponentDataSystem<CharBehaviour,AbilityControl, 
                     
                     var charPredictedState = EntityManager.GetComponentData<CharacterPredictedData>(charAbility.character);
                     charPredictedState.locoState = CharacterPredictedData.LocoState.InAir;
-                    charPredictedState.locoStartTick = time.tick;
+                    charPredictedState.locoStartTick = time.Tick;
                     EntityManager.SetComponentData(charAbility.character, charPredictedState);
                     
                     EntityManager.SetComponentData(abilityEntity, abilityCtrl);
@@ -197,7 +197,7 @@ class RocketJump_Update : BaseComponentDataSystem<CharBehaviour,AbilityControl, 
                     var phaseDuration = time.DurationSinceTick(predictedState.phaseStartTick);
                     if (phaseDuration >= settings.launchDuration)
                     {
-                        predictedState.SetPhase(Ability_RocketJump.Phase.Idle, time.tick);
+                        predictedState.SetPhase(Ability_RocketJump.Phase.Idle, time.Tick);
                         interpolatedState.phase = Ability_RocketJump.Phase.Idle;
                         abilityCtrl.behaviorState = AbilityControl.State.Idle;
 
@@ -223,7 +223,7 @@ class RocketJump_Update : BaseComponentDataSystem<CharBehaviour,AbilityControl, 
                     
                     var velocity = dir * settings.launchSpeed;
                     charPredictedState.velocity = velocity;
-                    charPredictedState.position = charPredictedState.position + time.tickDuration*velocity;
+                    charPredictedState.position = charPredictedState.position + time.TickDuration*velocity;
         
                     EntityManager.SetComponentData(charAbility.character, charPredictedState);
                     

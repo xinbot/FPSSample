@@ -144,16 +144,16 @@ class ProjectileLauncher_Update : BaseComponentDataSystem<AbilityControl,Ability
                     var charPredictedState = EntityManager.GetComponentData<CharacterPredictedData>(charAbility.character);
                     
                     abilityCtrl.behaviorState = AbilityControl.State.Active;
-                    predictedState.activeTick = time.tick;
+                    predictedState.activeTick = time.Tick;
                     
 //                    GameDebug.Log("Ability_ProjectileLauncher SetAction:" + state.fireAction + " tick:" + time.tick);
-                    charPredictedState.SetAction(state.fireAction, time.tick);
+                    charPredictedState.SetAction(state.fireAction, time.Tick);
 
                     // Only spawn once for each tick (so it does not fire again when re-predicting)
                     var localState = EntityManager.GetComponentData<Ability_ProjectileLauncher.LocalState>(entity);
-                    if (time.tick > localState.lastFireTick)
+                    if (time.Tick > localState.lastFireTick)
                     {
-                        localState.lastFireTick = time.tick;
+                        localState.lastFireTick = time.Tick;
                         EntityManager.SetComponentData(entity, localState);
                         
                         var eyePos = charPredictedState.position + Vector3.up*character.eyeHeight;
@@ -162,10 +162,10 @@ class ProjectileLauncher_Update : BaseComponentDataSystem<AbilityControl,Ability
                             .command;
                         
                         var endPos = eyePos + command.lookDir * state.projectileRange;
-                        ProjectileRequest.Create(PostUpdateCommands, time.tick, time.tick - command.renderTick,
+                        ProjectileRequest.Create(PostUpdateCommands, time.Tick, time.Tick - command.renderTick,
                             state.projectileAssetGuid, charAbility.character, character.teamId, eyePos, endPos);
 
-                        interpolatedState.fireTick = time.tick;
+                        interpolatedState.fireTick = time.Tick;
                         EntityManager.SetComponentData(entity, interpolatedState);
                     }
                     
@@ -185,7 +185,7 @@ class ProjectileLauncher_Update : BaseComponentDataSystem<AbilityControl,Ability
                     abilityCtrl.behaviorState = AbilityControl.State.Cooldown;
                     
 //                    GameDebug.Log("Ability_ProjectileLauncher SetAction:" + CharPredictedStateData.Action.None + " tick:" + time.tick);
-                    charPredictedState.SetAction(CharacterPredictedData.Action.None, time.tick);
+                    charPredictedState.SetAction(CharacterPredictedData.Action.None, time.Tick);
                     
                     EntityManager.SetComponentData(entity, abilityCtrl);
                     EntityManager.SetComponentData(charAbility.character, charPredictedState);

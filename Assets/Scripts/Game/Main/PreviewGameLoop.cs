@@ -307,8 +307,8 @@ public class PreviewGameLoop : Game.IGameLoop
         bool commandWasConsumed = false;
         while (Game.frameTime > m_GameWorld.nextTickTime)
         {
-            gameTime.tick++;
-            gameTime.tickDuration = gameTime.tickInterval;
+            gameTime.Tick++;
+            gameTime.TickDuration = gameTime.tickInterval;
             
             commandWasConsumed = true;
 
@@ -328,11 +328,11 @@ public class PreviewGameLoop : Game.IGameLoop
     public void PreviewTickUpdate()
     {
         m_GameWorld.worldTime = gameTime;
-        m_GameWorld.frameDuration = gameTime.tickDuration;
+        m_GameWorld.frameDuration = gameTime.TickDuration;
             
         m_PlayerModuleClient.ResolveReferenceFromLocalPlayerToPlayer();
         m_PlayerModuleClient.HandleCommandReset();
-        m_PlayerModuleClient.StoreCommand(m_GameWorld.worldTime.tick);
+        m_PlayerModuleClient.StoreCommand(m_GameWorld.worldTime.Tick);
 
         // Game mode update
         m_previewGameMode.Update();
@@ -347,7 +347,7 @@ public class PreviewGameLoop : Game.IGameLoop
         m_UpdateReplicatedOwnerFlag.Update();
         
         // Apply command for frame
-        m_PlayerModuleClient.RetrieveCommand(m_GameWorld.worldTime.tick);
+        m_PlayerModuleClient.RetrieveCommand(m_GameWorld.worldTime.Tick);
         
         // Handle spawn
         m_CharacterModule.HandleSpawns(); ; // TODO (mogensh) creates presentations, so it needs to be done first. Find better solution for ordering

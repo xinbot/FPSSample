@@ -145,7 +145,7 @@ class Movement_Update : BaseComponentDataSystem<CharBehaviour, AbilityControl, A
         if (newPhase != CharacterPredictedData.LocoState.MaxValue && newPhase != predictedState.locoState)
         {
             predictedState.locoState = newPhase;
-            predictedState.locoStartTick = time.tick;
+            predictedState.locoStartTick = time.Tick;
         }
         
         if (debugCharacterMove.IntValue > 0)
@@ -166,17 +166,17 @@ class Movement_Update : BaseComponentDataSystem<CharBehaviour, AbilityControl, A
             }
         }
 
-        if (time.tick != predictedState.tick + 1)
-            GameDebug.Log("Update tick invalid. Game tick:" + time.tick + " but current state is at tick:" + predictedState.tick);
+        if (time.Tick != predictedState.tick + 1)
+            GameDebug.Log("Update tick invalid. Game tick:" + time.Tick + " but current state is at tick:" + predictedState.tick);
 
-        predictedState.tick = time.tick;
+        predictedState.tick = time.Tick;
 
         // Apply damange impulse from previus frame
-        if (time.tick == predictedState.damageTick + 1)
+        if (time.Tick == predictedState.damageTick + 1)
         {
             predictedState.velocity += predictedState.damageDirection*predictedState.damageImpulse;
             predictedState.locoState = CharacterPredictedData.LocoState.InAir;
-            predictedState.locoStartTick = time.tick;
+            predictedState.locoStartTick = time.Tick;
         }
         
         var moveQuery = EntityManager.GetComponentObject<CharacterMoveQuery>(charAbility.character);
@@ -215,16 +215,16 @@ class Movement_Update : BaseComponentDataSystem<CharBehaviour, AbilityControl, A
             case CharacterPredictedData.LocoState.DoubleJump:
 
                 // In jump we overwrite velocity y component with linear movement up
-                velocity = CalculateGroundVelocity(velocity, ref command, Game.config.playerSpeed, Game.config.playerAirFriction, Game.config.playerAiracceleration, gameTime.tickDuration);
+                velocity = CalculateGroundVelocity(velocity, ref command, Game.config.playerSpeed, Game.config.playerAirFriction, Game.config.playerAiracceleration, gameTime.TickDuration);
                 velocity.y = Game.config.jumpAscentHeight / Game.config.jumpAscentDuration;
-                deltaPos += velocity * gameTime.tickDuration;
+                deltaPos += velocity * gameTime.TickDuration;
 
                 return;
             case CharacterPredictedData.LocoState.InAir:
 
                 var gravity = Game.config.playerGravity;
-                velocity += Vector3.down * gravity * gameTime.tickDuration;
-                velocity = CalculateGroundVelocity(velocity, ref command, Game.config.playerSpeed, Game.config.playerAirFriction, Game.config.playerAiracceleration, gameTime.tickDuration);
+                velocity += Vector3.down * gravity * gameTime.TickDuration;
+                velocity = CalculateGroundVelocity(velocity, ref command, Game.config.playerSpeed, Game.config.playerAirFriction, Game.config.playerAiracceleration, gameTime.TickDuration);
 
                 if (velocity.y < -Game.config.maxFallVelocity)
                     velocity.y = -Game.config.maxFallVelocity;
@@ -232,26 +232,26 @@ class Movement_Update : BaseComponentDataSystem<CharBehaviour, AbilityControl, A
                 // Cheat movement
                 if (command.buttons.IsSet(UserCommand.Button.Boost) && (Game.GetGameLoop<PreviewGameLoop>() != null))
                 {
-                    velocity.y += 25.0f * gameTime.tickDuration;
+                    velocity.y += 25.0f * gameTime.TickDuration;
                     velocity.y = Mathf.Clamp(velocity.y, -2.0f, 10.0f);
                 }
 
-                deltaPos = velocity * gameTime.tickDuration;
+                deltaPos = velocity * gameTime.TickDuration;
 
                 return;
         }
 
         var playerSpeed = predicted.sprinting == 1 ? Game.config.playerSprintSpeed : Game.config.playerSpeed;
 
-        velocity = CalculateGroundVelocity(velocity, ref command, playerSpeed, Game.config.playerFriction, Game.config.playerAcceleration, gameTime.tickDuration);
+        velocity = CalculateGroundVelocity(velocity, ref command, playerSpeed, Game.config.playerFriction, Game.config.playerAcceleration, gameTime.TickDuration);
 //        Debug.DrawLine(predictedState.State.position, predictedState.State.position + velocity, Color.yellow,1 );
         
         // Simple follow ground code so character sticks to ground when running down hill
-        velocity.y = -400.0f*gameTime.tickDuration;
+        velocity.y = -400.0f*gameTime.TickDuration;
         
 //        Debug.DrawLine(predictedState.State.position, predictedState.State.position + velocity, Color.green, 1 );
         
-        deltaPos = velocity * gameTime.tickDuration;
+        deltaPos = velocity * gameTime.TickDuration;
     }
 
     Vector3 CalculateGroundVelocity(Vector3 velocity, ref UserCommand command, float playerSpeed, float friction, float acceleration, float deltaTime)
@@ -335,13 +335,13 @@ class Movement_HandleCollision : BaseComponentDataSystem<CharBehaviour, AbilityC
                 predictedState.locoState = CharacterPredictedData.LocoState.InAir;                    
             }
             
-            predictedState.locoStartTick = time.tick;
+            predictedState.locoStartTick = time.Tick;
         }
     
         // Manually calculate resulting velocity as characterController.velocity is linked to Time.deltaTime
         var newPos = query.moveQueryResult;
         var oldPos = query.moveQueryStart;
-        var velocity = (newPos - oldPos) / time.tickDuration;
+        var velocity = (newPos - oldPos) / time.TickDuration;
     
         predictedState.velocity = velocity;
         predictedState.position = query.moveQueryResult;

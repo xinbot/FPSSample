@@ -102,7 +102,7 @@ public class AnimGraph_DamageReaction : AnimGraphAsset
 
             else if (m_reactionAnimPlaying)
             {
-                var timeSinceLastDamage = (time.tick - m_lastReactionTick) / (float)time.tickRate;
+                var timeSinceLastDamage = (time.Tick - m_lastReactionTick) / (float)time.tickRate;
                 if (timeSinceLastDamage > m_reactionAnimDuration)
                 {
                     m_reactionAnimPlaying = false;

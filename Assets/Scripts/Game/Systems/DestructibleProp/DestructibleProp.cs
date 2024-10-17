@@ -90,7 +90,7 @@ public class UpdateDestructableProps : BaseComponentSystem
 					gameObject.SetActive(false);
 				}
 
-				replicatedState.destroyedTick = m_world.worldTime.tick;
+				replicatedState.destroyedTick = m_world.worldTime.Tick;
 
 				// Create splash damage
 				if (prop.splashDamage.radius > 0)
@@ -103,7 +103,7 @@ public class UpdateDestructableProps : BaseComponentSystem
 					}
 
 					var splashCenter = prop.transform.position + prop.splashDamageOffset;
-					SplashDamageRequest.Create(PostUpdateCommands, m_world.worldTime.tick, instigator, splashCenter,
+					SplashDamageRequest.Create(PostUpdateCommands, m_world.worldTime.Tick, instigator, splashCenter,
 						collisionMask, prop.splashDamage);
 				}
 				

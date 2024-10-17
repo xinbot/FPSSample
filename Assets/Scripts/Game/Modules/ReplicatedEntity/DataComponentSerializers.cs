@@ -262,7 +262,7 @@ public interface IInterpolatedSerializer
             {
                 int lowIndex = 0, highIndex = 0;
                 float interpVal = 0;
-                var interpValid = stateHistory.GetStates(interpTime.tick, interpTime.TickDurationAsFraction, ref lowIndex, ref highIndex, ref interpVal);
+                var interpValid = stateHistory.GetStates(interpTime.Tick, interpTime.tickDurationAsFraction, ref lowIndex, ref highIndex, ref interpVal);
                 
                 if (interpValid)
                 {

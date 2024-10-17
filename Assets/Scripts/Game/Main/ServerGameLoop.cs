@@ -9,7 +9,7 @@ using SQP;
 
 public class ServerGameWorld : ISnapshotGenerator, IClientCommandProcessor
 {
-    public int WorldTick { get { return m_GameWorld.worldTime.tick; } }
+    public int WorldTick { get { return m_GameWorld.worldTime.Tick; } }
     public int TickRate
     {
         get
@@ -132,7 +132,7 @@ public class ServerGameWorld : ISnapshotGenerator, IClientCommandProcessor
                 tick = tick
             };
                 
-            if (tick == m_GameWorld.worldTime.tick)
+            if (tick == m_GameWorld.worldTime.Tick)
                 client.latestCommand.Deserialize(ref serializeContext, ref data);
 
             // Pass on command to controlled entity
@@ -167,19 +167,19 @@ public class ServerGameWorld : ISnapshotGenerator, IClientCommandProcessor
     {
         Profiler.BeginSample("ServerGameWorld.ServerTickUpdate()");
 
-        m_GameWorld.worldTime.tick++;
-        m_GameWorld.worldTime.tickDuration = m_GameWorld.worldTime.tickInterval;
+        m_GameWorld.worldTime.Tick++;
+        m_GameWorld.worldTime.TickDuration = m_GameWorld.worldTime.tickInterval;
         m_GameWorld.frameDuration = m_GameWorld.worldTime.tickInterval;
 
         Profiler.BeginSample("HandleClientCommands");
 
         // This call backs into ProcessCommand
-        m_NetworkServer.HandleClientCommands(m_GameWorld.worldTime.tick, this);
+        m_NetworkServer.HandleClientCommands(m_GameWorld.worldTime.Tick, this);
 
         Profiler.EndSample();
 
         GameTime gameTime = new GameTime(m_GameWorld.worldTime.tickRate);
-        gameTime.SetTime(m_GameWorld.worldTime.tick, m_GameWorld.worldTime.tickInterval);
+        gameTime.SetTime(m_GameWorld.worldTime.Tick, m_GameWorld.worldTime.tickInterval);
 
         // Handle spawn requests. All creation of game entities should happen in this phase        
         m_CharacterModule.HandleSpawnRequests();

@@ -9,7 +9,7 @@ public class EnumeratedArrayDrawer : PropertyDrawer
     {
         int idx = -1;
         bool ok = int.TryParse(property.propertyPath.AfterLast("[").BeforeFirst("]"), out idx);
-        var names = ((EnumeratedArrayAttribute)attribute).names;
+        var names = ((EnumeratedArrayAttribute)attribute).Names;
         var name = ok && idx >= 0 && idx < names.Length ? names[idx] : "Unknown (" + idx + ")";
         EditorGUI.PropertyField(rect, property, new GUIContent(name));
     }

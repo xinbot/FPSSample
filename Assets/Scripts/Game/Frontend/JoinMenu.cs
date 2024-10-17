@@ -35,7 +35,7 @@ public class JoinMenu : MonoBehaviour
     {
         // Unless typing, fill in field from configvar
         if (!playername.isFocused)
-            playername.text = ClientGameLoop.clientPlayerName.Value;
+            playername.text = ClientGameLoop.ClientPlayerName.Value;
 
         // Update all servers in our list
         foreach (var server in m_Servers)

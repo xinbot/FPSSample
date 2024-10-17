@@ -137,7 +137,7 @@ public class AnimGraph_Squash : AnimGraphAsset
                     m_playSpeed = m_Settings.changeDir.playSpeed; 
                 }
 
-                m_lastDirChangeTick = time.tick;
+                m_lastDirChangeTick = time.Tick;
             }
                         
             if (animState.squashWeight > 0)

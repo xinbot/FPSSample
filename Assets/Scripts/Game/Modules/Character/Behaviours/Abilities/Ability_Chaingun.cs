@@ -184,10 +184,10 @@ class Chaingun_Update : BaseComponentDataSystem<CharBehaviour, AbilityControl,Ab
         // Adjust fire rate
         if (predictedState.state == Ability_Chaingun.State.Fire)
         {
-            predictedState.fireRate += settings.fireRateAcceleration * time.tickDuration;
+            predictedState.fireRate += settings.fireRateAcceleration * time.TickDuration;
         }
         else
-            predictedState.fireRate -= settings.fireRateAcceleration * time.tickDuration;
+            predictedState.fireRate -= settings.fireRateAcceleration * time.TickDuration;
         predictedState.fireRate = Mathf.Clamp(predictedState.fireRate, settings.minFireRate, settings.maxFireRate);
         EntityManager.SetComponentData(abilityEntity, predictedState);
 
@@ -205,13 +205,13 @@ class Chaingun_Update : BaseComponentDataSystem<CharBehaviour, AbilityControl,Ab
                 {
                     if (request == Ability_Chaingun.State.Reload)
                     {
-                        EnterReloadingPhase(abilityEntity, ref abilityCtrl, ref predictedState, time.tick);
+                        EnterReloadingPhase(abilityEntity, ref abilityCtrl, ref predictedState, time.Tick);
                         break;
                     }
 
                     if (request == Ability_Chaingun.State.Fire)
                     {
-                        EnterFiringPhase(abilityEntity, ref abilityCtrl, ref predictedState, ref settings, time.tick);
+                        EnterFiringPhase(abilityEntity, ref abilityCtrl, ref predictedState, ref settings, time.Tick);
                         break;
                     }
                     break;
@@ -223,9 +223,9 @@ class Chaingun_Update : BaseComponentDataSystem<CharBehaviour, AbilityControl,Ab
                     if (phaseDuration > fireDuration)
                     {
                         if (request == Ability_Chaingun.State.Fire && predictedState.ammoInClip > 0)
-                            EnterFiringPhase(abilityEntity, ref abilityCtrl, ref predictedState, ref settings, time.tick);
+                            EnterFiringPhase(abilityEntity, ref abilityCtrl, ref predictedState, ref settings, time.Tick);
                         else
-                            EnterIdlePhase(abilityEntity, ref abilityCtrl, ref predictedState, time.tick);
+                            EnterIdlePhase(abilityEntity, ref abilityCtrl, ref predictedState, time.Tick);
                         
                         break;
                     }
@@ -239,7 +239,7 @@ class Chaingun_Update : BaseComponentDataSystem<CharBehaviour, AbilityControl,Ab
                         var neededInClip = settings.clipSize - predictedState.ammoInClip;
                         predictedState.ammoInClip += neededInClip;
 
-                        EnterIdlePhase(abilityEntity, ref abilityCtrl, ref predictedState, time.tick);
+                        EnterIdlePhase(abilityEntity, ref abilityCtrl, ref predictedState, time.Tick);
                         break;
                     }
                     break;

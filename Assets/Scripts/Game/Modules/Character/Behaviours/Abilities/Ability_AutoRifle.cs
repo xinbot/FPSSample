@@ -212,7 +212,7 @@ class AutoRifle_Update : BaseComponentDataSystem<CharBehaviour,AbilityControl,Ab
 		// Decrease cone
 		if (predictedState.action != Ability_AutoRifle.State.Fire)
 		{
-			predictedState.COF -= settings.COFDecreaseVel * m_world.worldTime.tickDuration;
+			predictedState.COF -= settings.COFDecreaseVel * m_world.worldTime.TickDuration;
 			if (predictedState.COF < settings.minCOF)
 				predictedState.COF = settings.minCOF;
 		}
@@ -232,13 +232,13 @@ class AutoRifle_Update : BaseComponentDataSystem<CharBehaviour,AbilityControl,Ab
 				var request = Ability_AutoRifle.GetPreferredState(ref predictedState, ref settings, ref command);
 				if (request == Ability_AutoRifle.State.Reload)
 				{
-					EnterReloadingPhase(abilityEntity, ref abilityCtrl, ref predictedState, m_world.worldTime.tick);
+					EnterReloadingPhase(abilityEntity, ref abilityCtrl, ref predictedState, m_world.worldTime.Tick);
 					break;
 				}
 
 				if (request == Ability_AutoRifle.State.Fire)
 				{
-					EnterFiringPhase(abilityEntity, ref abilityCtrl, ref predictedState, m_world.worldTime.tick);
+					EnterFiringPhase(abilityEntity, ref abilityCtrl, ref predictedState, m_world.worldTime.Tick);
 					break;
 				}
 
@@ -252,9 +252,9 @@ class AutoRifle_Update : BaseComponentDataSystem<CharBehaviour,AbilityControl,Ab
 				{
 					var request = Ability_AutoRifle.GetPreferredState(ref predictedState, ref settings, ref command);
 					if (request == Ability_AutoRifle.State.Fire && predictedState.ammoInClip > 0)
-						EnterFiringPhase(abilityEntity, ref abilityCtrl, ref predictedState, m_world.worldTime.tick);
+						EnterFiringPhase(abilityEntity, ref abilityCtrl, ref predictedState, m_world.worldTime.Tick);
 					else
-						EnterIdlePhase(abilityEntity, ref abilityCtrl, ref predictedState, m_world.worldTime.tick);
+						EnterIdlePhase(abilityEntity, ref abilityCtrl, ref predictedState, m_world.worldTime.Tick);
 				}
 
 				break;
@@ -267,7 +267,7 @@ class AutoRifle_Update : BaseComponentDataSystem<CharBehaviour,AbilityControl,Ab
 					var neededInClip = settings.clipSize - predictedState.ammoInClip;
 					predictedState.ammoInClip += neededInClip;
 
-					EnterIdlePhase(abilityEntity, ref abilityCtrl, ref predictedState, m_world.worldTime.tick);
+					EnterIdlePhase(abilityEntity, ref abilityCtrl, ref predictedState, m_world.worldTime.Tick);
 				}
 
 				break;
@@ -426,7 +426,7 @@ class AutoRifle_HandleCollisionQuery : BaseComponentDataSystem<Ability_AutoRifle
 			interpolatedState.impactType = Ability_AutoRifle.ImpactType.None;
 			endPos = query.origin + query.distance * query.direction;
 		}
-		interpolatedState.fireTick = m_world.worldTime.tick;
+		interpolatedState.fireTick = m_world.worldTime.Tick;
 		interpolatedState.fireEndPos = endPos;
 		
 		EntityManager.SetComponentData(abilityEntity,internalState);

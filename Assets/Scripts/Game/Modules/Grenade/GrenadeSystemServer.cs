@@ -40,7 +40,7 @@ public class HandleGrenadeRequest : BaseComponentDataSystem<GrenadeSpawnRequest>
         var grenadeEntity = m_resourceManager.CreateEntity(request.assetGuid);
         
         var internalState = EntityManager.GetComponentData<Grenade.InternalState>(grenadeEntity);       
-        internalState.startTick = m_world.worldTime.tick;
+        internalState.startTick = m_world.worldTime.Tick;
         internalState.owner = request.owner;
         internalState.teamId = request.teamId;
         internalState.velocity = request.velocity;
@@ -86,8 +86,8 @@ public class StartGrenadeMovement : BaseComponentSystem
             
             // Crate movement query
             var startPos = internalState.position;
-            var newVelocity = internalState.velocity - new float3(0,1,0) * settings.gravity * time.tickDuration;
-            var deltaPos = newVelocity * time.tickDuration;
+            var newVelocity = internalState.velocity - new float3(0,1,0) * settings.gravity * time.TickDuration;
+            var deltaPos = newVelocity * time.TickDuration;
 
             internalState.position = startPos + deltaPos;
             internalState.velocity = newVelocity;
@@ -99,7 +99,7 @@ public class StartGrenadeMovement : BaseComponentSystem
             var queryReciever = World.GetExistingManager<RaySphereQueryReciever>();
             internalState.rayQueryId = queryReciever.RegisterQuery(new RaySphereQueryReciever.Query()
             {
-                hitCollisionTestTick = time.tick,
+                hitCollisionTestTick = time.Tick,
                 origin = startPos,
                 direction = math.normalize(newVelocity),
                 distance = math.length(deltaPos) + settings.collisionRadius,
@@ -177,7 +177,7 @@ public class FinalizeGrenadeMovement : BaseComponentSystem
                     internalState.velocity = moveDir * moveVel * settings.bounciness;
 
                     if(moveVel > 1.0f)
-                        interpolatedState.bouncetick = m_world.worldTime.tick;
+                        interpolatedState.bouncetick = m_world.worldTime.Tick;
                 }
 
                 if (queryResult.hitCollisionOwner != Entity.Null)
@@ -193,14 +193,14 @@ public class FinalizeGrenadeMovement : BaseComponentSystem
             if (timeout || hitCollisionOwner != Entity.Null)
             {
                 internalState.active = 0;
-                internalState.explodeTick = time.tick; 
+                internalState.explodeTick = time.Tick; 
                 interpolatedState.exploded = 1;
 
                 if (settings.splashDamage.radius > 0)
                 {
                     var collisionMask = ~(1 << internalState.teamId);
 
-                    SplashDamageRequest.Create(PostUpdateCommands, time.tick, internalState.owner, internalState.position,
+                    SplashDamageRequest.Create(PostUpdateCommands, time.Tick, internalState.owner, internalState.position,
                         collisionMask, settings.splashDamage);
                 }
             }

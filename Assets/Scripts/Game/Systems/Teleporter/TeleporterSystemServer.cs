@@ -38,7 +38,7 @@ public class TeleporterSystemServer : ComponentSystem
                     character.TeleportTo(dstPos, dstRot);
 
                     var presentation = presentationArray[i];
-                    presentation.effectTick = m_GameWorld.worldTime.tick;
+                    presentation.effectTick = m_GameWorld.worldTime.Tick;
                     EntityManager.SetComponentData(entities[i],presentation);
                 }
                 t.characterInside = null;

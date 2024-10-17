@@ -172,7 +172,7 @@ public class UpdateTeleportation : BaseComponentSystem<Character>
 //            character.transform.position = character.m_TeleportToPosition;
 
             var userCommandComponent = EntityManager.GetComponentData<UserCommandComponentData>(entity);
-            userCommandComponent.ResetCommand(m_world.worldTime.tick, character.m_TeleportToRotation.eulerAngles.y, 90); 
+            userCommandComponent.ResetCommand(m_world.worldTime.Tick, character.m_TeleportToRotation.eulerAngles.y, 90); 
             EntityManager.SetComponentData(entity,userCommandComponent);
         }
     }
@@ -259,7 +259,7 @@ public class UpdateCharPresentationState : BaseComponentSystem
             if (charPredictedState.locoState == CharacterPredictedData.LocoState.GroundMove)
             {
                 animState = EntityManager.GetComponentData<CharacterInterpolatedData>(entity);
-                animState.lastGroundMoveTick = m_world.worldTime.tick;
+                animState.lastGroundMoveTick = m_world.worldTime.Tick;
                 EntityManager.SetComponentData(entity, animState);
             }
         }

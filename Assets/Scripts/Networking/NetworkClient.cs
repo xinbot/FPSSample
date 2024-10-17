@@ -188,8 +188,8 @@ namespace Networking
         {
             Profiler.BeginSample("NetworkClient.UpdateClientConfig");
 
-            ClientConfig.ServerUpdateRate = ClientGameLoop.clientUpdateRate.IntValue;
-            ClientConfig.ServerUpdateInterval = ClientGameLoop.clientUpdateInterval.IntValue;
+            ClientConfig.ServerUpdateRate = ClientGameLoop.ClientUpdateRate.IntValue;
+            ClientConfig.ServerUpdateInterval = ClientGameLoop.ClientUpdateInterval.IntValue;
             if (_clientConnection != null)
             {
                 _clientConnection.ClientConfigChanged();

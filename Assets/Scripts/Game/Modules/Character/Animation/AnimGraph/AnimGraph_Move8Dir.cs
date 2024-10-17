@@ -94,7 +94,7 @@ public class AnimGraph_Move8Dir : AnimGraphAsset
             if (firstUpdate)
             {
                 // Do phase projection for time not spent in state
-                var ticksSincePreviousGroundMove = time.tick - animState.lastGroundMoveTick;                
+                var ticksSincePreviousGroundMove = time.Tick - animState.lastGroundMoveTick;                
                 if (ticksSincePreviousGroundMove > 1)
                 {
                     animState.locomotionPhase += m_playSpeed * (ticksSincePreviousGroundMove - 1f);

@@ -56,9 +56,9 @@ public class MoverUpdate : BaseComponentSystem<Mover>
 
 		
 		var totalTickDuration = Mathf.FloorToInt(totalDuration / time.tickInterval);
-		var tickTime = time.tick % totalTickDuration;
+		var tickTime = time.Tick % totalTickDuration;
 
-		var totalTime = tickTime * time.tickInterval + time.tickDuration;
+		var totalTime = tickTime * time.tickInterval + time.TickDuration;
 
 		var moveForwardStart = mover.waitDuration;
 		var moveForwardEnd = moveForwardStart + baseMoveDuration;

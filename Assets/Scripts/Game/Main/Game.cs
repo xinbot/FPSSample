@@ -9,87 +9,96 @@ using UnityEngine.Rendering.PostProcessing;
 using SQP;
 #if UNITY_EDITOR
 using UnityEditor;
+
 #endif
 
 public struct GameTime
 {
+    // Current tick
+    public int Tick;
+
+    // Duration of current tick
+    public float TickDuration;
+
+    /// <summary>
+    /// Length of each world tick at current tick rate, e.g. 0.0166s if ticking at 60 fps.
+    /// Time between ticks
+    /// </summary>
+    public float tickInterval { get; private set; }
+
+    private int _tickRate;
+
     /// <summary>Number of ticks per second.</summary>
     public int tickRate
     {
-        get { return m_tickRate; }
+        get => _tickRate;
         set
         {
-            m_tickRate = value;
-            tickInterval = 1.0f / m_tickRate;
+            _tickRate = value;
+            tickInterval = 1.0f / _tickRate;
         }
     }
 
-    /// <summary>Length of each world tick at current tickrate, e.g. 0.0166s if ticking at 60fps.</summary>
-    public float tickInterval { get; private set; }     // Time between ticks
-    public int tick;                    // Current tick   
-    public float tickDuration;          // Duration of current tick
-
-    public GameTime(int tickRate)    
+    public float tickDurationAsFraction
     {
-        this.m_tickRate = tickRate;
-        this.tickInterval = 1.0f / m_tickRate;
-        this.tick = 1;
-        this.tickDuration = 0;
+        get { return TickDuration / tickInterval; }
     }
 
-    public float TickDurationAsFraction
+    public GameTime(int tickRate)
     {
-        get { return tickDuration / tickInterval; }
+        _tickRate = tickRate;
+        tickInterval = 1.0f / _tickRate;
+        Tick = 1;
+        TickDuration = 0;
     }
 
     public void SetTime(int tick, float tickDuration)
     {
-        this.tick = tick;
-        this.tickDuration = tickDuration;
+        Tick = tick;
+        TickDuration = tickDuration;
     }
 
     public float DurationSinceTick(int tick)
     {
-        return (this.tick - tick) * tickInterval + tickDuration;
+        return (Tick - tick) * tickInterval + TickDuration;
     }
 
     public void AddDuration(float duration)
     {
-        tickDuration += duration;
-        int deltaTicks = Mathf.FloorToInt(tickDuration * (float)tickRate);
-        tick += deltaTicks;
-        tickDuration = tickDuration % tickInterval;
+        TickDuration += duration;
+        int deltaTicks = Mathf.FloorToInt(TickDuration * tickRate);
+        Tick += deltaTicks;
+        TickDuration %= tickInterval;
     }
 
     public static float GetDuration(GameTime start, GameTime end)
     {
-        if(start.tickRate != end.tickRate)     
+        if (start.tickRate != end.tickRate)
         {
-            GameDebug.LogError("Trying to compare time with different tick rates (" + start.tickRate + " and " + end.tickRate + ")");
+            GameDebug.LogError(
+                $"Trying to compare time with different tick rates ({start.tickRate} and {end.tickRate})");
             return 0;
         }
 
-        float result = (end.tick - start.tick) * start.tickInterval + end.tickDuration - start.tickDuration;
+        float result = (end.Tick - start.Tick) * start.tickInterval + end.TickDuration - start.TickDuration;
         return result;
     }
-
-    int m_tickRate;
 }
 
 public class EnumeratedArrayAttribute : PropertyAttribute
 {
-    public readonly string[] names;
+    public readonly string[] Names;
+
     public EnumeratedArrayAttribute(Type enumtype)
     {
-        names = Enum.GetNames(enumtype);
+        Names = Enum.GetNames(enumtype);
     }
 }
-
 
 [DefaultExecutionOrder(-1000)]
 public class Game : MonoBehaviour
 {
-    public delegate void UpdateDelegate(); 
+    public delegate void UpdateDelegate();
 
     public WeakAssetReference movableBoxPrototype;
 
@@ -99,8 +108,8 @@ public class Game : MonoBehaviour
         Friend,
         Enemy
     }
-    [EnumeratedArray(typeof(GameColor))]
-    public Color[] gameColors;
+
+    [EnumeratedArray(typeof(GameColor))] public Color[] gameColors;
 
     public GameStatistics m_GameStatistics { get; private set; }
 
@@ -114,6 +123,7 @@ public class Game : MonoBehaviour
             Chat = 2,
             Debug = 4,
         }
+
         static Blocker blocks;
 
         public static void SetBlock(Blocker b, bool value)
@@ -163,22 +173,27 @@ public class Game : MonoBehaviour
     public event UpdateDelegate endUpdateEvent;
 
     // Vars owned by server and replicated to clients
-    [ConfigVar(Name = "server.tickrate", DefaultValue = "60", Description = "Tickrate for server", Flags = ConfigVar.Flags.ServerInfo)]
+    [ConfigVar(Name = "server.tickrate", DefaultValue = "60", Description = "Tickrate for server",
+        Flags = ConfigVar.Flags.ServerInfo)]
     public static ConfigVar serverTickRate;
 
     [ConfigVar(Name = "config.fov", DefaultValue = "60", Description = "Field of view", Flags = ConfigVar.Flags.Save)]
     public static ConfigVar configFov;
 
-    [ConfigVar(Name = "config.mousesensitivity", DefaultValue = "1.5", Description = "Mouse sensitivity", Flags = ConfigVar.Flags.Save)]
+    [ConfigVar(Name = "config.mousesensitivity", DefaultValue = "1.5", Description = "Mouse sensitivity",
+        Flags = ConfigVar.Flags.Save)]
     public static ConfigVar configMouseSensitivity;
 
-    [ConfigVar(Name = "config.inverty", DefaultValue = "0", Description = "Invert y mouse axis", Flags = ConfigVar.Flags.Save)]
+    [ConfigVar(Name = "config.inverty", DefaultValue = "0", Description = "Invert y mouse axis",
+        Flags = ConfigVar.Flags.Save)]
     public static ConfigVar configInvertY;
 
-    [ConfigVar(Name = "debug.catchloop", DefaultValue = "1", Description = "Catch exceptions in gameloop and pause game", Flags = ConfigVar.Flags.None)]
+    [ConfigVar(Name = "debug.catchloop", DefaultValue = "1",
+        Description = "Catch exceptions in gameloop and pause game", Flags = ConfigVar.Flags.None)]
     public static ConfigVar debugCatchLoop;
 
-    [ConfigVar(Name = "chartype", DefaultValue = "-1", Description = "Character to start with (-1 uses default character)")]
+    [ConfigVar(Name = "chartype", DefaultValue = "-1",
+        Description = "Character to start with (-1 uses default character)")]
     public static ConfigVar characterType;
 
     [ConfigVar(Name = "allowcharchange", DefaultValue = "1", Description = "Is changing character allowed")]
@@ -187,9 +202,10 @@ public class Game : MonoBehaviour
     [ConfigVar(Name = "debug.cpuprofile", DefaultValue = "0", Description = "Profile and dump cpu usage")]
     public static ConfigVar debugCpuProfile;
 
-    [ConfigVar(Name = "net.dropevents", DefaultValue = "0", Description = "Drops a fraction of all packages containing events!!")]
+    [ConfigVar(Name = "net.dropevents", DefaultValue = "0",
+        Description = "Drops a fraction of all packages containing events!!")]
     public static ConfigVar netDropEvents;
-    
+
     static readonly string k_UserConfigFilename = "user.cfg";
     public static readonly string k_BootConfigFilename = "boot.cfg";
 
@@ -199,7 +215,7 @@ public class Game : MonoBehaviour
     public UnityEngine.Audio.AudioMixer audioMixer;
     public SoundBank defaultBank;
     public Camera bootCamera;
-    
+
     public LevelManager levelManager;
     public SQPClient sqpClient;
 
@@ -214,8 +230,9 @@ public class Game : MonoBehaviour
     {
         get { return game.m_SoundSystem; }
     }
-    
-    public static int GameLoopCount {
+
+    public static int GameLoopCount
+    {
         get { return game == null ? 0 : 1; }
     }
 
@@ -229,9 +246,10 @@ public class Game : MonoBehaviour
             if (result != null)
                 return result;
         }
+
         return null;
     }
-    
+
     public static System.Diagnostics.Stopwatch Clock
     {
         get { return game.m_Clock; }
@@ -241,12 +259,13 @@ public class Game : MonoBehaviour
     {
         get { return _buildId; }
     }
+
     string _buildId = "NoBuild";
 
     public void RequestGameLoop(System.Type type, string[] args)
     {
         GameDebug.Assert(typeof(IGameLoop).IsAssignableFrom(type));
-        
+
         m_RequestedGameLoopTypes.Add(type);
         m_RequestedGameLoopArguments.Add(args);
         GameDebug.Log("Game loop " + type + " requested");
@@ -299,7 +318,7 @@ public class Game : MonoBehaviour
             else
                 consoleTitle = Application.productName + " Console";
 
-            consoleTitle += " ["+System.Diagnostics.Process.GetCurrentProcess().Id+"]";
+            consoleTitle += " [" + System.Diagnostics.Process.GetCurrentProcess().Id + "]";
 
             var consoleUI = new ConsoleTextWin(consoleTitle, consoleRestoreFocus);
 #elif UNITY_STANDALONE_LINUX
@@ -333,12 +352,12 @@ public class Game : MonoBehaviour
         // If -logfile was passed, we try to put our own logs next to the engine's logfile
         var engineLogFileLocation = ".";
         var logfileArgIdx = commandLineArgs.IndexOf("-logfile");
-        if(logfileArgIdx >= 0 && commandLineArgs.Count >= logfileArgIdx)
+        if (logfileArgIdx >= 0 && commandLineArgs.Count >= logfileArgIdx)
         {
             engineLogFileLocation = System.IO.Path.GetDirectoryName(commandLineArgs[logfileArgIdx + 1]);
         }
 
-        var logName = m_isHeadless ? "game_"+DateTime.UtcNow.ToString("yyyyMMdd_HHmmss_fff") : "game";
+        var logName = m_isHeadless ? "game_" + DateTime.UtcNow.ToString("yyyyMMdd_HHmmss_fff") : "game";
         GameDebug.Init(engineLogFileLocation, logName);
 
         ConfigVar.Init();
@@ -373,13 +392,13 @@ public class Game : MonoBehaviour
         }
 
         // Out of the box game behaviour is driven by boot.cfg unless you ask it not to
-        if(!commandLineArgs.Contains("-noboot"))
+        if (!commandLineArgs.Contains("-noboot"))
         {
             Console.EnqueueCommandNoHistory("exec -s " + k_BootConfigFilename);
         }
 
 
-        if(m_isHeadless)
+        if (m_isHeadless)
         {
             m_SoundSystem = new SoundSystemNull();
         }
@@ -389,7 +408,8 @@ public class Game : MonoBehaviour
             m_SoundSystem.Init(audioMixer);
             m_SoundSystem.MountBank(defaultBank);
 
-            GameObject go = (GameObject)GameObject.Instantiate(Resources.Load("Prefabs/ClientFrontend", typeof(GameObject)));
+            GameObject go =
+                (GameObject) GameObject.Instantiate(Resources.Load("Prefabs/ClientFrontend", typeof(GameObject)));
             UnityEngine.Object.DontDestroyOnLoad(go);
             clientFrontend = go.GetComponentInChildren<ClientFrontend>();
         }
@@ -419,7 +439,7 @@ public class Game : MonoBehaviour
 
         // TODO (petera) added Instantiate here to avoid making changes to asset file.
         // Feels like maybe SO is not really the right tool here.
-        config = Instantiate((GameConfiguration)Resources.Load("GameConfiguration"));
+        config = Instantiate((GameConfiguration) Resources.Load("GameConfiguration"));
         GameDebug.Log("Loaded game config");
 
         // Game loops
@@ -433,7 +453,8 @@ public class Game : MonoBehaviour
         Console.AddCommand("menu", CmdMenu, "show the main menu");
         Console.AddCommand("load", CmdLoad, "Load level");
         Console.AddCommand("quit", CmdQuit, "Quits");
-        Console.AddCommand("screenshot", CmdScreenshot, "Capture screenshot. Optional argument is destination folder or filename.");
+        Console.AddCommand("screenshot", CmdScreenshot,
+            "Capture screenshot. Optional argument is destination folder or filename.");
         Console.AddCommand("crashme", (string[] args) => { GameDebug.Assert(false); }, "Crashes the game next frame ");
         Console.AddCommand("saveconfig", CmdSaveConfig, "Save the user config variables");
         Console.AddCommand("loadconfig", CmdLoadConfig, "Load the user config variables");
@@ -457,15 +478,15 @@ public class Game : MonoBehaviour
     public void PushCamera(Camera cam)
     {
         if (m_CameraStack.Count > 0)
-            SetCameraEnabled(m_CameraStack[m_CameraStack.Count - 1],false);
+            SetCameraEnabled(m_CameraStack[m_CameraStack.Count - 1], false);
         m_CameraStack.Add(cam);
-        SetCameraEnabled(cam,true);
+        SetCameraEnabled(cam, true);
         m_ExposureReleaseCount = 10;
     }
 
     public void BlackFade(bool enabled)
     {
-        if(m_Exposure != null)
+        if (m_Exposure != null)
             m_Exposure.active = enabled;
     }
 
@@ -473,10 +494,10 @@ public class Game : MonoBehaviour
     {
         GameDebug.Assert(m_CameraStack.Count > 1, "Trying to pop last camera off stack!");
         GameDebug.Assert(cam == m_CameraStack[m_CameraStack.Count - 1]);
-        if(cam != null)
-            SetCameraEnabled(cam,false);
+        if (cam != null)
+            SetCameraEnabled(cam, false);
         m_CameraStack.RemoveAt(m_CameraStack.Count - 1);
-        SetCameraEnabled(m_CameraStack[m_CameraStack.Count - 1],true);
+        SetCameraEnabled(m_CameraStack[m_CameraStack.Count - 1], true);
     }
 
     void SetCameraEnabled(Camera cam, bool enabled)
@@ -486,14 +507,14 @@ public class Game : MonoBehaviour
 
         cam.enabled = enabled;
         var audioListener = cam.GetComponent<AudioListener>();
-        if(audioListener != null)
+        if (audioListener != null)
         {
             audioListener.enabled = enabled;
-            if(SoundSystem != null)
+            if (SoundSystem != null)
                 SoundSystem.SetCurrentListener(enabled ? audioListener : null);
         }
     }
-    
+
     void OnDestroy()
     {
         GameDebug.Shutdown();
@@ -503,6 +524,7 @@ public class Game : MonoBehaviour
     }
 
     bool pipeSetup = false;
+
     public void Update()
     {
         if (!m_isHeadless)
@@ -531,9 +553,9 @@ public class Game : MonoBehaviour
 
                 pipeSetup = true;
             }
-
         }
-        if(m_ExposureReleaseCount > 0)
+
+        if (m_ExposureReleaseCount > 0)
         {
             m_ExposureReleaseCount--;
             if (m_ExposureReleaseCount == 0)
@@ -541,7 +563,7 @@ public class Game : MonoBehaviour
         }
 
         // Verify if camera was somehow destroyed and pop it
-        if(m_CameraStack.Count > 1 && m_CameraStack[m_CameraStack.Count-1] == null)
+        if (m_CameraStack.Count > 1 && m_CameraStack[m_CameraStack.Count - 1] == null)
         {
             PopCamera(null);
         }
@@ -553,14 +575,17 @@ public class Game : MonoBehaviour
             try
             {
                 var gameViewType = typeof(UnityEditor.EditorWindow).Assembly.GetType("UnityEditor.GameView");
-                var gameView = (EditorWindow)Resources.FindObjectsOfTypeAll(gameViewType)[0];
+                var gameView = (EditorWindow) Resources.FindObjectsOfTypeAll(gameViewType)[0];
                 gameView.Focus();
             }
-            catch (System.Exception) { /* too bad */ }
+            catch (System.Exception)
+            {
+                /* too bad */
+            }
         }
 #endif
 
-        frameTime = (double)m_Clock.ElapsedTicks / m_StopwatchFrequency;
+        frameTime = (double) m_Clock.ElapsedTicks / m_StopwatchFrequency;
 
         // Switch game loop if needed
         if (m_RequestedGameLoopTypes.Count > 0)
@@ -570,24 +595,25 @@ public class Game : MonoBehaviour
             ShutdownGameLoops();
 #endif
             bool initSucceeded = false;
-            for(int i=0;i<m_RequestedGameLoopTypes.Count;i++)
+            for (int i = 0; i < m_RequestedGameLoopTypes.Count; i++)
             {
                 try
                 {
-                    IGameLoop gameLoop = (IGameLoop)System.Activator.CreateInstance(m_RequestedGameLoopTypes[i]);
+                    IGameLoop gameLoop = (IGameLoop) System.Activator.CreateInstance(m_RequestedGameLoopTypes[i]);
                     initSucceeded = gameLoop.Init(m_RequestedGameLoopArguments[i]);
                     if (!initSucceeded)
                         break;
-                    
+
                     m_gameLoops.Add(gameLoop);
                 }
                 catch (System.Exception e)
                 {
-                    GameDebug.Log(string.Format("Game loop initialization threw exception : ({0})\n{1}", e.Message, e.StackTrace));
+                    GameDebug.Log(string.Format("Game loop initialization threw exception : ({0})\n{1}", e.Message,
+                        e.StackTrace));
                 }
             }
-            
-            
+
+
             if (!initSucceeded)
             {
                 ShutdownGameLoops();
@@ -607,6 +633,7 @@ public class Game : MonoBehaviour
                 {
                     gameLoop.Update();
                 }
+
                 levelManager.Update();
             }
         }
@@ -641,7 +668,6 @@ public class Game : MonoBehaviour
         {
             gameLoop.FixedUpdate();
         }
-       
     }
 
     public void LateUpdate()
@@ -654,6 +680,7 @@ public class Game : MonoBehaviour
                 {
                     gameLoop.LateUpdate();
                 }
+
                 Console.ConsoleLateUpdate();
             }
         }
@@ -682,19 +709,20 @@ public class Game : MonoBehaviour
     float m_NextCpuProfileTime = 0;
     double m_LastCpuUsage = 0;
     double m_LastCpuUsageUser = 0;
+
     void UpdateCPUStats()
     {
-        if(debugCpuProfile.IntValue > 0)
+        if (debugCpuProfile.IntValue > 0)
         {
-            if(Time.time > m_NextCpuProfileTime)
+            if (Time.time > m_NextCpuProfileTime)
             {
                 const float interval = 5.0f;
                 m_NextCpuProfileTime = Time.time + interval;
                 var process = System.Diagnostics.Process.GetCurrentProcess();
                 var user = process.UserProcessorTime.TotalMilliseconds;
                 var total = process.TotalProcessorTime.TotalMilliseconds;
-                float userUsagePct = (float)(user - m_LastCpuUsageUser) / 10.0f / interval;
-                float totalUsagePct = (float)(total- m_LastCpuUsage) / 10.0f / interval;
+                float userUsagePct = (float) (user - m_LastCpuUsageUser) / 10.0f / interval;
+                float totalUsagePct = (float) (total - m_LastCpuUsage) / 10.0f / interval;
                 m_LastCpuUsage = total;
                 m_LastCpuUsageUser = user;
                 GameDebug.Log(string.Format("CPU Usage {0}% (user: {1}%)", totalUsagePct, userUsagePct));
@@ -731,23 +759,24 @@ public class Game : MonoBehaviour
 
     string FindNewFilename(string pattern)
     {
-        for(var i = 0; i < 10000; i++)
+        for (var i = 0; i < 10000; i++)
         {
             var f = string.Format(pattern, i);
             if (System.IO.File.Exists(string.Format(pattern, i)))
                 continue;
             return f;
         }
+
         return null;
     }
 
     void ShutdownGameLoops()
     {
         foreach (var gameLoop in m_gameLoops)
-            gameLoop.Shutdown();    
-        m_gameLoops.Clear();   
+            gameLoop.Shutdown();
+        m_gameLoops.Clear();
     }
-    
+
     void CmdPreview(string[] args)
     {
         RequestGameLoop(typeof(PreviewGameLoop), args);
@@ -756,7 +785,7 @@ public class Game : MonoBehaviour
 
     void CmdServe(string[] args)
     {
-        RequestGameLoop( typeof(ServerGameLoop) , args);
+        RequestGameLoop(typeof(ServerGameLoop), args);
         Console.s_PendingCommandsWaitForFrames = 1;
     }
 
@@ -777,7 +806,7 @@ public class Game : MonoBehaviour
 
     void CmdClient(string[] args)
     {
-        RequestGameLoop( typeof(ClientGameLoop), args);
+        RequestGameLoop(typeof(ClientGameLoop), args);
         Console.s_PendingCommandsWaitForFrames = 1;
     }
 
@@ -786,7 +815,7 @@ public class Game : MonoBehaviour
         // Special hack to allow "connect a.b.c.d" as shorthand
         if (m_gameLoops.Count == 0)
         {
-            RequestGameLoop( typeof(ClientGameLoop), args);
+            RequestGameLoop(typeof(ClientGameLoop), args);
             Console.s_PendingCommandsWaitForFrames = 1;
             return;
         }
@@ -803,7 +832,7 @@ public class Game : MonoBehaviour
 
     void CmdThinClient(string[] args)
     {
-        RequestGameLoop( typeof(ThinClientGameLoop), args);
+        RequestGameLoop(typeof(ThinClientGameLoop), args);
         Console.s_PendingCommandsWaitForFrames = 1;
     }
 
@@ -821,7 +850,7 @@ public class Game : MonoBehaviour
         string filename = null;
         var root = System.IO.Path.GetFullPath(".");
         if (arguments.Length == 0)
-            filename = FindNewFilename(root+"/screenshot{0}.png");
+            filename = FindNewFilename(root + "/screenshot{0}.png");
         else if (arguments.Length == 1)
         {
             var a = arguments[0];
@@ -835,6 +864,7 @@ public class Game : MonoBehaviour
                 return;
             }
         }
+
         if (filename != null)
         {
             GameDebug.Log("Saving screenshot to " + filename);
@@ -844,21 +874,24 @@ public class Game : MonoBehaviour
     }
 
     public ClientFrontend clientFrontend;
+
     private void CmdMenu(string[] args)
     {
         float fadeTime = 0.0f;
         ClientFrontend.MenuShowing show = ClientFrontend.MenuShowing.Main;
-        if(args.Length > 0)
+        if (args.Length > 0)
         {
             if (args[0] == "0")
                 show = ClientFrontend.MenuShowing.None;
             else if (args[0] == "2")
                 show = ClientFrontend.MenuShowing.Ingame;
         }
-        if(args.Length > 1)
+
+        if (args.Length > 1)
         {
             float.TryParse(args[1], NumberStyles.Float, CultureInfo.InvariantCulture.NumberFormat, out fadeTime);
         }
+
         clientFrontend.ShowMenu(show, fadeTime);
         Console.SetOpen(false);
     }
@@ -891,6 +924,7 @@ public class Game : MonoBehaviour
                 }
             }
         }
+
         Console.Write("Usage: windowpos <x,y>");
     }
 
@@ -918,7 +952,7 @@ public class Game : MonoBehaviour
         bool menusShowing = (clientFrontend != null && clientFrontend.menuShowing != ClientFrontend.MenuShowing.None);
         bool lockWhenClicked = !menusShowing && !Console.IsOpen();
 
-        if(s_bMouseLockFrameNo == Time.frameCount)
+        if (s_bMouseLockFrameNo == Time.frameCount)
         {
             SetMousePointerLock(true);
             return;

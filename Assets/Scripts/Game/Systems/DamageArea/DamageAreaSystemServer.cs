@@ -45,13 +45,13 @@ public class DamageAreaSystemServer : ComponentSystem
                 if (healthState.health <= 0)
                     continue;
                 
-                if (m_GameWorld.worldTime.tick > charactersInside[i].nextDamageTick)
+                if (m_GameWorld.worldTime.Tick > charactersInside[i].nextDamageTick)
                 {
                     var damageEventBuffer = EntityManager.GetBuffer<DamageEvent>(charactersInside[i].hitCollisionOwner);
                     DamageEvent.AddEvent(damageEventBuffer, Entity.Null, damageAmount, Vector3.zero, 0);
 
                     var info = charactersInside[i];
-                    info.nextDamageTick = m_GameWorld.worldTime.tick + ticksBetweenDamage;
+                    info.nextDamageTick = m_GameWorld.worldTime.Tick + ticksBetweenDamage;
                     charactersInside[i] = info;
                 }
             }

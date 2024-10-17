@@ -175,7 +175,7 @@ public class HandleCharacterDespawnRequests : BaseComponentSystem
                 .GetComponentObject<Character>(request.characterEntity);
             GameDebug.Assert(character != null,"Character despawn requst entity is not a character");
 
-            GameDebug.Log("Despawning character:" + character.name + " tick:" + m_world.worldTime.tick);
+            GameDebug.Log("Despawning character:" + character.name + " tick:" + m_world.worldTime.Tick);
             
             m_world.RequestDespawn(character.gameObject, PostUpdateCommands);
 
@@ -233,7 +233,7 @@ public class HandleDamage : BaseComponentSystem
                 var damageEvent = damageBuffer[eventIndex];
     
                 //GameDebug.Log(string.Format("ApplyDamage. Target:{0} Instigator:{1} Dam:{2}", healthState.name, m_world.GetGameObjectFromEntity(damageEvent.instigator), damageEvent.damage ));
-                healthState.ApplyDamage(ref damageEvent, m_world.worldTime.tick);
+                healthState.ApplyDamage(ref damageEvent, m_world.worldTime.Tick);
                 EntityManager.SetComponentData(entity,healthState);
                 
                 impulseVec += damageEvent.direction * damageEvent.impulse;
@@ -245,9 +245,9 @@ public class HandleDamage : BaseComponentSystem
                 if (damageBuffer[eventIndex].instigator != Entity.Null && EntityManager.Exists(damageEvent.instigator) && EntityManager.HasComponent<DamageHistoryData>(damageEvent.instigator))
                 {
                     var instigatorDamageHistory = EntityManager.GetComponentData<DamageHistoryData>(damageEvent.instigator);
-                    if (m_world.worldTime.tick > instigatorDamageHistory.inflictedDamage.tick)
+                    if (m_world.worldTime.Tick > instigatorDamageHistory.inflictedDamage.tick)
                     {
-                        instigatorDamageHistory.inflictedDamage.tick = m_world.worldTime.tick;
+                        instigatorDamageHistory.inflictedDamage.tick = m_world.worldTime.Tick;
                         instigatorDamageHistory.inflictedDamage.lethal = 0;
                     }
                     if(healthState.health <= 0)
@@ -267,7 +267,7 @@ public class HandleDamage : BaseComponentSystem
                 var damageDir = damageImpulse > 0 ? impulseVec.normalized : damageVec.normalized;
                 
                 var charPredictedState = EntityManager.GetComponentData<CharacterPredictedData>(entity);
-                charPredictedState.damageTick = m_world.worldTime.tick;
+                charPredictedState.damageTick = m_world.worldTime.Tick;
                 charPredictedState.damageDirection = damageDir;
                 charPredictedState.damageImpulse = damageImpulse;
                 EntityManager.SetComponentData(entity, charPredictedState);

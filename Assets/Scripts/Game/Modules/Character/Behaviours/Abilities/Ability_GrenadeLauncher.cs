@@ -161,15 +161,15 @@ class GrenadeLauncher_Update : BaseComponentDataSystem<AbilityControl,Ability_Gr
                     
                     abilityCtrl.behaviorState = AbilityControl.State.Active;
                     
-                    predictedState.SetPhase(Ability_GrenadeLauncher.Phase.Active, time.tick);
+                    predictedState.SetPhase(Ability_GrenadeLauncher.Phase.Active, time.Tick);
 
-                    charPredictedState.SetAction(state.fireAction, time.tick);
+                    charPredictedState.SetAction(state.fireAction, time.Tick);
 
                     // Only spawn once for each tick (so it does not fire again when re-predicting)
                     var localState = EntityManager.GetComponentData<Ability_GrenadeLauncher.LocalState>(entity);
-                    if (time.tick > localState.lastFireTick)
+                    if (time.Tick > localState.lastFireTick)
                     {
-                        localState.lastFireTick = time.tick;
+                        localState.lastFireTick = time.Tick;
                         EntityManager.SetComponentData(entity, localState);
                         
                         var eyePos = charPredictedState.position + Vector3.up*character.eyeHeight;
@@ -189,7 +189,7 @@ class GrenadeLauncher_Update : BaseComponentDataSystem<AbilityControl,Ability_Gr
                         GrenadeSpawnRequest.Create(PostUpdateCommands, state.assetGuid, eyePos,
                             velocity, charAbility.character, character.teamId);
 
-                        interpolatedState.fireTick = time.tick;
+                        interpolatedState.fireTick = time.Tick;
                         EntityManager.SetComponentData(entity, interpolatedState);
                     }
                     
@@ -208,9 +208,9 @@ class GrenadeLauncher_Update : BaseComponentDataSystem<AbilityControl,Ability_Gr
                     
                     abilityCtrl.behaviorState = AbilityControl.State.Cooldown;
                     
-                    predictedState.SetPhase(Ability_GrenadeLauncher.Phase.Cooldown, time.tick);
+                    predictedState.SetPhase(Ability_GrenadeLauncher.Phase.Cooldown, time.Tick);
                     
-                    charPredictedState.SetAction(CharacterPredictedData.Action.None, time.tick);
+                    charPredictedState.SetAction(CharacterPredictedData.Action.None, time.Tick);
                     
                     EntityManager.SetComponentData(entity, abilityCtrl);
                     EntityManager.SetComponentData(entity, predictedState);
@@ -225,7 +225,7 @@ class GrenadeLauncher_Update : BaseComponentDataSystem<AbilityControl,Ability_Gr
                 {
                     abilityCtrl.behaviorState = AbilityControl.State.Idle;
 
-                    predictedState.SetPhase(Ability_GrenadeLauncher.Phase.Idle, time.tick);
+                    predictedState.SetPhase(Ability_GrenadeLauncher.Phase.Idle, time.Tick);
                     
                     EntityManager.SetComponentData(entity, abilityCtrl);
                     EntityManager.SetComponentData(entity, predictedState);
