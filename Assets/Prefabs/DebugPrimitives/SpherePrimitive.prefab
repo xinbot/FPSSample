@@ -10,7 +10,6 @@ GameObject:
   m_Component:
   - component: {fileID: 4274887661694274}
   - component: {fileID: 114076712986992522}
-  - component: {fileID: 114809699157724712}
   - component: {fileID: 114057928458575538}
   m_Layer: 0
   m_Name: SpherePrimitive
@@ -45,24 +44,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0b26653afb76acc4c80fe40b49c335a2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  guid: 739c18571eff1c0448c443adf82088d0
-  netID: 54d7af353bc4874d9bfc013b60be7461
-  registryId: 13
---- !u!114 &114809699157724712
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1551873804734984}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 63b093bdf343e9b498cbfbdb2c026ea4, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  center: {x: 0, y: 0, z: 0}
-  radius: 0
-  color: {r: 0, g: 0, b: 0, a: 0}
+  m_SerializedData:
+    assetGuid:
+      val0: 1939609687
+      val1: 470032127
+      val2: -1388067768
+      val3: -796385032
+  netID: 61d5a1d7dab80240bfd679735d79919c
 --- !u!114 &114057928458575538
 MonoBehaviour:
   m_ObjectHideFlags: 0

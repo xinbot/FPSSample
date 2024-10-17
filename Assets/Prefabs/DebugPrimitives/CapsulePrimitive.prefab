@@ -10,7 +10,6 @@ GameObject:
   m_Component:
   - component: {fileID: 4274887661694274}
   - component: {fileID: 114076712986992522}
-  - component: {fileID: 114586752454059536}
   - component: {fileID: 114144736257086312}
   m_Layer: 0
   m_Name: CapsulePrimitive
@@ -45,25 +44,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0b26653afb76acc4c80fe40b49c335a2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  guid: 3d159574b30cce641a2623e856f11007
-  netID: ab0cb24da4b9104e9257ea142f4eabc6
-  registryId: 11
---- !u!114 &114586752454059536
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1551873804734984}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4a23b333198823c4f8ee8604618a6b8c, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  pA: {x: 0, y: 0, z: 0}
-  pB: {x: 0, y: 0, z: 0}
-  radius: 0
-  color: {r: 0, g: 0, b: 0, a: 0}
+  m_SerializedData:
+    assetGuid:
+      val0: 1024824692
+      val1: -832261364
+      val2: -400349670
+      val3: 118550870
+  netID: 719a34324595924db3448a12caf2d727
 --- !u!114 &114144736257086312
 MonoBehaviour:
   m_ObjectHideFlags: 0
