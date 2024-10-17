@@ -78,7 +78,7 @@ public static class RenderSettings
         }
         if(rOcclusionThreshold.ChangeCheck())
         {
-            HDRenderPipeline.s_OcclusionThreshold = rOcclusionThreshold.FloatValue;
+            // HDRenderPipeline.s_OcclusionThreshold = rOcclusionThreshold.FloatValue;
         }
 
         bool updateAAFlags = false;
@@ -177,8 +177,8 @@ public static class RenderSettings
         if (rDistortion.ChangeCheck())
             updateFrameSettings = true;
 
-        if (rShadowDistMult.ChangeCheck())
-            HDShadowSettings.shadowDistanceMultiplier = Mathf.Clamp(rShadowDistMult.FloatValue, 0.5f, 4.0f);
+        //if (rShadowDistMult.ChangeCheck())
+            //HDShadowSettings.shadowDistanceMultiplier = Mathf.Clamp(rShadowDistMult.FloatValue, 0.5f, 4.0f);
 
         if (rDecalDist.ChangeCheck())
         {

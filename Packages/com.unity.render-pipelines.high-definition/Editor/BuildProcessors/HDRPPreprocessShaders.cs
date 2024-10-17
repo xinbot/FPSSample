@@ -25,28 +25,37 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                         return true;
             }
 
+            // Remove editor only pass
             bool isSceneSelectionPass = snippet.passName == "SceneSelectionPass";
             if (isSceneSelectionPass)
                 return true;
 
+            // CAUTION: We can't identify transparent material in the stripped in a general way.
+            // Shader Graph don't produce any keyword - However it will only generate the pass that are required, so it already handle transparent (Note that shader Graph still define _SURFACE_TYPE_TRANSPARENT but as a #define)
+            // For inspector version of shader, we identify transparent with a shader feature _SURFACE_TYPE_TRANSPARENT.
+            // Only our Lit (and inherited) shader use _SURFACE_TYPE_TRANSPARENT, so the specific stripping based on this keyword is in LitShadePreprocessor.
+            // Here we can't strip based on opaque or transparent but we will strip based on HDRP Asset configuration.
+
             bool isMotionPass = snippet.passName == "Motion Vectors";
-            if (!hdrpAsset.renderPipelineSettings.supportMotionVectors && isMotionPass)
+            bool isTransparentPrepass = snippet.passName == "TransparentDepthPrepass";
+            bool isTransparentPostpass = snippet.passName == "TransparentDepthPostpass";
+            bool isTransparentBackface = snippet.passName == "TransparentBackface";
+            bool isDistortionPass = snippet.passName == "DistortionVectors";
+
+            if (isMotionPass && !hdrpAsset.renderPipelineSettings.supportMotionVectors)
                 return true;
 
-            //bool isForwardPass = (snippet.passName == "Forward") || (snippet.passName == "ForwardOnly");
+            if (isDistortionPass && !hdrpAsset.renderPipelineSettings.supportDistortion)
+                return true;
 
-            if (inputData.shaderKeywordSet.IsEnabled(m_Transparent))
-            {
-                // If we are transparent we use cluster lighting and not tile lighting
-                if (inputData.shaderKeywordSet.IsEnabled(m_TileLighting))
-                    return true;
-            }
-            else // Opaque
-            {
-                // Note: we can't assume anything regarding tile/cluster for opaque as multiple view could used different settings and it depends on MSAA
-            }
+            if (isTransparentBackface && !hdrpAsset.renderPipelineSettings.supportTransparentBackface)
+                return true;
 
-            // TODO: If static lighting we can remove meta pass, but how to know that?
+            if (isTransparentPrepass && !hdrpAsset.renderPipelineSettings.supportTransparentDepthPrepass)
+                return true;
+
+            if (isTransparentPostpass && !hdrpAsset.renderPipelineSettings.supportTransparentDepthPostpass)
+                return true;
 
             // If we are in a release build, don't compile debug display variant
             // Also don't compile it if not requested by the render pipeline settings
@@ -55,8 +64,38 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 
             if (inputData.shaderKeywordSet.IsEnabled(m_LodFadeCrossFade) && !hdrpAsset.renderPipelineSettings.supportDitheringCrossFade)
                 return true;
+           
+            if (inputData.shaderKeywordSet.IsEnabled(m_WriteMSAADepth) && !hdrpAsset.renderPipelineSettings.supportMSAA)
+                return true;
 
-            // Decal case
+            // Note that this is only going to affect the deferred shader and for a debug case, so it won't save much.
+            if (inputData.shaderKeywordSet.IsEnabled(m_SubsurfaceScattering) && !hdrpAsset.renderPipelineSettings.supportSubsurfaceScattering)
+                return true;
+
+            // DECAL
+
+            // Identify when we compile a decal shader
+            bool isDecal3RTPass = false;
+            bool isDecal4RTPass = false;
+            bool isDecalPass = false;
+
+            if (snippet.passName.Contains("DBufferMesh") || snippet.passName.Contains("DBufferProjector"))
+            {
+                isDecalPass = true;
+
+                // All decal pass name:
+                // "ShaderGraph_DBufferMesh3RT" "ShaderGraph_DBufferProjector3RT" "DBufferMesh_3RT"
+                // "DBufferProjector_M" "DBufferProjector_AO" "DBufferProjector_MAO" "DBufferProjector_S" "DBufferProjector_MS" "DBufferProjector_AOS" "DBufferProjector_MAOS"
+                // "DBufferMesh_M" "DBufferMesh_AO" "DBufferMesh_MAO" "DBufferMesh_S" "DBufferMesh_MS" "DBufferMesh_AOS""DBufferMesh_MAOS"
+
+                // Caution: As mention in Decal.shader DBufferProjector_S is also DBufferProjector_3RT so this pass is both 4RT and 3RT
+                // there is a multi-compile to handle this pass, so it will be correctly removed by testing m_Decals3RT or m_Decals4RT
+                if (snippet.passName != "DBufferProjector_S")
+                {
+                    isDecal3RTPass = snippet.passName.Contains("3RT");
+                    isDecal4RTPass = !isDecal3RTPass;
+                }
+            }
 
             // If decal support, remove unused variant
             if (hdrpAsset.renderPipelineSettings.supportDecals)
@@ -66,29 +105,21 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                     return true;
 
                 // If decal but with 4RT remove 3RT variant and vice versa
-                if (inputData.shaderKeywordSet.IsEnabled(m_Decals3RT) && hdrpAsset.renderPipelineSettings.decalSettings.perChannelMask)
+                if ((inputData.shaderKeywordSet.IsEnabled(m_Decals3RT) || isDecal3RTPass) && hdrpAsset.renderPipelineSettings.decalSettings.perChannelMask)
                     return true;
 
-                if (inputData.shaderKeywordSet.IsEnabled(m_Decals4RT) && !hdrpAsset.renderPipelineSettings.decalSettings.perChannelMask)
+                if ((inputData.shaderKeywordSet.IsEnabled(m_Decals4RT) || isDecal4RTPass) && !hdrpAsset.renderPipelineSettings.decalSettings.perChannelMask)
                     return true;
             }
             else
             {
+                if (isDecalPass)
+                    return true;
+
                 // If no decal support, remove decal variant
                 if (inputData.shaderKeywordSet.IsEnabled(m_Decals3RT) || inputData.shaderKeywordSet.IsEnabled(m_Decals4RT))
                     return true;
             }
-
-            if (inputData.shaderKeywordSet.IsEnabled(m_LightLayers) && !hdrpAsset.renderPipelineSettings.supportLightLayers)
-                return true;
-
-           
-            if (inputData.shaderKeywordSet.IsEnabled(m_WriteMSAADepth) && !hdrpAsset.renderPipelineSettings.supportMSAA)
-                return true;
-
-            // Note that this is only going to affect the deferred shader and for a debug case, so it won't save much.
-            if (inputData.shaderKeywordSet.IsEnabled(m_SubsurfaceScattering) && !hdrpAsset.renderPipelineSettings.supportSubsurfaceScattering)
-                return true;
 
             return false;
         }

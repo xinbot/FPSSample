@@ -37,10 +37,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             }
         }
 
-        // sample-game begin: global tweak for shadow distance
-        public static float shadowDistanceMultiplier = 1.0f;
-        // sample-game end
-
         [Tooltip("Maximum shadow distance for all light types.")]
         public NoInterpMinFloatParameter        maxShadowDistance = new NoInterpMinFloatParameter(500.0f, 0.0f);
 
