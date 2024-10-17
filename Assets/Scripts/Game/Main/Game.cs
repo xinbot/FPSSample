@@ -1,7 +1,6 @@
 #define DEBUG_LOGGING
 using UnityEngine;
 using System.Collections.Generic;
-using Unity.Entities;
 using UnityEngine.Experimental.Rendering;
 using UnityEngine.Experimental.Rendering.HDPipeline;
 using System;
@@ -11,7 +10,6 @@ using SQP;
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
-
 
 public struct GameTime
 {
@@ -156,7 +154,6 @@ public class Game : MonoBehaviour
     {
         bool Init(string[] args);
         void Shutdown();
-
         void Update();
         void FixedUpdate();
         void LateUpdate();

@@ -35,7 +35,7 @@ public class StateHistoryInspectorWindow : EditorWindow
         var clientGameWorld = clientGameLoop.GetClientGameWorld();
         if(clientGameWorld == null)
             return;
-        ReplicatedEntityModuleClient repEntityModule = clientGameWorld.ReplicatedEntityModule;
+        ReplicatedEntityModuleClient repEntityModule = clientGameWorld.replicatedEntityModule;
         if(repEntityModule == null)
             return;
 
