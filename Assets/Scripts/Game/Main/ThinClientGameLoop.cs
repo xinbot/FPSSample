@@ -336,8 +336,8 @@ public class ThinClient : INetworkCallbacks, INetworkClientCallbacks
 
         GameDebug.Log("Network client initialized");
 
-        m_requestedPlayerSettings.playerName = ClientGameLoop.ClientPlayerName.Value;
-        m_requestedPlayerSettings.teamId = -1;
+        m_requestedPlayerSettings.PlayerName = ClientGameLoop.ClientPlayerName.Value;
+        m_requestedPlayerSettings.TeamId = -1;
     }
 
     public void Shutdown()
@@ -475,8 +475,8 @@ public class ThinClient : INetworkCallbacks, INetworkClientCallbacks
         GameDebug.Assert(m_clientWorld == null);
         GameDebug.Assert(m_NetworkClient.isConnected);
 
-        m_requestedPlayerSettings.playerName = "ThinPlayer";
-        m_requestedPlayerSettings.characterType = (short) Game.characterType.IntValue;
+        m_requestedPlayerSettings.PlayerName = "ThinPlayer";
+        m_requestedPlayerSettings.CharacterType = (short) Game.characterType.IntValue;
         m_playerSettingsUpdated = true;
 
         m_ClientState = ClientState.Loading;

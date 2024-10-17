@@ -55,10 +55,10 @@ public class ChatSystemServer
         {
             if (target != null)
             {
-                var fromLine = string.Format("<color=#ffffffff>[{0}:{1:00}]</color><color=#ff00ffff> [From {2}] {3}</color>", minutes, seconds, from.playerSettings.playerName, text);
+                var fromLine = string.Format("<color=#ffffffff>[{0}:{1:00}]</color><color=#ff00ffff> [From {2}] {3}</color>", minutes, seconds, from.playerSettings.PlayerName, text);
                 SendChatMessage(target.id, fromLine);
 
-                var toLine = string.Format("<color=#ffffffff>[{0}:{1:00}]</color><color=#ff00ffff> [To {2}] {3}</color>", minutes, seconds, target.playerSettings.playerName, text);
+                var toLine = string.Format("<color=#ffffffff>[{0}:{1:00}]</color><color=#ff00ffff> [To {2}] {3}</color>", minutes, seconds, target.playerSettings.PlayerName, text);
                 SendChatMessage(from.id, toLine);
             }
             else
@@ -68,8 +68,8 @@ public class ChatSystemServer
         {
             var marker = type == ChatMessageType.All ? "[All] " : "";
 
-            var friendly = string.Format("[{0}:{1:00}] <color=#1D89CC>{2}{3}</color> {4}", minutes, seconds, marker, from.playerSettings.playerName, text);
-            var hostile = string.Format("[{0}:{1:00}] <color=#FF3E3E>{2}{3}</color> {4}", minutes, seconds, marker, from.playerSettings.playerName, text);
+            var friendly = string.Format("[{0}:{1:00}] <color=#1D89CC>{2}{3}</color> {4}", minutes, seconds, marker, from.playerSettings.PlayerName, text);
+            var hostile = string.Format("[{0}:{1:00}] <color=#FF3E3E>{2}{3}</color> {4}", minutes, seconds, marker, from.playerSettings.PlayerName, text);
 
             var fromTeamIndex = from.player != null ? from.player.teamIndex : -1;
             foreach (var pair in m_Clients)
@@ -111,7 +111,7 @@ public class ChatSystemServer
                         var name = !String.IsNullOrEmpty(match2.Groups[1].Value) ? match2.Groups[1].Value : match2.Groups[2].Value;
                         foreach (var pair in m_Clients)
                         {
-                            if (pair.Value.playerSettings.playerName.Equals(name, StringComparison.InvariantCultureIgnoreCase))
+                            if (pair.Value.playerSettings.PlayerName.Equals(name, StringComparison.InvariantCultureIgnoreCase))
                             {
                                 target = pair.Value;
                                 m_ReplyTracker[target] = from;

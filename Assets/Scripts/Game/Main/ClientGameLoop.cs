@@ -567,8 +567,8 @@ public class ClientGameLoop : Game.IGameLoop, INetworkClientCallbacks
 
         GameDebug.Log("Network client initialized");
 
-        _requestedPlayerSettings.playerName = ClientPlayerName.Value;
-        _requestedPlayerSettings.teamId = -1;
+        _requestedPlayerSettings.PlayerName = ClientPlayerName.Value;
+        _requestedPlayerSettings.TeamId = -1;
 
         Console.AddCommand("disconnect", CmdDisconnect, "Disconnect from server if connected", GetHashCode());
         Console.AddCommand("prediction", CmdTogglePrediction, "Toggle prediction", GetHashCode());
@@ -669,11 +669,11 @@ public class ClientGameLoop : Game.IGameLoop, INetworkClientCallbacks
         _networkClient.SendData();
 
         // TODO (petera) merge with clientinfo 
-        if (_requestedPlayerSettings.playerName != ClientPlayerName.Value)
+        if (_requestedPlayerSettings.PlayerName != ClientPlayerName.Value)
         {
             // Cap name length
             ClientPlayerName.Value = ClientPlayerName.Value.Substring(0, Mathf.Min(ClientPlayerName.Value.Length, 16));
-            _requestedPlayerSettings.playerName = ClientPlayerName.Value;
+            _requestedPlayerSettings.PlayerName = ClientPlayerName.Value;
             _playerSettingsUpdated = true;
         }
 
@@ -763,8 +763,8 @@ public class ClientGameLoop : Game.IGameLoop, INetworkClientCallbacks
         GameDebug.Assert(_clientWorld == null);
         GameDebug.Assert(_networkClient.isConnected);
 
-        _requestedPlayerSettings.playerName = ClientPlayerName.Value;
-        _requestedPlayerSettings.characterType = (short) Game.characterType.IntValue;
+        _requestedPlayerSettings.PlayerName = ClientPlayerName.Value;
+        _requestedPlayerSettings.CharacterType = (short) Game.characterType.IntValue;
         _playerSettingsUpdated = true;
         _clientState = ClientState.Loading;
     }
@@ -962,7 +962,7 @@ public class ClientGameLoop : Game.IGameLoop, INetworkClientCallbacks
         // Request new char type
         if (args.Length == 1)
         {
-            _requestedPlayerSettings.characterType = short.Parse(args[0]);
+            _requestedPlayerSettings.CharacterType = short.Parse(args[0]);
             _playerSettingsUpdated = true;
         }
 
@@ -992,10 +992,10 @@ public class ClientGameLoop : Game.IGameLoop, INetworkClientCallbacks
         var charSetupRegistry = _resourceSystem.GetResourceRegistry<HeroTypeRegistry>();
         var charSetupCount = charSetupRegistry.entries.Count;
 
-        _requestedPlayerSettings.characterType += 1;
-        if (_requestedPlayerSettings.characterType >= charSetupCount)
+        _requestedPlayerSettings.CharacterType += 1;
+        if (_requestedPlayerSettings.CharacterType >= charSetupCount)
         {
-            _requestedPlayerSettings.characterType = 0;
+            _requestedPlayerSettings.CharacterType = 0;
         }
 
         _playerSettingsUpdated = true;
@@ -1018,7 +1018,7 @@ public class ClientGameLoop : Game.IGameLoop, INetworkClientCallbacks
             .HasComponent<SpectatorCamData>(_localPlayer.playerState.controlledEntity);
 
         // TODO find better way to identity spectator cam
-        _requestedPlayerSettings.characterType = isControllingSpectatorCam ? 0 : 1000;
+        _requestedPlayerSettings.CharacterType = isControllingSpectatorCam ? 0 : 1000;
         _playerSettingsUpdated = true;
     }
 
@@ -1034,9 +1034,9 @@ public class ClientGameLoop : Game.IGameLoop, INetworkClientCallbacks
             return;
         }
 
-        _requestedPlayerSettings.teamId = (short) (_localPlayer.playerState.teamIndex + 1);
-        if (_requestedPlayerSettings.teamId > 1)
-            _requestedPlayerSettings.teamId = 0;
+        _requestedPlayerSettings.TeamId = (short) (_localPlayer.playerState.teamIndex + 1);
+        if (_requestedPlayerSettings.TeamId > 1)
+            _requestedPlayerSettings.TeamId = 0;
         _playerSettingsUpdated = true;
     }
 

@@ -28,7 +28,9 @@ public struct GameTime
 
     private int _tickRate;
 
-    /// <summary>Number of ticks per second.</summary>
+    /// <summary>
+    /// Number of ticks per second.
+    /// </summary>
     public int tickRate
     {
         get => _tickRate;
@@ -89,9 +91,9 @@ public class EnumeratedArrayAttribute : PropertyAttribute
 {
     public readonly string[] Names;
 
-    public EnumeratedArrayAttribute(Type enumtype)
+    public EnumeratedArrayAttribute(Type enumType)
     {
-        Names = Enum.GetNames(enumtype);
+        Names = Enum.GetNames(enumType);
     }
 }
 

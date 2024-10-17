@@ -215,7 +215,7 @@ class Movement_Update : BaseComponentDataSystem<CharBehaviour, AbilityControl, A
             case CharacterPredictedData.LocoState.DoubleJump:
 
                 // In jump we overwrite velocity y component with linear movement up
-                velocity = CalculateGroundVelocity(velocity, ref command, Game.config.playerSpeed, Game.config.playerAirFriction, Game.config.playerAiracceleration, gameTime.TickDuration);
+                velocity = CalculateGroundVelocity(velocity, ref command, Game.config.playerSpeed, Game.config.playerAirFriction, Game.config.playerAirAcceleration, gameTime.TickDuration);
                 velocity.y = Game.config.jumpAscentHeight / Game.config.jumpAscentDuration;
                 deltaPos += velocity * gameTime.TickDuration;
 
@@ -224,7 +224,7 @@ class Movement_Update : BaseComponentDataSystem<CharBehaviour, AbilityControl, A
 
                 var gravity = Game.config.playerGravity;
                 velocity += Vector3.down * gravity * gameTime.TickDuration;
-                velocity = CalculateGroundVelocity(velocity, ref command, Game.config.playerSpeed, Game.config.playerAirFriction, Game.config.playerAiracceleration, gameTime.TickDuration);
+                velocity = CalculateGroundVelocity(velocity, ref command, Game.config.playerSpeed, Game.config.playerAirFriction, Game.config.playerAirAcceleration, gameTime.TickDuration);
 
                 if (velocity.y < -Game.config.maxFallVelocity)
                     velocity.y = -Game.config.maxFallVelocity;

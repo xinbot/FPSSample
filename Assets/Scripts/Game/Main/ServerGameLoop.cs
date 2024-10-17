@@ -99,21 +99,21 @@ public class ServerGameWorld : ISnapshotGenerator, IClientCommandProcessor
     char[] _msgBuf = new char[256];
     public void HandlePlayerSetupEvent(PlayerState player, PlayerSettings settings)
     {
-        if (player.playerName != settings.playerName)
+        if (player.playerName != settings.PlayerName)
         {
             int l = 0;
             if (player.playerName == "")
-                l = StringFormatter.Write(ref _msgBuf, 0, "{0} joined", settings.playerName);
+                l = StringFormatter.Write(ref _msgBuf, 0, "{0} joined", settings.PlayerName);
             else
-                l = StringFormatter.Write(ref _msgBuf, 0, "{0} is now known as {1}", player.playerName, settings.playerName);
+                l = StringFormatter.Write(ref _msgBuf, 0, "{0} is now known as {1}", player.playerName, settings.PlayerName);
             m_ChatSystem.SendChatAnnouncement(new CharBufView(_msgBuf, l));
-            player.playerName = settings.playerName;
+            player.playerName = settings.PlayerName;
         }
 
         var playerEntity = player.gameObject.GetComponent<GameObjectEntity>().Entity;
         var charControl = m_GameWorld.GetEntityManager().GetComponentObject<PlayerCharacterControl>(playerEntity);
 
-        charControl.requestedCharacterType = settings.characterType;
+        charControl.requestedCharacterType = settings.CharacterType;
     }
 
     public void ProcessCommand(int connectionId, int tick, ref NetworkReader data)
@@ -793,7 +793,7 @@ public class ServerGameLoop : Game.IGameLoop, INetworkCallbacks
         foreach (var c in m_Clients)
         {
             var client = c.Value;
-            Console.Write(string.Format("   {0:00} {1,-15}", client.id, client.playerSettings.playerName));
+            Console.Write(string.Format("   {0:00} {1,-15}", client.id, client.playerSettings.PlayerName));
         }
         Console.Write("-------------------");
         Console.Write(string.Format("Total: {0}/{0} players connected", m_Clients.Count, serverMaxClients.IntValue));

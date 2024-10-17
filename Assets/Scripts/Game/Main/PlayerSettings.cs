@@ -1,24 +1,20 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
-
-public class PlayerSettings 
+﻿public class PlayerSettings 
 {
-    public string playerName;
-    public int characterType;
-    public short teamId;
+    public string PlayerName;
+    public int CharacterType;
+    public short TeamId;
 
     public void Serialize(ref NetworkWriter writer)
     {
-        writer.WriteString("playerName", playerName);
-        writer.WriteInt16("characterType", (short)characterType);
-        writer.WriteInt16("teamId", teamId);
+        writer.WriteString("playerName", PlayerName);
+        writer.WriteInt16("characterType", (short)CharacterType);
+        writer.WriteInt16("teamId", TeamId);
     }
 
     public void Deserialize(ref NetworkReader reader)
     {
-        playerName = reader.ReadString();
-        characterType = reader.ReadInt16();
-        teamId = reader.ReadInt16();
+        PlayerName = reader.ReadString();
+        CharacterType = reader.ReadInt16();
+        TeamId = reader.ReadInt16();
     }
 }

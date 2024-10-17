@@ -1,14 +1,13 @@
 ﻿using UnityEngine;
 
-[CreateAssetMenu()]
-public class GameConfiguration: ScriptableObject
+[CreateAssetMenu(fileName = "GameConfiguration", menuName = "FPS Sample/GameConfiguration")]
+public class GameConfiguration : ScriptableObject
 {
-    [Header("Player movement")]
-    public float playerSpeed = 6.0f;
+    [Header("Player movement")] public float playerSpeed = 6.0f;
     public float playerSprintSpeed = 6.0f;
     public float playerAcceleration = 30.0f;
     public float playerFriction = 6.0f;
-    public float playerAiracceleration = 3.0f;
+    public float playerAirAcceleration = 3.0f;
     public float playerAirFriction = 3.0f;
     public float playerGravity = 9.82f;
     public bool easterBunny = false;
