@@ -2,11 +2,30 @@
 {
     public static class NetworkCompressionUtils
     {
+        private class Node
+        {
+            public byte Symbol;
+            public int Frequency;
+            public Node LeftChild;
+            public Node RightChild;
+        }
+
+        private struct SortEntry
+        {
+            public byte Symbol;
+            public int Frequency;
+        }
+
         public static int CalculateBucket(uint value)
         {
             int bucketIndex = 0;
-            while (bucketIndex + 1 < NetworkCompressionConstants.KNumBuckets && value >= NetworkCompressionConstants.KBucketOffsets[bucketIndex + 1]) // TODO: use CountLeadingZeros to do this in constant time
+            // TODO: use CountLeadingZeros to do this in constant time
+            while (bucketIndex + 1 < NetworkCompressionConstants.KNumBuckets &&
+                   value >= NetworkCompressionConstants.KBucketOffsets[bucketIndex + 1]
+            )
+            {
                 bucketIndex++;
+            }
 
             return bucketIndex;
         }
@@ -19,6 +38,7 @@
                 value >>= 1;
                 n++;
             }
+
             return 32 - n;
         }
 
@@ -26,18 +46,19 @@
         {
             int numOutputBits = 1;
             int numPrefixBits = 0;
-            while (value >= (1L << numOutputBits))  // RUTODO: Unroll this and merge with bit output. How do we actually verify inlining in C#?
+            while (value >= (1L << numOutputBits)
+            ) // RUTODO: Unroll this and merge with bit output. How do we actually verify inlining in C#?
             {
                 value -= (1L << numOutputBits);
                 numOutputBits += 2;
                 numPrefixBits++;
             }
+
             return numPrefixBits + 1 + numOutputBits;
         }
 
-
-
-        public static void GenerateLengthLimitedHuffmanCodeLengths(byte[] symbolLengths, int symbolLengthsOffset, int[] symbolFrequencies, int alphabetSize, int maxCodeLength)
+        public static void GenerateLengthLimitedHuffmanCodeLengths(byte[] symbolLengths, int symbolLengthsOffset,
+            int[] symbolFrequencies, int alphabetSize, int maxCodeLength)
         {
             GameDebug.Assert(alphabetSize <= 255);
             GameDebug.Assert(maxCodeLength <= 8);
@@ -53,8 +74,8 @@
                 if (frequency > 0)
                 {
                     lastNonZeroIndex = symbol;
-                    sortEntries[numSortEntries].frequency = frequency;
-                    sortEntries[numSortEntries].symbol = (byte)symbol;
+                    sortEntries[numSortEntries].Frequency = frequency;
+                    sortEntries[numSortEntries].Symbol = (byte) symbol;
                     numSortEntries++;
                 }
             }
@@ -66,7 +87,7 @@
             }
 
             System.Array.Resize(ref sortEntries, numSortEntries);
-            System.Array.Sort(sortEntries, (a, b) => a.frequency - b.frequency);
+            System.Array.Sort(sortEntries, (a, b) => a.Frequency - b.Frequency);
 
             int numNodes = alphabetSize * maxCodeLength * 2;
             var nodes = new Node[numNodes];
@@ -78,32 +99,34 @@
             int prevNodesPointer = 0;
             for (int length = 1; length <= maxCodeLength; length++)
             {
-                int num_a = numPrevNodes;
-                int num_b = numSortEntries;
+                int numA = numPrevNodes;
+                int numB = numSortEntries;
 
                 int aPointer = prevNodesPointer;
                 prevNodesPointer = nodesPointer;
                 numPrevNodes = 0;
-                while (num_a >= 2 || num_b > 0)
+                while (numA >= 2 || numB > 0)
                 {
-                    if (num_b > 0 && (num_a < 2 || sortEntries[numSortEntries - num_b].frequency <= nodes[aPointer + 0].frequency + nodes[aPointer + 1].frequency))
+                    if (numB > 0 && (numA < 2 || sortEntries[numSortEntries - numB].Frequency <=
+                        nodes[aPointer + 0].Frequency + nodes[aPointer + 1].Frequency))
                     {
-                        var e = sortEntries[numSortEntries - num_b];
+                        var e = sortEntries[numSortEntries - numB];
                         var node = nodes[nodesPointer++];
-                        node.frequency = e.frequency;
-                        node.symbol = e.symbol;
-                        num_b--;
+                        node.Frequency = e.Frequency;
+                        node.Symbol = e.Symbol;
+                        numB--;
                     }
                     else
                     {
                         var node = nodes[nodesPointer++];
-                        node.frequency = nodes[aPointer + 0].frequency + nodes[aPointer + 1].frequency;
-                        node.symbol = 0xFF;
-                        node.leftChild = nodes[aPointer + 0];
-                        node.rightChild = nodes[aPointer + 1];
-                        num_a -= 2;
+                        node.Frequency = nodes[aPointer + 0].Frequency + nodes[aPointer + 1].Frequency;
+                        node.Symbol = 0xFF;
+                        node.LeftChild = nodes[aPointer + 0];
+                        node.RightChild = nodes[aPointer + 1];
+                        numA -= 2;
                         aPointer += 2;
                     }
+
                     numPrevNodes++;
                 }
             }
@@ -115,38 +138,44 @@
             }
         }
 
-        public static void GenerateHuffmanCodes(byte[] symboLCodes, int symbolCodesOffset, byte[] symbolLengths, int symbolLengthsOffset, int alphabetSize, int maxCodeLength)
+        public static void GenerateHuffmanCodes(byte[] symbolCodes, int symbolCodesOffset, byte[] symbolLengths,
+            int symbolLengthsOffset, int alphabetSize, int maxCodeLength)
         {
             GameDebug.Assert(alphabetSize <= 256);
             GameDebug.Assert(maxCodeLength <= 8);
 
             var lengthCounts = new byte[maxCodeLength + 1];
-            var symbolList = new byte[maxCodeLength + 1, alphabetSize];
+            var symbolList = new byte[maxCodeLength + 1][];
+            for (var index = 0; index < maxCodeLength + 1; index++)
+            {
+                symbolList[index] = new byte[alphabetSize];
+            }
 
-            //byte[] symbol_list[(MAX_HUFFMAN_CODE_LENGTH + 1u) * MAX_NUM_HUFFMAN_SYMBOLS];
-            for (int symbol = 0; symbol < alphabetSize; symbol++)
+            for (var symbol = 0; symbol < alphabetSize; symbol++)
             {
                 int length = symbolLengths[symbol + symbolLengthsOffset];
                 GameDebug.Assert(length <= maxCodeLength);
-                symbolList[length, lengthCounts[length]++] = (byte)symbol;
+                symbolList[length][lengthCounts[length]++] = (byte) symbol;
             }
 
             uint nextCodeWord = 0;
-            for (int length = 1; length <= maxCodeLength; length++)
+            for (var length = 1; length <= maxCodeLength; length++)
             {
-                int length_count = lengthCounts[length];
-                for (int i = 0; i < length_count; i++)
+                int lengthCount = lengthCounts[length];
+                for (var i = 0; i < lengthCount; i++)
                 {
-                    int symbol = symbolList[length, i];
+                    int symbol = symbolList[length][i];
                     GameDebug.Assert(symbolLengths[symbol + symbolLengthsOffset] == length);
-                    symboLCodes[symbol + symbolCodesOffset] = (byte)ReverseBits(nextCodeWord++, length);
+                    symbolCodes[symbol + symbolCodesOffset] = (byte) ReverseBits(nextCodeWord++, length);
                 }
+
                 nextCodeWord <<= 1;
             }
         }
 
         // decode table entries: (symbol << 8) | length
-        public static void GenerateHuffmanDecodeTable(ushort[] decodeTable, int decodeTableOffset, byte[] symbolLengths, byte[] symbolCodes, int alphabetSize, int maxCodeLength)
+        public static void GenerateHuffmanDecodeTable(ushort[] decodeTable, int decodeTableOffset, byte[] symbolLengths,
+            byte[] symbolCodes, int alphabetSize, int maxCodeLength)
         {
             GameDebug.Assert(alphabetSize <= 256);
             GameDebug.Assert(maxCodeLength <= 8);
@@ -162,47 +191,33 @@
                     uint step = 1u << length;
                     do
                     {
-                        decodeTable[decodeTableOffset + code] = (ushort)(symbol << 8 | length);
+                        decodeTable[decodeTableOffset + code] = (ushort) (symbol << 8 | length);
                         code += step;
                     } while (code < maxCode);
                 }
             }
         }
 
-        private static uint ReverseBits(uint value, int num_bits)
+        private static uint ReverseBits(uint value, int numBits)
         {
             value = ((value & 0x55555555u) << 1) | ((value & 0xAAAAAAAAu) >> 1);
             value = ((value & 0x33333333u) << 2) | ((value & 0xCCCCCCCCu) >> 2);
             value = ((value & 0x0F0F0F0Fu) << 4) | ((value & 0xF0F0F0F0u) >> 4);
             value = ((value & 0x00FF00FFu) << 8) | ((value & 0xFF00FF00u) >> 8);
             value = (value << 16) | (value >> 16);
-            return value >> (32 - num_bits);
+            return value >> (32 - numBits);
         }
-
-        private class Node
-        {
-            public byte symbol;
-            public int frequency;
-            public Node leftChild;
-            public Node rightChild;
-        };
-
-        private struct SortEntry
-        {
-            public byte symbol;
-            public int frequency;
-        };
 
         private static void GenerateLengthLimitedHuffmanCodeLengthsRecursive(Node node, byte[] symbolLengths)
         {
-            if (node.symbol == 0xFF)
+            if (node.Symbol == 0xFF)
             {
-                GenerateLengthLimitedHuffmanCodeLengthsRecursive(node.leftChild, symbolLengths);
-                GenerateLengthLimitedHuffmanCodeLengthsRecursive(node.rightChild, symbolLengths);
+                GenerateLengthLimitedHuffmanCodeLengthsRecursive(node.LeftChild, symbolLengths);
+                GenerateLengthLimitedHuffmanCodeLengthsRecursive(node.RightChild, symbolLengths);
             }
             else
             {
-                symbolLengths[node.symbol]++;
+                symbolLengths[node.Symbol]++;
             }
         }
     }

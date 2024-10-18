@@ -795,7 +795,7 @@ unsafe public class NetworkServer
             output.WriteRawBits((uint)server.serverInfo.serverTickRate, 8);
             output.WriteRawBits(NetworkConfig.ProtocolVersion, 8);
 
-            byte[] modelData = server.serverInfo.compressionModel.modelData;
+            byte[] modelData = server.serverInfo.compressionModel.ModelData;
             output.WriteRawBits((uint)modelData.Length, 16);
             for (int i = 0; i < modelData.Length; i++)
                 output.WriteRawBits(modelData[i], 8);

@@ -60,7 +60,7 @@ namespace Networking.Compression
             FillBitBuffer();
             uint peekMask = (1u << NetworkCompressionConstants.KMaxHuffmanSymbolLength) - 1u;
             uint peekBits = (uint) _bitBuffer & peekMask;
-            ushort huffmanEntry = _model.decodeTable[context, peekBits];
+            ushort huffmanEntry = _model.DecodeTable[context, peekBits];
             int symbol = huffmanEntry >> 8;
             int length = huffmanEntry & 0xFF;
 
@@ -75,7 +75,7 @@ namespace Networking.Compression
             FillBitBuffer();
             uint peekMask = (1u << NetworkCompressionConstants.KMaxHuffmanSymbolLength) - 1u;
             uint peekBits = (uint) _bitBuffer & peekMask;
-            ushort huffmanEntry = _model.decodeTable[context, peekBits];
+            ushort huffmanEntry = _model.DecodeTable[context, peekBits];
             int symbol = huffmanEntry >> 8;
             int length = huffmanEntry & 0xFF;
 

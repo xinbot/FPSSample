@@ -57,7 +57,7 @@ namespace Networking.Compression
                 _capture.AddNibble(context, value);
             }
 
-            ushort encodeEntry = _model.encodeTable[context, value];
+            ushort encodeEntry = _model.EncodeTable[context, value];
             WriteRawBitsInternal((uint) (encodeEntry >> 8), encodeEntry & 0xFF);
             FlushBits();
         }
@@ -78,7 +78,7 @@ namespace Networking.Compression
 
             uint offset = NetworkCompressionConstants.KBucketOffsets[bucket];
             int bits = NetworkCompressionConstants.KBucketSizes[bucket];
-            ushort encodeEntry = _model.encodeTable[context, bucket];
+            ushort encodeEntry = _model.EncodeTable[context, bucket];
             WriteRawBitsInternal((uint) (encodeEntry >> 8), encodeEntry & 0xFF);
             WriteRawBitsInternal(value - offset, bits);
             FlushBits();

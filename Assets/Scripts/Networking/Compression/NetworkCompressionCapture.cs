@@ -176,7 +176,7 @@ namespace Networking.Compression
                     int n = histogram[i];
                     if (n > 0)
                     {
-                        int currentBitLength = model.encodeTable[context, i] & 0xFF;
+                        int currentBitLength = model.EncodeTable[context, i] & 0xFF;
                         int optimizedBitLength = optimizedSymbolLengths[i] & 0xFF;
                         currentCost += n * currentBitLength;
                         optimizedCost += n * optimizedBitLength;
