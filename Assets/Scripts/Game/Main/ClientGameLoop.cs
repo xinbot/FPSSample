@@ -789,7 +789,7 @@ public class ClientGameLoop : IGameLoop, INetworkClientCallbacks
 
         // Load if we are not already loading
         var level = Game.game.LevelManager.currentLevel;
-        if (level == null || level.name != _levelName)
+        if (level == null || level.Name != _levelName)
         {
             if (!Game.game.LevelManager.LoadLevel(_levelName))
             {
@@ -802,7 +802,7 @@ public class ClientGameLoop : IGameLoop, INetworkClientCallbacks
         }
 
         // Wait for level to be loaded
-        if (level.state == LevelState.Loaded)
+        if (level.State == LevelState.Loaded)
         {
             _stateMachine.SwitchTo(ClientState.Playing);
         }

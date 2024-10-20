@@ -27,9 +27,9 @@ public class EditorLevelManager
         var name = filename.Substring(0, filename.Length - 11);
 
         var layerPaths = new List<string>();
-        for (var i = 0; i < LevelManager.layerNames.Length; ++i)
+        for (var i = 0; i < LevelManager.LayerNames.Length; ++i)
         {
-            var layerPath = Path.Combine(dir, name + "_" + LevelManager.layerNames[i] + ".unity");
+            var layerPath = Path.Combine(dir, name + "_" + LevelManager.LayerNames[i] + ".unity");
             if (File.Exists(layerPath))
                 layerPaths.Add(layerPath.ToLower());
         }

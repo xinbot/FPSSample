@@ -514,7 +514,7 @@ public class ServerGameLoop : IGameLoop, INetworkCallbacks
         sid.Port = (ushort)NetworkConfig.ServerPort.IntValue;
         sid.CurrentPlayers = (ushort)m_Clients.Count;
         sid.GameType = GameModeSystemServer.modeName.Value;
-        sid.Map = Game.game.LevelManager.currentLevel.name;
+        sid.Map = Game.game.LevelManager.currentLevel.Name;
         sid.MaxPlayers = (ushort)serverMaxClients.IntValue;
         sid.ServerName = serverServerName.Value;
 
@@ -555,7 +555,7 @@ public class ServerGameLoop : IGameLoop, INetworkCallbacks
 
         m_NetworkServer.InitializeMap((ref NetworkWriter data) =>
         {
-            data.WriteString("name", Game.game.LevelManager.currentLevel.name);
+            data.WriteString("name", Game.game.LevelManager.currentLevel.Name);
         });
 
         m_serverGameWorld = new ServerGameWorld(m_GameWorld, m_NetworkServer, m_Clients, m_ChatSystem, m_resourceSystem);

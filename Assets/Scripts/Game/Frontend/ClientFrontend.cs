@@ -94,7 +94,7 @@ public class ClientFrontend : MonoBehaviour
             {
                 // What menu should we show?
                 // Show main menu if no level loaded or menu level loaded
-                if (Game.game.LevelManager.currentLevel == null || Game.game.LevelManager.currentLevel.name == "level_menu")
+                if (Game.game.LevelManager.currentLevel == null || Game.game.LevelManager.currentLevel.Name == "level_menu")
                     Console.EnqueueCommandNoHistory("menu 1 0.2");
                 else
                     Console.EnqueueCommandNoHistory("menu 2 0.2");
