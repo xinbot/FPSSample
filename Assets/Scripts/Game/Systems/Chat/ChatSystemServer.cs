@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
+using Networking;
 using UnityEngine;
 
 public class ChatSystemServer
@@ -15,7 +16,7 @@ public class ChatSystemServer
 
     public void ResetChatTime()
     {
-        m_StartTime = Game.Clock.ElapsedMilliseconds;
+        m_StartTime = Game.clock.ElapsedMilliseconds;
     }
 
     char[] _msgBuf = new char[256];
@@ -29,7 +30,7 @@ public class ChatSystemServer
     char[] _buf = new char[256];
     public void SendChatAnnouncement(CharBufView message)
     {
-        var time = (Game.Clock.ElapsedMilliseconds - m_StartTime) / 1000;
+        var time = (Game.clock.ElapsedMilliseconds - m_StartTime) / 1000;
         var minutes = (int)time / 60;
         var seconds = (int)time % 60;
 
@@ -46,7 +47,7 @@ public class ChatSystemServer
         ChatMessageType type;
         ServerGameLoop.ClientInfo target;
 
-        var time = (Game.Clock.ElapsedMilliseconds - m_StartTime) / 1000;
+        var time = (Game.clock.ElapsedMilliseconds - m_StartTime) / 1000;
         var minutes = time / 60;
         var seconds = time % 60;
 

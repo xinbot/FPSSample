@@ -70,7 +70,7 @@ public class GameModeSystemClient : ComponentSystem
             if(m_LocalPlayer)
             {
                 bool friendly = teamIndex == m_LocalPlayer.teamIndex;
-                teamColor = friendly ? Game.game.gameColors[(int)Game.GameColor.Friend]: Game.game.gameColors[(int)Game.GameColor.Enemy];
+                teamColor = friendly ? Game.game.gameColors[(int)GameColor.Friend]: Game.game.gameColors[(int)GameColor.Enemy];
                 scoreBoardColumn = friendly ? 0 : 1;
             }
 
@@ -146,8 +146,8 @@ public class GameModeSystemClient : ComponentSystem
 
         if(gameMode.teamScore0 >= 0 && gameMode.teamScore1 >= 0)
         {
-            var friendColor = Game.game.gameColors[(int)Game.GameColor.Friend];
-            var enemyColor = Game.game.gameColors[(int)Game.GameColor.Enemy];
+            var friendColor = Game.game.gameColors[(int)GameColor.Friend];
+            var enemyColor = Game.game.gameColors[(int)GameColor.Enemy];
             overlayUI.team1Score.Format("{0}", m_LocalPlayer.teamIndex == 0 ? gameMode.teamScore0 : gameMode.teamScore1);
             overlayUI.team1Score.color = friendColor;
             overlayUI.team2Score.Format("{0}", m_LocalPlayer.teamIndex == 0 ? gameMode.teamScore1 :  gameMode.teamScore0);

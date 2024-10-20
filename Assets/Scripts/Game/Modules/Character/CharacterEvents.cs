@@ -117,7 +117,7 @@ public class HandleCharacterEvents : ComponentSystem
 				if (Time.time > charEvents.lastFootstepTime + charEvents.minFootstepInterval)
 				{
 					var sound = charEvents.nextFootLeft ? charEvents.footstepLeft : charEvents.footstepRight;
-					Game.SoundSystem.Play(sound, charEvents.transform);
+					Game.soundSystem.Play(sound, charEvents.transform);
 					charEvents.nextFootLeft = !charEvents.nextFootLeft;
 					charEvents.lastFootstepTime = Time.time;
 				}
@@ -129,7 +129,7 @@ public class HandleCharacterEvents : ComponentSystem
 			{
 				if (charEvents.land != null)
 				{
-					Game.SoundSystem.Play(charEvents.land, charEvents.transform);
+					Game.soundSystem.Play(charEvents.land, charEvents.transform);
 					charEvents.onLand = false;
 					charEvents.onLand = false;
 				}
@@ -139,7 +139,7 @@ public class HandleCharacterEvents : ComponentSystem
 			{
 				if (charEvents.doubleJump != null)
 				{
-					Game.SoundSystem.Play(charEvents.doubleJump, charEvents.transform);
+					Game.soundSystem.Play(charEvents.doubleJump, charEvents.transform);
 					charEvents.onDoubleJump = false;
 				}
 			}
@@ -148,7 +148,7 @@ public class HandleCharacterEvents : ComponentSystem
 			{
 				if (charEvents.jumpStart != null)
 				{
-					Game.SoundSystem.Play(charEvents.jumpStart, charEvents.transform);
+					Game.soundSystem.Play(charEvents.jumpStart, charEvents.transform);
 					charEvents.onJumpStart = false;
 				}
 			}

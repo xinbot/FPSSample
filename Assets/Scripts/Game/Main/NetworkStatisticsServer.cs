@@ -86,11 +86,11 @@ internal class NetworkStatisticsServer
     double lastStatsTime = 0;
     void PrintStats()
     {
-        double timePassed = Game.frameTime - lastStatsTime;
-        lastStatsTime = Game.frameTime;
+        double timePassed = Game.FrameTime - lastStatsTime;
+        lastStatsTime = Game.FrameTime;
         GameDebug.Log("Network stats");
         GameDebug.Log("=============");
-        GameDebug.Log("Tick rate  : " + Game.serverTickRate.IntValue);
+        GameDebug.Log("Tick rate  : " + Game.ServerTickRate.IntValue);
         GameDebug.Log("Num netents: " + m_NetworkServer.NumEntities);
         Console.Write("--------------");
         Console.Write("Connections:");
@@ -105,13 +105,13 @@ internal class NetworkStatisticsServer
             var client = c.Value;
             Console.Write(string.Format("   {0:00} {1,5} {2,5} {3,5} {4,5} {5,5} {6:00.00} {7,5} {8:00.00} {9,5} {10,5}",
                 client.ConnectionId, client.RTT, client.InSequence, client.InSequenceTime, client.OutSequence, client.OutSequenceAck,
-                (client.counters.AvgPackagesIn.graph.average * Game.serverTickRate.FloatValue),
-                (int)(client.counters.AvgBytesIn.graph.average * Game.serverTickRate.FloatValue),
-                (client.counters.AvgPackagesOut.graph.average * Game.serverTickRate.FloatValue),
-                (int)(client.counters.AvgBytesOut.graph.average * Game.serverTickRate.FloatValue),
+                (client.counters.AvgPackagesIn.graph.average * Game.ServerTickRate.FloatValue),
+                (int)(client.counters.AvgBytesIn.graph.average * Game.ServerTickRate.FloatValue),
+                (client.counters.AvgPackagesOut.graph.average * Game.ServerTickRate.FloatValue),
+                (int)(client.counters.AvgBytesOut.graph.average * Game.ServerTickRate.FloatValue),
                 client.counters.FragmentedPackagesOut
                 ));
-            byteOutSum += (int)(client.counters.AvgBytesOut.graph.average * Game.serverTickRate.FloatValue);
+            byteOutSum += (int)(client.counters.AvgBytesOut.graph.average * Game.ServerTickRate.FloatValue);
             byteOutCount++;
         }
         if(byteOutCount > 0)
@@ -140,7 +140,7 @@ internal class NetworkStatisticsServer
     void DrawStats()
     {
         int y = 2;
-        DebugOverlay.Write(2, y++, "  tick rate: {0}", Game.serverTickRate.IntValue);
+        DebugOverlay.Write(2, y++, "  tick rate: {0}", Game.ServerTickRate.IntValue);
         DebugOverlay.Write(2, y++, "  entities:  {0}", m_NetworkServer.NumEntities);
 
         DebugOverlay.Write(2, y++, "  sim  : {0:0.0} / {1:0.0} / {2:0.0} ({3:0.0})",

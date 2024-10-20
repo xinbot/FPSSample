@@ -14,12 +14,12 @@ public class AmbientSoundEmitter : MonoBehaviour
         // TODO (petera) remove if once we get null soundsystem. Headless check needed
         // for headless clients
         if(!Game.IsHeadless())
-            handle = Game.SoundSystem.Play(sound);
+            handle = Game.soundSystem.Play(sound);
     }
 
     void OnDisable()
     {
         if (!Game.IsHeadless())
-            Game.SoundSystem.Stop(handle, 4.0f);
+            Game.soundSystem.Stop(handle, 4.0f);
     }
 }

@@ -46,7 +46,7 @@ public class HandleSpatialEffectRequests : BaseComponentSystem
 			}
 
 			if (request.effectDef.sound != null)
-				Game.SoundSystem.Play(request.effectDef.sound, request.position);
+				Game.soundSystem.Play(request.effectDef.sound, request.position);
 
 			if (request.effectDef.shockwave.enabled)
 			{

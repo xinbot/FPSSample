@@ -32,7 +32,7 @@ public class IngameHUD : MonoBehaviour
 
     public void ShowHitMarker(bool lethal)
     {
-        Game.SoundSystem.Play(lethal ? m_LethalHitSound : m_HitMarkerSound);
+        Game.soundSystem.Play(lethal ? m_LethalHitSound : m_HitMarkerSound);
         m_Crosshair.ShowHitMarker(lethal);
     }
 

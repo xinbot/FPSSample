@@ -65,7 +65,7 @@ public class PlayerModuleClient
         
         // Only sample input when cursor is locked to avoid affecting multiple clients running on same machine (TODO: find better handling of selected window)
         if (userInputEnabled)
-            Game.inputSystem.AccumulateInput(ref localPlayer.command, deltaTime);
+            Game.InputSystem.AccumulateInput(ref localPlayer.command, deltaTime);
 
         if (m_debugMove.IntValue == 1)
         {
@@ -107,10 +107,10 @@ public class PlayerModuleClient
     {
         // Clear keys and resample to make sure released keys gets detected.
         // Pass in 0 as deltaTime to make mouse input and view stick do nothing
-        Game.inputSystem.ClearInput(ref m_LocalPlayer.command);
+        Game.InputSystem.ClearInput(ref m_LocalPlayer.command);
 
         if (userInputEnabled)
-            Game.inputSystem.AccumulateInput(ref m_LocalPlayer.command, 0.0f);
+            Game.InputSystem.AccumulateInput(ref m_LocalPlayer.command, 0.0f);
     }
 
     public void HandleCommandReset()

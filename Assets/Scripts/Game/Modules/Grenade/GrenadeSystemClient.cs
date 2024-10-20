@@ -38,7 +38,7 @@ public class ApplyGrenadePresentation : BaseComponentSystem
             if(interpolatedState.bouncetick > grenadeClient.bounceTick)
             {
                 grenadeClient.bounceTick = interpolatedState.bouncetick;
-                Game.SoundSystem.Play(grenadeClient.bounceSound, interpolatedState.position);
+                Game.soundSystem.Play(grenadeClient.bounceSound, interpolatedState.position);
             }
             
             if (interpolatedState.exploded == 1 && !grenadeClient.exploded)

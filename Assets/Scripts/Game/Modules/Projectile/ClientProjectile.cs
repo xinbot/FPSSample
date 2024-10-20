@@ -53,11 +53,11 @@ public class ClientProjectile : MonoBehaviour
 
         if (thrustSound && isVisible)
         {
-            m_ThrustSoundHandle = Game.SoundSystem.Play(thrustSound, gameObject.transform);
+            m_ThrustSoundHandle = Game.soundSystem.Play(thrustSound, gameObject.transform);
         }
         else if (m_ThrustSoundHandle.IsValid() && !isVisible)
         {
-            Game.SoundSystem.Stop(m_ThrustSoundHandle);
+            Game.soundSystem.Stop(m_ThrustSoundHandle);
         }
 
         var lights = GetComponentsInChildren<Light>();

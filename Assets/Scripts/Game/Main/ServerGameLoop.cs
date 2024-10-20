@@ -305,7 +305,7 @@ public class ServerGameWorld : ISnapshotGenerator, IClientCommandProcessor
 
 
 
-public class ServerGameLoop : Game.IGameLoop, INetworkCallbacks
+public class ServerGameLoop : IGameLoop, INetworkCallbacks
 {
     public bool Init(string[] args)
     {
@@ -345,7 +345,7 @@ public class ServerGameLoop : Game.IGameLoop, INetworkCallbacks
 
 
 #if UNITY_EDITOR        
-        Game.game.levelManager.UnloadLevel();
+        Game.game.LevelManager.UnloadLevel();
 #endif        
         m_GameWorld = new GameWorld("ServerWorld");
 
@@ -383,7 +383,7 @@ public class ServerGameLoop : Game.IGameLoop, INetworkCallbacks
         m_NetworkServer.Shutdown();
 
         m_NetworkTransport.Shutdown();
-        Game.game.levelManager.UnloadLevel();
+        Game.game.LevelManager.UnloadLevel();
 
         m_GameWorld.Shutdown();
         m_GameWorld = null;
@@ -410,7 +410,7 @@ public class ServerGameLoop : Game.IGameLoop, INetworkCallbacks
             Console.EnqueueCommandNoHistory("quit");
         }
 
-        m_SimStartTime = Game.Clock.ElapsedTicks;
+        m_SimStartTime = Game.clock.ElapsedTicks;
         m_SimStartTimeTick = m_serverGameWorld != null ? m_serverGameWorld.WorldTick : 0;
 
         UpdateNetwork();
@@ -505,8 +505,8 @@ public class ServerGameLoop : Game.IGameLoop, INetworkCallbacks
             ConfigVar.DirtyFlags &= ~ConfigVar.Flags.ServerInfo;
         }
 
-        if (m_serverGameWorld != null && m_serverGameWorld.TickRate != Game.serverTickRate.IntValue)
-            m_serverGameWorld.TickRate = Game.serverTickRate.IntValue;
+        if (m_serverGameWorld != null && m_serverGameWorld.TickRate != Game.ServerTickRate.IntValue)
+            m_serverGameWorld.TickRate = Game.ServerTickRate.IntValue;
 
         // Update SQP data with current values
         var sid = m_ServerQueryProtocolServer.ServerInfoData;
@@ -514,7 +514,7 @@ public class ServerGameLoop : Game.IGameLoop, INetworkCallbacks
         sid.Port = (ushort)NetworkConfig.ServerPort.IntValue;
         sid.CurrentPlayers = (ushort)m_Clients.Count;
         sid.GameType = GameModeSystemServer.modeName.Value;
-        sid.Map = Game.game.levelManager.currentLevel.name;
+        sid.Map = Game.game.LevelManager.currentLevel.name;
         sid.MaxPlayers = (ushort)serverMaxClients.IntValue;
         sid.ServerName = serverServerName.Value;
 
@@ -538,7 +538,7 @@ public class ServerGameLoop : Game.IGameLoop, INetworkCallbacks
     /// </summary>
     void UpdateLoadingState()
     {
-        if (Game.game.levelManager.IsCurrentLevelLoaded())
+        if (Game.game.LevelManager.IsCurrentLevelLoaded())
             m_StateMachine.SwitchTo(ServerState.Active);
     }
 
@@ -555,7 +555,7 @@ public class ServerGameLoop : Game.IGameLoop, INetworkCallbacks
 
         m_NetworkServer.InitializeMap((ref NetworkWriter data) =>
         {
-            data.WriteString("name", Game.game.levelManager.currentLevel.name);
+            data.WriteString("name", Game.game.LevelManager.currentLevel.name);
         });
 
         m_serverGameWorld = new ServerGameWorld(m_GameWorld, m_NetworkServer, m_Clients, m_ChatSystem, m_resourceSystem);
@@ -571,7 +571,7 @@ public class ServerGameLoop : Game.IGameLoop, INetworkCallbacks
         GameDebug.Assert(m_serverGameWorld != null);
 
         int tickCount = 0;
-        while (Game.frameTime > m_nextTickTime)
+        while (Game.FrameTime > m_nextTickTime)
         {
             tickCount++;
             m_serverGameWorld.ServerTickUpdate();
@@ -595,7 +595,7 @@ public class ServerGameLoop : Game.IGameLoop, INetworkCallbacks
         //
         if (Game.IsHeadless())
         {
-            float remainTime = (float)(m_nextTickTime - Game.frameTime);
+            float remainTime = (float)(m_nextTickTime - Game.FrameTime);
 
             int rate = m_serverGameWorld.TickRate;
             if (remainTime > 0.75f * m_serverGameWorld.TickInterval)
@@ -645,7 +645,7 @@ public class ServerGameLoop : Game.IGameLoop, INetworkCallbacks
         {
             // Only update sim time if we actually simulatated
             // TODO : remove this when targetFrameRate works the way we want it.
-            m_LastSimTime = Game.Clock.GetTicksDeltaAsMilliseconds(m_SimStartTime);
+            m_LastSimTime = Game.clock.GetTicksDeltaAsMilliseconds(m_SimStartTime);
         }
 
         if (m_performLateUpdate)
@@ -657,14 +657,14 @@ public class ServerGameLoop : Game.IGameLoop, INetworkCallbacks
 
     void LoadLevel(string levelname, string gamemode = "deathmatch")
     {
-        if (!Game.game.levelManager.CanLoadLevel(levelname))
+        if (!Game.game.LevelManager.CanLoadLevel(levelname))
         {
             GameDebug.Log("ERROR : Cannot load level : " + levelname);
             return;
         }
 
         m_RequestedGameMode = gamemode;
-        Game.game.levelManager.LoadLevel(levelname);
+        Game.game.LevelManager.LoadLevel(levelname);
 
         m_StateMachine.SwitchTo(ServerState.Loading);
     }

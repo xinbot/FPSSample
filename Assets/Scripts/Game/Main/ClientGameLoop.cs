@@ -422,7 +422,7 @@ public class ClientGameWorld
             GameDebug.Log(string.Format("CATCHUP ({0} -> {1})", _predictedTime.Tick, preferredTick));
 
             _networkStatisticsClient.notifyHardCatchup = true;
-            _gameWorld.nextTickTime = Game.frameTime;
+            _gameWorld.nextTickTime = Game.FrameTime;
             _predictedTime.Tick = preferredTick;
             _predictedTime.SetTime(preferredTick, 0);
         }
@@ -480,7 +480,7 @@ public class ClientGameWorld
     }
 }
 
-public class ClientGameLoop : Game.IGameLoop, INetworkClientCallbacks
+public class ClientGameLoop : IGameLoop, INetworkClientCallbacks
 {
     private enum ClientState
     {
@@ -549,7 +549,7 @@ public class ClientGameLoop : Game.IGameLoop, INetworkClientCallbacks
         _stateMachine.Add(ClientState.Playing, EnterPlayingState, UpdatePlayingState, LeavePlayingState);
 
 #if UNITY_EDITOR
-        Game.game.levelManager.UnloadLevel();
+        Game.game.LevelManager.UnloadLevel();
 #endif
         _gameWorld = new GameWorld("ClientWorld");
 
@@ -764,7 +764,7 @@ public class ClientGameLoop : Game.IGameLoop, INetworkClientCallbacks
         GameDebug.Assert(_networkClient.isConnected);
 
         _requestedPlayerSettings.PlayerName = ClientPlayerName.Value;
-        _requestedPlayerSettings.CharacterType = (short) Game.characterType.IntValue;
+        _requestedPlayerSettings.CharacterType = (short) Game.CharacterType.IntValue;
         _playerSettingsUpdated = true;
         _clientState = ClientState.Loading;
     }
@@ -788,17 +788,17 @@ public class ClientGameLoop : Game.IGameLoop, INetworkClientCallbacks
         }
 
         // Load if we are not already loading
-        var level = Game.game.levelManager.currentLevel;
+        var level = Game.game.LevelManager.currentLevel;
         if (level == null || level.name != _levelName)
         {
-            if (!Game.game.levelManager.LoadLevel(_levelName))
+            if (!Game.game.LevelManager.LoadLevel(_levelName))
             {
                 _disconnectReason = $"could not load requested level '{_levelName}'";
                 _networkClient.Disconnect();
                 return;
             }
 
-            level = Game.game.levelManager.currentLevel;
+            level = Game.game.LevelManager.currentLevel;
         }
 
         // Wait for level to be loaded
@@ -810,7 +810,7 @@ public class ClientGameLoop : Game.IGameLoop, INetworkClientCallbacks
 
     private void EnterPlayingState()
     {
-        GameDebug.Assert(_clientWorld == null && Game.game.levelManager.IsCurrentLevelLoaded());
+        GameDebug.Assert(_clientWorld == null && Game.game.LevelManager.IsCurrentLevelLoaded());
 
         _gameWorld.RegisterSceneEntities();
 
@@ -856,8 +856,8 @@ public class ClientGameLoop : Game.IGameLoop, INetworkClientCallbacks
             CmdNextTeam(null);
         }
 
-        float frameDuration = _lastFrameTime != 0 ? (float) (Game.frameTime - _lastFrameTime) : 0;
-        _lastFrameTime = Game.frameTime;
+        float frameDuration = _lastFrameTime != 0 ? (float) (Game.FrameTime - _lastFrameTime) : 0;
+        _lastFrameTime = Game.FrameTime;
 
         _clientWorld.Update(frameDuration);
         _performGameWorldLateUpdate = true;
@@ -883,7 +883,7 @@ public class ClientGameLoop : Game.IGameLoop, INetworkClientCallbacks
             Game.game.clientFrontend.ShowMenu(ClientFrontend.MenuShowing.None);
         }
 
-        Game.game.levelManager.LoadLevel("level_menu");
+        Game.game.LevelManager.LoadLevel("level_menu");
 
         GameDebug.Log("Left playing state");
     }
@@ -978,7 +978,7 @@ public class ClientGameLoop : Game.IGameLoop, INetworkClientCallbacks
             return;
         }
 
-        if (Game.allowCharChange.IntValue != 1)
+        if (Game.AllowCharChange.IntValue != 1)
         {
             return;
         }
@@ -1009,7 +1009,7 @@ public class ClientGameLoop : Game.IGameLoop, INetworkClientCallbacks
             return;
         }
 
-        if (Game.allowCharChange.IntValue != 1)
+        if (Game.AllowCharChange.IntValue != 1)
         {
             return;
         }
@@ -1029,7 +1029,7 @@ public class ClientGameLoop : Game.IGameLoop, INetworkClientCallbacks
             return;
         }
 
-        if (Game.allowCharChange.IntValue != 1)
+        if (Game.AllowCharChange.IntValue != 1)
         {
             return;
         }

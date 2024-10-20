@@ -97,24 +97,24 @@ public class EnumeratedArrayAttribute : PropertyAttribute
     }
 }
 
+public interface IGameLoop
+{
+    bool Init(string[] args);
+    void Shutdown();
+    void Update();
+    void FixedUpdate();
+    void LateUpdate();
+}
+
+public enum GameColor
+{
+    Friend,
+    Enemy
+}
+
 [DefaultExecutionOrder(-1000)]
 public class Game : MonoBehaviour
 {
-    public delegate void UpdateDelegate();
-
-    public WeakAssetReference movableBoxPrototype;
-
-    // Color scheme configurable? (cvars?)
-    public enum GameColor
-    {
-        Friend,
-        Enemy
-    }
-
-    [EnumeratedArray(typeof(GameColor))] public Color[] gameColors;
-
-    public GameStatistics m_GameStatistics { get; private set; }
-
     public static class Input
     {
         [Flags]
@@ -126,114 +126,118 @@ public class Game : MonoBehaviour
             Debug = 4,
         }
 
-        static Blocker blocks;
+        private static Blocker _blocks;
 
         public static void SetBlock(Blocker b, bool value)
         {
             if (value)
-                blocks |= b;
+            {
+                _blocks |= b;
+            }
             else
-                blocks &= ~b;
+            {
+                _blocks &= ~b;
+            }
         }
 
         internal static float GetAxisRaw(string axis)
         {
-            return blocks != Blocker.None ? 0.0f : UnityEngine.Input.GetAxisRaw(axis);
+            return _blocks != Blocker.None ? 0.0f : UnityEngine.Input.GetAxisRaw(axis);
         }
 
         internal static bool GetKey(KeyCode key)
         {
-            return blocks != Blocker.None ? false : UnityEngine.Input.GetKey(key);
+            return _blocks != Blocker.None ? false : UnityEngine.Input.GetKey(key);
         }
 
         internal static bool GetKeyDown(KeyCode key)
         {
-            return blocks != Blocker.None ? false : UnityEngine.Input.GetKeyDown(key);
+            return _blocks != Blocker.None ? false : UnityEngine.Input.GetKeyDown(key);
         }
 
         internal static bool GetMouseButton(int button)
         {
-            return blocks != Blocker.None ? false : UnityEngine.Input.GetMouseButton(button);
+            return _blocks != Blocker.None ? false : UnityEngine.Input.GetMouseButton(button);
         }
 
         internal static bool GetKeyUp(KeyCode key)
         {
-            return blocks != Blocker.None ? false : UnityEngine.Input.GetKeyUp(key);
+            return _blocks != Blocker.None ? false : UnityEngine.Input.GetKeyUp(key);
         }
     }
 
-    public interface IGameLoop
-    {
-        bool Init(string[] args);
-        void Shutdown();
-        void Update();
-        void FixedUpdate();
-        void LateUpdate();
-    }
+    public delegate void UpdateDelegate();
+
+    public event UpdateDelegate EndUpdateEvent;
 
     public static Game game;
-    public event UpdateDelegate endUpdateEvent;
+    public WeakAssetReference movableBoxPrototype;
+
+    [EnumeratedArray(typeof(GameColor))] public Color[] gameColors;
+
+    public GameStatistics gameStatistics { get; private set; }
 
     // Vars owned by server and replicated to clients
-    [ConfigVar(Name = "server.tickrate", DefaultValue = "60", Description = "Tickrate for server",
+    [ConfigVar(Name = "server.tickrate", DefaultValue = "60", Description = "Tick rate for server",
         Flags = ConfigVar.Flags.ServerInfo)]
-    public static ConfigVar serverTickRate;
+    public static ConfigVar ServerTickRate;
 
     [ConfigVar(Name = "config.fov", DefaultValue = "60", Description = "Field of view", Flags = ConfigVar.Flags.Save)]
-    public static ConfigVar configFov;
+    public static ConfigVar ConfigFov;
 
     [ConfigVar(Name = "config.mousesensitivity", DefaultValue = "1.5", Description = "Mouse sensitivity",
         Flags = ConfigVar.Flags.Save)]
-    public static ConfigVar configMouseSensitivity;
+    public static ConfigVar ConfigMouseSensitivity;
 
     [ConfigVar(Name = "config.inverty", DefaultValue = "0", Description = "Invert y mouse axis",
         Flags = ConfigVar.Flags.Save)]
-    public static ConfigVar configInvertY;
+    public static ConfigVar ConfigInvertY;
 
     [ConfigVar(Name = "debug.catchloop", DefaultValue = "1",
         Description = "Catch exceptions in gameloop and pause game", Flags = ConfigVar.Flags.None)]
-    public static ConfigVar debugCatchLoop;
+    public static ConfigVar DebugCatchLoop;
 
     [ConfigVar(Name = "chartype", DefaultValue = "-1",
         Description = "Character to start with (-1 uses default character)")]
-    public static ConfigVar characterType;
+    public static ConfigVar CharacterType;
 
     [ConfigVar(Name = "allowcharchange", DefaultValue = "1", Description = "Is changing character allowed")]
-    public static ConfigVar allowCharChange;
+    public static ConfigVar AllowCharChange;
 
     [ConfigVar(Name = "debug.cpuprofile", DefaultValue = "0", Description = "Profile and dump cpu usage")]
-    public static ConfigVar debugCpuProfile;
+    public static ConfigVar DebugCpuProfile;
 
     [ConfigVar(Name = "net.dropevents", DefaultValue = "0",
         Description = "Drops a fraction of all packages containing events!!")]
-    public static ConfigVar netDropEvents;
+    public static ConfigVar NetDropEvents;
 
-    static readonly string k_UserConfigFilename = "user.cfg";
-    public static readonly string k_BootConfigFilename = "boot.cfg";
+    public static readonly string UserConfigFilename = "user.cfg";
+    public static readonly string BootConfigFilename = "boot.cfg";
 
-    public static GameConfiguration config;
-    public static InputSystem inputSystem;
+    public static GameConfiguration Config;
+    public static InputSystem InputSystem;
 
     public UnityEngine.Audio.AudioMixer audioMixer;
     public SoundBank defaultBank;
     public Camera bootCamera;
+    public ClientFrontend clientFrontend;
 
-    public LevelManager levelManager;
-    public SQPClient sqpClient;
+    public LevelManager LevelManager;
+    public SQPClient SqpClient;
 
-    public static double frameTime;
+    public static double FrameTime;
 
     public static bool IsHeadless()
     {
-        return game.m_isHeadless;
+        return game._isHeadless;
     }
 
-    public static ISoundSystem SoundSystem
+    public static ISoundSystem soundSystem
     {
-        get { return game.m_SoundSystem; }
+        get { return game._soundSystem; }
     }
 
-    public static int GameLoopCount
+    public static int gameLoopCount
     {
         get { return game == null ? 0 : 1; }
     }
@@ -241,20 +245,24 @@ public class Game : MonoBehaviour
     public static T GetGameLoop<T>() where T : class
     {
         if (game == null)
-            return null;
-        foreach (var gameLoop in game.m_gameLoops)
         {
-            T result = gameLoop as T;
-            if (result != null)
+            return null;
+        }
+
+        foreach (var gameLoop in game._gameLoops)
+        {
+            if (gameLoop is T result)
+            {
                 return result;
+            }
         }
 
         return null;
     }
 
-    public static System.Diagnostics.Stopwatch Clock
+    public static System.Diagnostics.Stopwatch clock
     {
-        get { return game.m_Clock; }
+        get { return game._clock; }
     }
 
     public string buildId
@@ -262,14 +270,12 @@ public class Game : MonoBehaviour
         get { return _buildId; }
     }
 
-    string _buildId = "NoBuild";
-
-    public void RequestGameLoop(System.Type type, string[] args)
+    public void RequestGameLoop(Type type, string[] args)
     {
         GameDebug.Assert(typeof(IGameLoop).IsAssignableFrom(type));
 
-        m_RequestedGameLoopTypes.Add(type);
-        m_RequestedGameLoopArguments.Add(args);
+        _requestedGameLoopTypes.Add(type);
+        _requestedGameLoopArguments.Add(args);
         GameDebug.Log("Game loop " + type + " requested");
     }
 
@@ -280,11 +286,43 @@ public class Game : MonoBehaviour
     {
         var idx = args.IndexOf(option);
         if (idx < 0)
+        {
             return null;
+        }
+
         if (idx < args.Count - 1)
+        {
             return args[idx + 1];
+        }
+
         return "";
     }
+
+    // Global camera handling
+    private readonly List<Camera> _cameraStack = new List<Camera>();
+    private AutoExposure _exposure;
+    private PostProcessVolume _exposureVolume;
+
+    private DebugOverlay _debugOverlay;
+    private ISoundSystem _soundSystem;
+    private System.Diagnostics.Stopwatch _clock;
+
+    private long _stopwatchFrequency;
+    private int _exposureReleaseCount;
+    private string _buildId = "NoBuild";
+
+    private bool _isHeadless;
+    private bool _pipeSetup;
+    private bool _errorState;
+    private float _nextCpuProfileTime;
+    private double _lastCpuUsage;
+    private double _lastCpuUsageUser;
+
+    private static int _mouseLockFrameNo;
+
+    private readonly List<Type> _requestedGameLoopTypes = new List<Type>();
+    private readonly List<IGameLoop> _gameLoops = new List<IGameLoop>();
+    private readonly List<string[]> _requestedGameLoopArguments = new List<string[]>();
 
     public void Awake()
     {
@@ -292,33 +330,39 @@ public class Game : MonoBehaviour
         DontDestroyOnLoad(gameObject);
         game = this;
 
-        m_StopwatchFrequency = System.Diagnostics.Stopwatch.Frequency;
-        m_Clock = new System.Diagnostics.Stopwatch();
-        m_Clock.Start();
+        _stopwatchFrequency = System.Diagnostics.Stopwatch.Frequency;
+        _clock = new System.Diagnostics.Stopwatch();
+        _clock.Start();
 
         var buildInfo = FindObjectOfType<BuildInfo>();
         if (buildInfo != null)
+        {
             _buildId = buildInfo.buildId;
+        }
 
-        var commandLineArgs = new List<string>(System.Environment.GetCommandLineArgs());
+        var commandLineArgs = new List<string>(Environment.GetCommandLineArgs());
 
 #if UNITY_STANDALONE_LINUX
         m_isHeadless = true;
 #else
-        m_isHeadless = commandLineArgs.Contains("-batchmode");
+        _isHeadless = commandLineArgs.Contains("-batchmode");
 #endif
         var consoleRestoreFocus = commandLineArgs.Contains("-consolerestorefocus");
 
-        if (m_isHeadless)
+        if (_isHeadless)
         {
 #if UNITY_STANDALONE_WIN
             string consoleTitle;
 
             var overrideTitle = ArgumentForOption(commandLineArgs, "-title");
             if (overrideTitle != null)
+            {
                 consoleTitle = overrideTitle;
+            }
             else
+            {
                 consoleTitle = Application.productName + " Console";
+            }
 
             consoleTitle += " [" + System.Diagnostics.Process.GetCurrentProcess().Id + "]";
 
@@ -337,18 +381,11 @@ public class Game : MonoBehaviour
             DontDestroyOnLoad(consoleUI);
             Console.Init(consoleUI);
 
-            m_DebugOverlay = Instantiate(Resources.Load<DebugOverlay>("DebugOverlay"));
-            DontDestroyOnLoad(m_DebugOverlay);
-            m_DebugOverlay.Init();
-            /*
-            var hdpipe = RenderPipelineManager.currentPipeline as HDRenderPipeline;
-            if (hdpipe != null)
-            {
-                hdpipe.DebugLayer2DCallback = DebugOverlay.Render;
-                hdpipe.DebugLayer3DCallback = DebugOverlay.Render3D;
-            }
-            */
-            m_GameStatistics = new GameStatistics();
+            _debugOverlay = Instantiate(Resources.Load<DebugOverlay>("DebugOverlay"));
+            DontDestroyOnLoad(_debugOverlay);
+            _debugOverlay.Init();
+
+            gameStatistics = new GameStatistics();
         }
 
         // If -logfile was passed, we try to put our own logs next to the engine's logfile
@@ -359,7 +396,7 @@ public class Game : MonoBehaviour
             engineLogFileLocation = System.IO.Path.GetDirectoryName(commandLineArgs[logfileArgIdx + 1]);
         }
 
-        var logName = m_isHeadless ? "game_" + DateTime.UtcNow.ToString("yyyyMMdd_HHmmss_fff") : "game";
+        var logName = _isHeadless ? "game_" + DateTime.UtcNow.ToString("yyyyMMdd_HHmmss_fff") : "game";
         GameDebug.Init(engineLogFileLocation, logName);
 
         ConfigVar.Init();
@@ -367,25 +404,32 @@ public class Game : MonoBehaviour
         // Support -port and -query_port as per Multiplay standard
         var serverPort = ArgumentForOption(commandLineArgs, "-port");
         if (serverPort != null)
+        {
             Console.EnqueueCommandNoHistory("server.port " + serverPort);
+        }
 
         var sqpPort = ArgumentForOption(commandLineArgs, "-query_port");
         if (sqpPort != null)
+        {
             Console.EnqueueCommandNoHistory("server.sqp_port " + sqpPort);
+        }
 
-        Console.EnqueueCommandNoHistory("exec -s " + k_UserConfigFilename);
+        Console.EnqueueCommandNoHistory("exec -s " + UserConfigFilename);
 
         // Default is to allow no frame cap, i.e. as fast as possible if vsync is disabled
         Application.targetFrameRate = -1;
 
-        if (m_isHeadless)
+        if (_isHeadless)
         {
-            Application.targetFrameRate = serverTickRate.IntValue;
-            QualitySettings.vSyncCount = 0; // Needed to make targetFramerate work; even in headless mode
+            Application.targetFrameRate = ServerTickRate.IntValue;
+            // Needed to make Target Frame Rate work; even in headless mode
+            QualitySettings.vSyncCount = 0;
 
 #if !UNITY_STANDALONE_LINUX
             if (!commandLineArgs.Contains("-nographics"))
+            {
                 GameDebug.Log("WARNING: running -batchmod without -nographics");
+            }
 #endif
         }
         else
@@ -396,29 +440,28 @@ public class Game : MonoBehaviour
         // Out of the box game behaviour is driven by boot.cfg unless you ask it not to
         if (!commandLineArgs.Contains("-noboot"))
         {
-            Console.EnqueueCommandNoHistory("exec -s " + k_BootConfigFilename);
+            Console.EnqueueCommandNoHistory("exec -s " + BootConfigFilename);
         }
 
-
-        if (m_isHeadless)
+        if (_isHeadless)
         {
-            m_SoundSystem = new SoundSystemNull();
+            _soundSystem = new SoundSystemNull();
         }
         else
         {
-            m_SoundSystem = new SoundSystem();
-            m_SoundSystem.Init(audioMixer);
-            m_SoundSystem.MountBank(defaultBank);
+            _soundSystem = new SoundSystem();
+            _soundSystem.Init(audioMixer);
+            _soundSystem.MountBank(defaultBank);
 
-            GameObject go =
-                (GameObject) GameObject.Instantiate(Resources.Load("Prefabs/ClientFrontend", typeof(GameObject)));
-            UnityEngine.Object.DontDestroyOnLoad(go);
+            var go = (GameObject) Instantiate(Resources.Load("Prefabs/ClientFrontend", typeof(GameObject)));
+            DontDestroyOnLoad(go);
             clientFrontend = go.GetComponentInChildren<ClientFrontend>();
         }
 
-        sqpClient = new SQPClient();
+        SqpClient = new SQPClient();
 
         GameDebug.Log("FPS Sample initialized");
+
 #if UNITY_EDITOR
         GameDebug.Log("Build type: editor");
 #elif DEVELOPMENT_BUILD
@@ -426,22 +469,23 @@ public class Game : MonoBehaviour
 #else
         GameDebug.Log("Build type: release");
 #endif
+
         GameDebug.Log("BuildID: " + buildId);
         GameDebug.Log("Cwd: " + System.IO.Directory.GetCurrentDirectory());
 
         SimpleBundleManager.Init();
         GameDebug.Log("SimpleBundleManager initialized");
 
-        levelManager = new LevelManager();
-        levelManager.Init();
+        LevelManager = new LevelManager();
+        LevelManager.Init();
         GameDebug.Log("LevelManager initialized");
 
-        inputSystem = new InputSystem();
+        InputSystem = new InputSystem();
         GameDebug.Log("InputSystem initialized");
 
         // TODO (petera) added Instantiate here to avoid making changes to asset file.
         // Feels like maybe SO is not really the right tool here.
-        config = Instantiate((GameConfiguration) Resources.Load("GameConfiguration"));
+        Config = Instantiate((GameConfiguration) Resources.Load("GameConfiguration"));
         GameDebug.Log("Loaded game config");
 
         // Game loops
@@ -457,7 +501,7 @@ public class Game : MonoBehaviour
         Console.AddCommand("quit", CmdQuit, "Quits");
         Console.AddCommand("screenshot", CmdScreenshot,
             "Capture screenshot. Optional argument is destination folder or filename.");
-        Console.AddCommand("crashme", (string[] args) => { GameDebug.Assert(false); }, "Crashes the game next frame ");
+        Console.AddCommand("crashme", (args) => { GameDebug.Assert(false); }, "Crashes the game next frame ");
         Console.AddCommand("saveconfig", CmdSaveConfig, "Save the user config variables");
         Console.AddCommand("loadconfig", CmdLoadConfig, "Load the user config variables");
 
@@ -473,148 +517,160 @@ public class Game : MonoBehaviour
 
     public Camera TopCamera()
     {
-        var c = m_CameraStack.Count;
-        return c == 0 ? null : m_CameraStack[c - 1];
+        var count = _cameraStack.Count;
+        return count == 0 ? null : _cameraStack[count - 1];
     }
 
     public void PushCamera(Camera cam)
     {
-        if (m_CameraStack.Count > 0)
-            SetCameraEnabled(m_CameraStack[m_CameraStack.Count - 1], false);
-        m_CameraStack.Add(cam);
+        if (_cameraStack.Count > 0)
+        {
+            SetCameraEnabled(_cameraStack[_cameraStack.Count - 1], false);
+        }
+
+        _cameraStack.Add(cam);
         SetCameraEnabled(cam, true);
-        m_ExposureReleaseCount = 10;
+        _exposureReleaseCount = 10;
     }
 
-    public void BlackFade(bool enabled)
+    public void BlackFade(bool active)
     {
-        if (m_Exposure != null)
-            m_Exposure.active = enabled;
+        if (_exposure != null)
+        {
+            _exposure.active = active;
+        }
     }
 
     public void PopCamera(Camera cam)
     {
-        GameDebug.Assert(m_CameraStack.Count > 1, "Trying to pop last camera off stack!");
-        GameDebug.Assert(cam == m_CameraStack[m_CameraStack.Count - 1]);
+        GameDebug.Assert(_cameraStack.Count > 1, "Trying to pop last camera off stack!");
+        GameDebug.Assert(cam == _cameraStack[_cameraStack.Count - 1]);
         if (cam != null)
+        {
             SetCameraEnabled(cam, false);
-        m_CameraStack.RemoveAt(m_CameraStack.Count - 1);
-        SetCameraEnabled(m_CameraStack[m_CameraStack.Count - 1], true);
+        }
+
+        _cameraStack.RemoveAt(_cameraStack.Count - 1);
+        SetCameraEnabled(_cameraStack[_cameraStack.Count - 1], true);
     }
 
-    void SetCameraEnabled(Camera cam, bool enabled)
+    private void SetCameraEnabled(Camera cam, bool state)
     {
-        if (enabled)
+        if (state)
+        {
             RenderSettings.UpdateCameraSettings(cam);
+        }
 
-        cam.enabled = enabled;
+        cam.enabled = state;
         var audioListener = cam.GetComponent<AudioListener>();
         if (audioListener != null)
         {
-            audioListener.enabled = enabled;
-            if (SoundSystem != null)
-                SoundSystem.SetCurrentListener(enabled ? audioListener : null);
+            audioListener.enabled = state;
+            soundSystem?.SetCurrentListener(state ? audioListener : null);
         }
     }
 
-    void OnDestroy()
+    private void OnDestroy()
     {
         GameDebug.Shutdown();
         Console.Shutdown();
-        if (m_DebugOverlay != null)
-            m_DebugOverlay.Shutdown();
+        if (_debugOverlay != null)
+        {
+            _debugOverlay.Shutdown();
+        }
     }
-
-    bool pipeSetup = false;
 
     public void Update()
     {
-        if (!m_isHeadless)
+        if (!_isHeadless)
+        {
             RenderSettings.Update();
+        }
 
         // TODO (petera) remove this hack once we know exactly when renderer is available...
-        if (!pipeSetup)
+        if (!_pipeSetup)
         {
-            var hdpipe = RenderPipelineManager.currentPipeline as HDRenderPipeline;
-            if (hdpipe != null)
+            if (RenderPipelineManager.currentPipeline is HDRenderPipeline)
             {
-                //hdpipe.DebugLayer2DCallback = DebugOverlay.Render;
-                //hdpipe.DebugLayer3DCallback = DebugOverlay.Render3D;
-
                 var layer = LayerMask.NameToLayer("PostProcess Volumes");
                 if (layer == -1)
+                {
                     GameDebug.LogWarning("Unable to find layer mask for camera fader");
+                }
                 else
                 {
-                    m_Exposure = ScriptableObject.CreateInstance<AutoExposure>();
-                    m_Exposure.active = false;
-                    m_Exposure.enabled.Override(true);
-                    m_Exposure.keyValue.Override(0);
-                    m_ExposureVolume = PostProcessManager.instance.QuickVolume(layer, 100.0f, m_Exposure);
+                    _exposure = ScriptableObject.CreateInstance<AutoExposure>();
+                    _exposure.active = false;
+                    _exposure.enabled.Override(true);
+                    _exposure.keyValue.Override(0);
+                    _exposureVolume = PostProcessManager.instance.QuickVolume(layer, 100.0f, _exposure);
                 }
 
-                pipeSetup = true;
+                _pipeSetup = true;
             }
         }
 
-        if (m_ExposureReleaseCount > 0)
+        if (_exposureReleaseCount > 0)
         {
-            m_ExposureReleaseCount--;
-            if (m_ExposureReleaseCount == 0)
+            _exposureReleaseCount--;
+            if (_exposureReleaseCount == 0)
+            {
                 BlackFade(false);
+            }
         }
 
         // Verify if camera was somehow destroyed and pop it
-        if (m_CameraStack.Count > 1 && m_CameraStack[m_CameraStack.Count - 1] == null)
+        if (_cameraStack.Count > 1 && _cameraStack[_cameraStack.Count - 1] == null)
         {
             PopCamera(null);
         }
 
 #if UNITY_EDITOR
-        // Ugly hack to force focus to game view when using scriptable renderloops.
+        // Ugly hack to force focus to game view when using scriptable render loops.
         if (Time.frameCount < 4)
         {
             try
             {
-                var gameViewType = typeof(UnityEditor.EditorWindow).Assembly.GetType("UnityEditor.GameView");
+                var gameViewType = typeof(EditorWindow).Assembly.GetType("UnityEditor.GameView");
                 var gameView = (EditorWindow) Resources.FindObjectsOfTypeAll(gameViewType)[0];
                 gameView.Focus();
             }
-            catch (System.Exception)
+            catch (Exception)
             {
                 /* too bad */
             }
         }
 #endif
 
-        frameTime = (double) m_Clock.ElapsedTicks / m_StopwatchFrequency;
+        FrameTime = (double) _clock.ElapsedTicks / _stopwatchFrequency;
 
         // Switch game loop if needed
-        if (m_RequestedGameLoopTypes.Count > 0)
+        if (_requestedGameLoopTypes.Count > 0)
         {
             // Multiple running gameloops only allowed in editor
 #if !UNITY_EDITOR
             ShutdownGameLoops();
 #endif
             bool initSucceeded = false;
-            for (int i = 0; i < m_RequestedGameLoopTypes.Count; i++)
+            for (int i = 0; i < _requestedGameLoopTypes.Count; i++)
             {
                 try
                 {
-                    IGameLoop gameLoop = (IGameLoop) System.Activator.CreateInstance(m_RequestedGameLoopTypes[i]);
-                    initSucceeded = gameLoop.Init(m_RequestedGameLoopArguments[i]);
+                    IGameLoop gameLoop = (IGameLoop) Activator.CreateInstance(_requestedGameLoopTypes[i]);
+                    initSucceeded = gameLoop.Init(_requestedGameLoopArguments[i]);
                     if (!initSucceeded)
+                    {
                         break;
+                    }
 
-                    m_gameLoops.Add(gameLoop);
+                    _gameLoops.Add(gameLoop);
                 }
-                catch (System.Exception e)
+                catch (Exception e)
                 {
                     GameDebug.Log(string.Format("Game loop initialization threw exception : ({0})\n{1}", e.Message,
                         e.StackTrace));
                 }
             }
-
 
             if (!initSucceeded)
             {
@@ -623,33 +679,37 @@ public class Game : MonoBehaviour
                 GameDebug.Log("Game loop initialization failed ... reverting to boot loop");
             }
 
-            m_RequestedGameLoopTypes.Clear();
-            m_RequestedGameLoopArguments.Clear();
+            _requestedGameLoopTypes.Clear();
+            _requestedGameLoopArguments.Clear();
         }
 
         try
         {
-            if (!m_ErrorState)
+            if (!_errorState)
             {
-                foreach (var gameLoop in m_gameLoops)
+                foreach (var gameLoop in _gameLoops)
                 {
                     gameLoop.Update();
                 }
 
-                levelManager.Update();
+                LevelManager.Update();
             }
         }
-        catch (System.Exception e)
+        catch (Exception e)
         {
-            HandleGameloopException(e);
+            HandleGameLoopException(e);
             throw;
         }
 
-        if (m_SoundSystem != null)
-            m_SoundSystem.Update();
+        if (_soundSystem != null)
+        {
+            _soundSystem.Update();
+        }
 
         if (clientFrontend != null)
+        {
             clientFrontend.UpdateGame();
+        }
 
         Console.ConsoleUpdate();
 
@@ -657,16 +717,14 @@ public class Game : MonoBehaviour
 
         UpdateCPUStats();
 
-        sqpClient.Update();
+        SqpClient.Update();
 
-        endUpdateEvent?.Invoke();
+        EndUpdateEvent?.Invoke();
     }
-
-    bool m_ErrorState;
 
     public void FixedUpdate()
     {
-        foreach (var gameLoop in m_gameLoops)
+        foreach (var gameLoop in _gameLoops)
         {
             gameLoop.FixedUpdate();
         }
@@ -676,9 +734,9 @@ public class Game : MonoBehaviour
     {
         try
         {
-            if (!m_ErrorState)
+            if (!_errorState)
             {
-                foreach (var gameLoop in m_gameLoops)
+                foreach (var gameLoop in _gameLoops)
                 {
                     gameLoop.LateUpdate();
                 }
@@ -686,17 +744,21 @@ public class Game : MonoBehaviour
                 Console.ConsoleLateUpdate();
             }
         }
-        catch (System.Exception e)
+        catch (Exception e)
         {
-            HandleGameloopException(e);
+            HandleGameLoopException(e);
             throw;
         }
 
-        if (m_GameStatistics != null)
-            m_GameStatistics.TickLateUpdate();
+        if (gameStatistics != null)
+        {
+            gameStatistics.TickLateUpdate();
+        }
 
-        if (m_DebugOverlay != null)
-            m_DebugOverlay.TickLateUpdate();
+        if (_debugOverlay != null)
+        {
+            _debugOverlay.TickLateUpdate();
+        }
     }
 
     void OnApplicationQuit()
@@ -708,114 +770,98 @@ public class Game : MonoBehaviour
         ShutdownGameLoops();
     }
 
-    float m_NextCpuProfileTime = 0;
-    double m_LastCpuUsage = 0;
-    double m_LastCpuUsageUser = 0;
-
-    void UpdateCPUStats()
+    private void UpdateCPUStats()
     {
-        if (debugCpuProfile.IntValue > 0)
+        if (DebugCpuProfile.IntValue <= 0)
         {
-            if (Time.time > m_NextCpuProfileTime)
-            {
-                const float interval = 5.0f;
-                m_NextCpuProfileTime = Time.time + interval;
-                var process = System.Diagnostics.Process.GetCurrentProcess();
-                var user = process.UserProcessorTime.TotalMilliseconds;
-                var total = process.TotalProcessorTime.TotalMilliseconds;
-                float userUsagePct = (float) (user - m_LastCpuUsageUser) / 10.0f / interval;
-                float totalUsagePct = (float) (total - m_LastCpuUsage) / 10.0f / interval;
-                m_LastCpuUsage = total;
-                m_LastCpuUsageUser = user;
-                GameDebug.Log(string.Format("CPU Usage {0}% (user: {1}%)", totalUsagePct, userUsagePct));
-            }
-        }
-    }
-
-
-    public void LoadLevel(string levelname)
-    {
-        if (!Game.game.levelManager.CanLoadLevel(levelname))
-        {
-            GameDebug.Log("ERROR : Cannot load level : " + levelname);
             return;
         }
 
-        Game.game.levelManager.LoadLevel(levelname);
-    }
-
-    void UnloadLevel()
-    {
-        // TODO
-    }
-
-    void HandleGameloopException(System.Exception e)
-    {
-        if (debugCatchLoop.IntValue > 0)
+        if (Time.time > _nextCpuProfileTime)
         {
-            GameDebug.Log("EXCEPTION " + e.Message + "\n" + e.StackTrace);
-            Console.SetOpen(true);
-            m_ErrorState = true;
+            const float interval = 5.0f;
+            _nextCpuProfileTime = Time.time + interval;
+            var process = System.Diagnostics.Process.GetCurrentProcess();
+            var user = process.UserProcessorTime.TotalMilliseconds;
+            var total = process.TotalProcessorTime.TotalMilliseconds;
+            float userUsagePct = (float) (user - _lastCpuUsageUser) / 10.0f / interval;
+            float totalUsagePct = (float) (total - _lastCpuUsage) / 10.0f / interval;
+            _lastCpuUsage = total;
+            _lastCpuUsageUser = user;
+            GameDebug.Log($"CPU Usage {totalUsagePct}% (user: {userUsagePct}%)");
         }
     }
 
-    string FindNewFilename(string pattern)
+    private void LoadLevel(string levelName)
     {
-        for (var i = 0; i < 10000; i++)
+        if (!game.LevelManager.CanLoadLevel(levelName))
         {
-            var f = string.Format(pattern, i);
-            if (System.IO.File.Exists(string.Format(pattern, i)))
-                continue;
-            return f;
+            GameDebug.Log("ERROR : Cannot load level : " + levelName);
+            return;
         }
 
-        return null;
+        game.LevelManager.LoadLevel(levelName);
     }
 
-    void ShutdownGameLoops()
+    private void HandleGameLoopException(Exception e)
     {
-        foreach (var gameLoop in m_gameLoops)
+        if (DebugCatchLoop.IntValue <= 0)
+        {
+            return;
+        }
+
+        GameDebug.Log("EXCEPTION " + e.Message + "\n" + e.StackTrace);
+        Console.SetOpen(true);
+        _errorState = true;
+    }
+
+    private void ShutdownGameLoops()
+    {
+        foreach (var gameLoop in _gameLoops)
+        {
             gameLoop.Shutdown();
-        m_gameLoops.Clear();
+        }
+
+        _gameLoops.Clear();
     }
 
-    void CmdPreview(string[] args)
+    private void CmdPreview(string[] args)
     {
         RequestGameLoop(typeof(PreviewGameLoop), args);
         Console.s_PendingCommandsWaitForFrames = 1;
     }
 
-    void CmdServe(string[] args)
+    private void CmdServe(string[] args)
     {
         RequestGameLoop(typeof(ServerGameLoop), args);
         Console.s_PendingCommandsWaitForFrames = 1;
     }
 
-    void CmdLoad(string[] args)
+    private void CmdLoad(string[] args)
     {
         LoadLevel(args[0]);
         Console.SetOpen(false);
     }
 
-    void CmdBoot(string[] args)
+    private void CmdBoot(string[] args)
     {
         clientFrontend.ShowMenu(ClientFrontend.MenuShowing.None);
-        levelManager.UnloadLevel();
+        LevelManager.UnloadLevel();
         ShutdownGameLoops();
         Console.s_PendingCommandsWaitForFrames = 1;
         Console.SetOpen(true);
     }
 
-    void CmdClient(string[] args)
+    private void CmdClient(string[] args)
     {
         RequestGameLoop(typeof(ClientGameLoop), args);
         Console.s_PendingCommandsWaitForFrames = 1;
     }
 
-    void CmdConnect(string[] args)
+    private void CmdConnect(string[] args)
     {
         // Special hack to allow "connect a.b.c.d" as shorthand
-        if (m_gameLoops.Count == 0)
+        if (_gameLoops.Count == 0)
         {
             RequestGameLoop(typeof(ClientGameLoop), args);
             Console.s_PendingCommandsWaitForFrames = 1;
@@ -825,20 +871,26 @@ public class Game : MonoBehaviour
         ClientGameLoop clientGameLoop = GetGameLoop<ClientGameLoop>();
         ThinClientGameLoop thinClientGameLoop = GetGameLoop<ThinClientGameLoop>();
         if (clientGameLoop != null)
+        {
             clientGameLoop.CmdConnect(args);
+        }
         else if (thinClientGameLoop != null)
+        {
             thinClientGameLoop.CmdConnect(args);
+        }
         else
-            GameDebug.Log("Cannot connect from current gamemode");
+        {
+            GameDebug.Log("Cannot connect from current game mode");
+        }
     }
 
-    void CmdThinClient(string[] args)
+    private void CmdThinClient(string[] args)
     {
         RequestGameLoop(typeof(ThinClientGameLoop), args);
         Console.s_PendingCommandsWaitForFrames = 1;
     }
 
-    void CmdQuit(string[] args)
+    private void CmdQuit(string[] args)
     {
 #if UNITY_EDITOR
         EditorApplication.isPlaying = false;
@@ -847,35 +899,55 @@ public class Game : MonoBehaviour
 #endif
     }
 
-    void CmdScreenshot(string[] arguments)
+    private void CmdScreenshot(string[] arguments)
     {
+        string FindNewFilename(string pattern)
+        {
+            for (var i = 0; i < 10000; i++)
+            {
+                var path = string.Format(pattern, i);
+                if (System.IO.File.Exists(path))
+                {
+                    continue;
+                }
+
+                return path;
+            }
+
+            return null;
+        }
+
         string filename = null;
         var root = System.IO.Path.GetFullPath(".");
         if (arguments.Length == 0)
-            filename = FindNewFilename(root + "/screenshot{0}.png");
+        {
+            filename = FindNewFilename($"/screenshot{root}.png");
+        }
         else if (arguments.Length == 1)
         {
-            var a = arguments[0];
-            if (System.IO.Directory.Exists(a))
-                filename = FindNewFilename(a + "/screenshot{0}.png");
-            else if (!System.IO.File.Exists(a))
-                filename = a;
+            var arg = arguments[0];
+            if (System.IO.Directory.Exists(arg))
+            {
+                filename = FindNewFilename($"/screenshot{arg}.png");
+            }
+            else if (!System.IO.File.Exists(arg))
+            {
+                filename = arg;
+            }
             else
             {
-                Console.Write("File " + a + " already exists");
+                Console.Write($"File {arg} already exists");
                 return;
             }
         }
 
         if (filename != null)
         {
-            GameDebug.Log("Saving screenshot to " + filename);
+            GameDebug.Log($"Saving screenshot to {filename}");
             Console.SetOpen(false);
             ScreenCapture.CaptureScreenshot(filename);
         }
     }
-
-    public ClientFrontend clientFrontend;
 
     private void CmdMenu(string[] args)
     {
@@ -884,9 +956,13 @@ public class Game : MonoBehaviour
         if (args.Length > 0)
         {
             if (args[0] == "0")
+            {
                 show = ClientFrontend.MenuShowing.None;
+            }
             else if (args[0] == "2")
+            {
                 show = ClientFrontend.MenuShowing.Ingame;
+            }
         }
 
         if (args.Length > 1)
@@ -898,18 +974,18 @@ public class Game : MonoBehaviour
         Console.SetOpen(false);
     }
 
-    void CmdSaveConfig(string[] arguments)
+    private void CmdSaveConfig(string[] arguments)
     {
-        ConfigVar.Save(k_UserConfigFilename);
+        ConfigVar.Save(UserConfigFilename);
     }
 
-    void CmdLoadConfig(string[] arguments)
+    private void CmdLoadConfig(string[] arguments)
     {
-        Console.EnqueueCommandNoHistory("exec " + k_UserConfigFilename);
+        Console.EnqueueCommandNoHistory("exec " + UserConfigFilename);
     }
 
 #if UNITY_STANDALONE_WIN
-    void CmdWindowPosition(string[] arguments)
+    private void CmdWindowPosition(string[] arguments)
     {
         if (arguments.Length == 1)
         {
@@ -934,14 +1010,14 @@ public class Game : MonoBehaviour
 
     public static void RequestMousePointerLock()
     {
-        s_bMouseLockFrameNo = Time.frameCount + 1;
+        _mouseLockFrameNo = Time.frameCount + 1;
     }
 
     public static void SetMousePointerLock(bool locked)
     {
         Cursor.lockState = locked ? CursorLockMode.Locked : CursorLockMode.None;
         Cursor.visible = !locked;
-        s_bMouseLockFrameNo = Time.frameCount; // prevent default handling in WindowFocusUpdate overriding requests
+        _mouseLockFrameNo = Time.frameCount; // prevent default handling in WindowFocusUpdate overriding requests
     }
 
     public static bool GetMousePointerLock()
@@ -949,12 +1025,12 @@ public class Game : MonoBehaviour
         return Cursor.lockState == CursorLockMode.Locked;
     }
 
-    void WindowFocusUpdate()
+    private void WindowFocusUpdate()
     {
         bool menusShowing = (clientFrontend != null && clientFrontend.menuShowing != ClientFrontend.MenuShowing.None);
         bool lockWhenClicked = !menusShowing && !Console.IsOpen();
 
-        if (s_bMouseLockFrameNo == Time.frameCount)
+        if (_mouseLockFrameNo == Time.frameCount)
         {
             SetMousePointerLock(true);
             return;
@@ -964,10 +1040,14 @@ public class Game : MonoBehaviour
         {
             // Default behaviour when no menus or anything. Catch mouse on click, release on escape.
             if (UnityEngine.Input.GetMouseButtonUp(0) && !GetMousePointerLock())
+            {
                 SetMousePointerLock(true);
+            }
 
             if (UnityEngine.Input.GetKeyUp(KeyCode.Escape) && GetMousePointerLock())
+            {
                 SetMousePointerLock(false);
+            }
         }
         else
         {
@@ -978,23 +1058,4 @@ public class Game : MonoBehaviour
             }
         }
     }
-
-    List<Type> m_RequestedGameLoopTypes = new List<System.Type>();
-    private List<string[]> m_RequestedGameLoopArguments = new List<string[]>();
-
-    // Global camera handling
-    List<Camera> m_CameraStack = new List<Camera>();
-    AutoExposure m_Exposure;
-    PostProcessVolume m_ExposureVolume;
-    int m_ExposureReleaseCount;
-
-    List<IGameLoop> m_gameLoops = new List<IGameLoop>();
-    DebugOverlay m_DebugOverlay;
-    ISoundSystem m_SoundSystem;
-
-    bool m_isHeadless;
-    long m_StopwatchFrequency;
-    System.Diagnostics.Stopwatch m_Clock;
-
-    static int s_bMouseLockFrameNo;
 }

@@ -26,7 +26,7 @@ public class SoundTimelineMixerBehaviour : PlayableBehaviour
             {
                 input.triggered = false;
 
-                if (Game.SoundSystem == null)
+                if (Game.soundSystem == null)
                 {
                     GameDebug.LogWarning("SoundTimeline: You should not try to play sound with no soundsystem");
                     return;
@@ -36,7 +36,7 @@ public class SoundTimelineMixerBehaviour : PlayableBehaviour
                 switch (input.position)
                 {
                     case SoundTimelineBehaviour.SoundPosition.None:
-                        Game.SoundSystem.Play(input.sound);
+                        Game.soundSystem.Play(input.sound);
                         break;
                     case SoundTimelineBehaviour.SoundPosition.Position:
                         if(trackBinding == null)
@@ -44,7 +44,7 @@ public class SoundTimelineMixerBehaviour : PlayableBehaviour
                             GameDebug.LogError("Cant play timeline sound as no transform is defined for track. Sound:" + input.sound.name);
                             break;
                         }
-                        Game.SoundSystem.Play(input.sound, trackBinding.position);
+                        Game.soundSystem.Play(input.sound, trackBinding.position);
                         break;
                     case SoundTimelineBehaviour.SoundPosition.Follow:
                         if (trackBinding == null)
@@ -52,7 +52,7 @@ public class SoundTimelineMixerBehaviour : PlayableBehaviour
                             GameDebug.LogError("Cant play timeline sound as no transform is defined for track. Sound:"  + input.sound.name);
                             break;
                         }
-                        Game.SoundSystem.Play(input.sound, trackBinding);
+                        Game.soundSystem.Play(input.sound, trackBinding);
                         break;
                 }
                 Profiler.EndSample();    

@@ -158,7 +158,7 @@ public class LevelManager
                 // Do activation here?
                 currentLevel.state = LevelState.Loaded;
 
-                if (Game.GameLoopCount == 1)
+                if (Game.gameLoopCount == 1)
                 {
                     if (Game.GetGameLoop<ServerGameLoop>() != null)
                         StripCode(BuildType.Server, true);

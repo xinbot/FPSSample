@@ -103,9 +103,9 @@ public class NetworkStatisticsClient
         }
 
         // Pass on a few key stats to gamestatistics
-        if (Game.game.m_GameStatistics != null)
+        if (Game.game.gameStatistics != null)
         {
-            Game.game.m_GameStatistics.rtt = Mathf.RoundToInt(m_RTT.average);
+            Game.game.gameStatistics.rtt = Mathf.RoundToInt(m_RTT.average);
         }
 
         Profiler.EndSample();
@@ -115,7 +115,7 @@ public class NetworkStatisticsClient
     {
         GameDebug.Log("Network stats");
         GameDebug.Log("=============");
-        GameDebug.Log("Tick rate : " + Game.serverTickRate.IntValue);
+        GameDebug.Log("Tick rate : " + Game.ServerTickRate.IntValue);
         GameDebug.Log("clientID  : " + m_NetworkClient.clientId);
         GameDebug.Log("rtt       : " + m_NetworkClient.rtt);
         GameDebug.Log("LastPkgSeq: " + m_NetworkClient.counters.PackageContentStatsPackageSequence);

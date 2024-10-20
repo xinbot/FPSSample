@@ -426,8 +426,8 @@ public class BuildTools
            "client",
            "load level_menu"
         };
-        File.WriteAllLines(buildPath + "/" + Game.k_BootConfigFilename, bootCfg);
-        Debug.Log("  " + Game.k_BootConfigFilename);
+        File.WriteAllLines(buildPath + "/" + Game.BootConfigFilename, bootCfg);
+        Debug.Log("  " + Game.BootConfigFilename);
 
         Debug.Log("Writing steam upload bat file.");
         var steamBat = new string[]
@@ -551,8 +551,8 @@ public class BuildTools
            "game.modename assault",
            "serve level_01"
         };
-        File.WriteAllLines(buildPath + "/" + Game.k_BootConfigFilename, bootCfg);
-        Debug.Log("  " + Game.k_BootConfigFilename);
+        File.WriteAllLines(buildPath + "/" + Game.BootConfigFilename, bootCfg);
+        Debug.Log("  " + Game.BootConfigFilename);
 
         Debug.Log("Linux build postprocessing done.");
     }

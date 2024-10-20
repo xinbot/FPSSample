@@ -48,7 +48,7 @@ unsafe public class NetworkServer
     // handshake (protocol version etc.)
     public void UpdateClientInfo()
     {
-        serverInfo.serverTickRate = Game.serverTickRate.IntValue;
+        serverInfo.serverTickRate = Game.ServerTickRate.IntValue;
 
         foreach (var pair in m_Connections)
             pair.Value.clientInfoAcked = false;
@@ -389,7 +389,7 @@ unsafe public class NetworkServer
 
         long startTick = 0;
         if (NetworkServer.print_senddata_time.IntValue > 0)
-            startTick = Game.Clock.ElapsedTicks;
+            startTick = Game.clock.ElapsedTicks;
 
         foreach (var pair in m_Connections)
         {
@@ -411,7 +411,7 @@ unsafe public class NetworkServer
 
         if (NetworkServer.print_senddata_time.IntValue > 0)
         {
-            long stopTick = Game.Clock.ElapsedTicks;
+            long stopTick = Game.clock.ElapsedTicks;
             long ticksPerSecond = System.Diagnostics.Stopwatch.Frequency;
             accumSendDataTicks += stopTick - startTick;
 
@@ -419,7 +419,7 @@ unsafe public class NetworkServer
             {
                 GameDebug.Log("SendData Time per second: " + accumSendDataTicks * 1000.0 / ticksPerSecond);
                 accumSendDataTicks = 0;
-                lastUpdateTick = Game.Clock.ElapsedTicks;
+                lastUpdateTick = Game.clock.ElapsedTicks;
             }
         }
 
@@ -715,7 +715,7 @@ unsafe public class NetworkServer
                 return;
 
             // Respect max bps rate cap
-            if (Game.frameTime < nextOutPackageTime)
+            if (Game.FrameTime < nextOutPackageTime)
                 return;
 
             ServerPackageInfo packageInfo;
@@ -779,10 +779,10 @@ unsafe public class NetworkServer
             if (maxBPS > 0)
             {
                 double timeLimitBPS = messageSize / maxBPS;
-                if (timeLimitBPS > (float)snapshotInterval / Game.serverTickRate.FloatValue)
+                if (timeLimitBPS > (float)snapshotInterval / Game.ServerTickRate.FloatValue)
                 {
                     GameDebug.Log("SERVER: Choked by BPS sending " + messageSize);
-                    nextOutPackageTime = Game.frameTime + timeLimitBPS;
+                    nextOutPackageTime = Game.FrameTime + timeLimitBPS;
                 }
             }
         }

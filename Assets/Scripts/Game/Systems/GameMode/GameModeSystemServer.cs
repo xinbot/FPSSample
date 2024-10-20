@@ -213,8 +213,8 @@ public class GameModeSystemServer : ComponentSystem
 
                 if (charControl.characterType == -1)
                 {
-                    charControl.characterType = Game.characterType.IntValue;
-                    if (Game.allowCharChange.IntValue == 1)
+                    charControl.characterType = Game.CharacterType.IntValue;
+                    if (Game.AllowCharChange.IntValue == 1)
                     {
                         charControl.characterType = player.teamIndex;
                     }

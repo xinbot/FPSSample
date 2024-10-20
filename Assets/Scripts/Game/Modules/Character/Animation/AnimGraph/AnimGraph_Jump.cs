@@ -40,7 +40,7 @@ public class AnimGraph_Jump : AnimGraphAsset
     
             // Adjust play speed so vertical velocity in animation is matched with character velocity (so feet doesnt penetrate ground)
             var animJumpVel = settings.jumpHeight / settings.animJump.length;
-            var characterJumpVel = Game.config != null ? Game.config.jumpAscentHeight / Game.config.jumpAscentDuration : animJumpVel; 
+            var characterJumpVel = Game.Config != null ? Game.Config.jumpAscentHeight / Game.Config.jumpAscentDuration : animJumpVel; 
             playSpeed = characterJumpVel / animJumpVel;
     
     

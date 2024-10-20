@@ -44,7 +44,7 @@ public class JoinMenu : MonoBehaviour
             UpdateItem(server);
             if (Time.time > server.nextUpdate && server.sqpQuery.m_State == SQPClient.SQPClientState.Idle)
             {
-                Game.game.sqpClient.StartInfoQuery(server.sqpQuery);
+                Game.game.SqpClient.StartInfoQuery(server.sqpQuery);
                 server.nextUpdate = Time.time + 5.0f + UnityEngine.Random.Range(0.0f, 1.0f);
             }
         }
@@ -149,7 +149,7 @@ public class JoinMenu : MonoBehaviour
         NetworkUtils.EndpointParse(server.hostname, out addr, out port, 0);
         // SQP Port is sqpPortOffset after whatever port we are using for the game itself
         port = (port == 0 ? NetworkConfig.ServerPort.IntValue : port) + NetworkConfig.SqpPortOffset;
-        server.sqpQuery = Game.game.sqpClient.GetSQPQuery(new System.Net.IPEndPoint(addr, port));
+        server.sqpQuery = Game.game.SqpClient.GetSQPQuery(new System.Net.IPEndPoint(addr, port));
 
         UpdateItem(server);
         m_Servers.Add(server);

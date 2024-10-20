@@ -162,7 +162,7 @@ public class ThinClientGameWorld
             GameDebug.Log($"CATCHUP ({_predictedTime.Tick} -> {preferredTick})");
 
             _networkStatistics.notifyHardCatchup = true;
-            _gameWorld.nextTickTime = Game.frameTime;
+            _gameWorld.nextTickTime = Game.FrameTime;
             _predictedTime.Tick = preferredTick;
             _predictedTime.SetTime(preferredTick, 0);
         }
@@ -219,7 +219,7 @@ public class ThinClientGameWorld
     }
 }
 
-public class ThinClientGameLoop : Game.IGameLoop
+public class ThinClientGameLoop : IGameLoop
 {
     [ConfigVar(Name = "thinclient.requested", DefaultValue = "4", Description = "Number of thin clients wanted")]
     public static ConfigVar ThinClientNum;
@@ -236,7 +236,7 @@ public class ThinClientGameLoop : Game.IGameLoop
         NetworkClient.DropSnapshots = true;
 
 #if UNITY_EDITOR
-        Game.game.levelManager.UnloadLevel();
+        Game.game.LevelManager.UnloadLevel();
 #endif
         Console.AddCommand("disconnect", CmdDisconnect, "Disconnect from server if connected", this.GetHashCode());
 
@@ -492,7 +492,7 @@ public class ThinClient : INetworkClientCallbacks
         GameDebug.Assert(_networkClient.isConnected);
 
         _requestedPlayerSettings.PlayerName = "ThinPlayer";
-        _requestedPlayerSettings.CharacterType = (short) Game.characterType.IntValue;
+        _requestedPlayerSettings.CharacterType = (short) Game.CharacterType.IntValue;
         _playerSettingsUpdated = true;
 
         _clientState = ClientState.Loading;
@@ -555,8 +555,8 @@ public class ThinClient : INetworkClientCallbacks
             ConfigVar.DirtyFlags &= ~ConfigVar.Flags.ClientInfo;
         }
 
-        float frameDuration = _lastFrameTime != 0 ? (float) (Game.frameTime - _lastFrameTime) : 0;
-        _lastFrameTime = Game.frameTime;
+        float frameDuration = _lastFrameTime != 0 ? (float) (Game.FrameTime - _lastFrameTime) : 0;
+        _lastFrameTime = Game.FrameTime;
 
         _clientWorld.Update(frameDuration);
         _performGameWorldLateUpdate = true;

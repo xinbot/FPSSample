@@ -83,7 +83,7 @@ public class GameWorld
 
         worldTime.tickRate = 60;
 
-        nextTickTime = Game.frameTime;
+        nextTickTime = Game.FrameTime;
 
         s_Worlds.Add(this);
 

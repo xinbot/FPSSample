@@ -24,7 +24,7 @@ public class InputSystem
         command.moveYaw = maxMoveYaw;
         command.moveMagnitude = maxMoveMagnitude;
 
-        float invertY = Game.configInvertY.IntValue > 0 ? -1.0f : 1.0f;
+        float invertY = Game.ConfigInvertY.IntValue > 0 ? -1.0f : 1.0f;
 
         Vector2 deltaMousePos = new Vector2(0, 0);
         if(deltaTime > 0.0f)
@@ -34,11 +34,11 @@ public class InputSystem
             ((Game.Input.GetKey(KeyCode.Keypad4) ? -1.0f : 0.0f) + (Game.Input.GetKey(KeyCode.Keypad6) ? 1.0f : 0.0f)) * s_JoystickLookSensitivity.x,
             - invertY * Game.Input.GetAxisRaw("RightStickY") * s_JoystickLookSensitivity.y));
 
-        command.lookYaw += deltaMousePos.x * Game.configMouseSensitivity.FloatValue;
+        command.lookYaw += deltaMousePos.x * Game.ConfigMouseSensitivity.FloatValue;
         command.lookYaw = command.lookYaw % 360;
         while (command.lookYaw < 0.0f) command.lookYaw += 360.0f;
 
-        command.lookPitch += deltaMousePos.y * Game.configMouseSensitivity.FloatValue;
+        command.lookPitch += deltaMousePos.y * Game.ConfigMouseSensitivity.FloatValue;
         command.lookPitch = Mathf.Clamp(command.lookPitch, 0, 180);
 
         command.buttons.Or(UserCommand.Button.Jump,Game.Input.GetKeyDown(KeyCode.Space) || Game.Input.GetKeyDown(KeyCode.Joystick1Button0)); 

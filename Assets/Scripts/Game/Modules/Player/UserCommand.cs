@@ -1,6 +1,7 @@
 ﻿using Unity.Entities;
 using UnityEngine;
 using UnityEngine.Networking;
+using NetworkWriter = Networking.NetworkWriter;
 
 [System.Serializable]
 public struct UserCommand : IReplicatedComponent

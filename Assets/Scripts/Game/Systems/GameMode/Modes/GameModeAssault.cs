@@ -240,8 +240,8 @@ public class GameModeAssault : IGameMode
             player.goalPosition = capturePosition;
             player.goalString = player.teamIndex == s_AttackTeam ? m_ActiveCaptureMessage : m_ActiveDefendMessage;
             player.goalCompletion = m_ActiveCapturePoint.captured;
-            player.goalDefendersColor = player.teamIndex == s_AttackTeam ? (uint)Game.GameColor.Enemy : (uint)Game.GameColor.Friend;
-            player.goalAttackersColor = player.teamIndex == s_AttackTeam ? (uint)Game.GameColor.Friend : (uint)Game.GameColor.Enemy;
+            player.goalDefendersColor = player.teamIndex == s_AttackTeam ? (uint)GameColor.Enemy : (uint)GameColor.Friend;
+            player.goalAttackersColor = player.teamIndex == s_AttackTeam ? (uint)GameColor.Friend : (uint)GameColor.Enemy;
             player.goalAttackers = (uint)attacking;
             player.goalDefenders = (uint)defending;
         }

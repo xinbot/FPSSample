@@ -135,7 +135,7 @@ class Movement_Update : BaseComponentDataSystem<CharBehaviour, AbilityControl, A
 
         if (predictedState.locoState == CharacterPredictedData.LocoState.Jump || predictedState.locoState == CharacterPredictedData.LocoState.DoubleJump)
         {
-            if (phaseDuration >= Game.config.jumpAscentDuration)
+            if (phaseDuration >= Game.Config.jumpAscentDuration)
             {
                 newPhase = CharacterPredictedData.LocoState.InAir;
             }
@@ -215,19 +215,19 @@ class Movement_Update : BaseComponentDataSystem<CharBehaviour, AbilityControl, A
             case CharacterPredictedData.LocoState.DoubleJump:
 
                 // In jump we overwrite velocity y component with linear movement up
-                velocity = CalculateGroundVelocity(velocity, ref command, Game.config.playerSpeed, Game.config.playerAirFriction, Game.config.playerAirAcceleration, gameTime.TickDuration);
-                velocity.y = Game.config.jumpAscentHeight / Game.config.jumpAscentDuration;
+                velocity = CalculateGroundVelocity(velocity, ref command, Game.Config.playerSpeed, Game.Config.playerAirFriction, Game.Config.playerAirAcceleration, gameTime.TickDuration);
+                velocity.y = Game.Config.jumpAscentHeight / Game.Config.jumpAscentDuration;
                 deltaPos += velocity * gameTime.TickDuration;
 
                 return;
             case CharacterPredictedData.LocoState.InAir:
 
-                var gravity = Game.config.playerGravity;
+                var gravity = Game.Config.playerGravity;
                 velocity += Vector3.down * gravity * gameTime.TickDuration;
-                velocity = CalculateGroundVelocity(velocity, ref command, Game.config.playerSpeed, Game.config.playerAirFriction, Game.config.playerAirAcceleration, gameTime.TickDuration);
+                velocity = CalculateGroundVelocity(velocity, ref command, Game.Config.playerSpeed, Game.Config.playerAirFriction, Game.Config.playerAirAcceleration, gameTime.TickDuration);
 
-                if (velocity.y < -Game.config.maxFallVelocity)
-                    velocity.y = -Game.config.maxFallVelocity;
+                if (velocity.y < -Game.Config.maxFallVelocity)
+                    velocity.y = -Game.Config.maxFallVelocity;
 
                 // Cheat movement
                 if (command.buttons.IsSet(UserCommand.Button.Boost) && (Game.GetGameLoop<PreviewGameLoop>() != null))
@@ -241,9 +241,9 @@ class Movement_Update : BaseComponentDataSystem<CharBehaviour, AbilityControl, A
                 return;
         }
 
-        var playerSpeed = predicted.sprinting == 1 ? Game.config.playerSprintSpeed : Game.config.playerSpeed;
+        var playerSpeed = predicted.sprinting == 1 ? Game.Config.playerSprintSpeed : Game.Config.playerSpeed;
 
-        velocity = CalculateGroundVelocity(velocity, ref command, playerSpeed, Game.config.playerFriction, Game.config.playerAcceleration, gameTime.TickDuration);
+        velocity = CalculateGroundVelocity(velocity, ref command, playerSpeed, Game.Config.playerFriction, Game.Config.playerAcceleration, gameTime.TickDuration);
 //        Debug.DrawLine(predictedState.State.position, predictedState.State.position + velocity, Color.yellow,1 );
         
         // Simple follow ground code so character sticks to ground when running down hill
@@ -282,7 +282,7 @@ class Movement_Update : BaseComponentDataSystem<CharBehaviour, AbilityControl, A
             groundVelocity += speed_adjustment;
         }
 
-        if (!Game.config.easterBunny)
+        if (!Game.Config.easterBunny)
         {
             newGroundSpeed = groundVelocity.magnitude;
             if (newGroundSpeed > playerSpeed)

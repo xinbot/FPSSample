@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using Networking;
 using Unity.Entities;
 
 public interface IReplicatedComponentSerializerFactory

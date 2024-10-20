@@ -31,7 +31,7 @@ namespace Networking
 
         public void Release()
         {
-            GameDebug.Assert(_refCount > 0, "Trying to release an event that has refcount 0 (seq: {0})", Sequence);
+            GameDebug.Assert(_refCount > 0, "Trying to release an event that has ref count 0 (seq: {0})", Sequence);
             if (--_refCount == 0)
             {
                 if (NetworkConfig.NetDebug.IntValue > 0)
@@ -71,8 +71,10 @@ namespace Networking
             var result = Create(type, reliable);
             result.Sequence = ++_sequence;
             if (NetworkConfig.NetDebug.IntValue > 0)
+            {
                 GameDebug.Log("Serializing event " + ((GameNetworkEvents.EventType) result.Type.TypeId) +
                               " in seq no: " + result.Sequence);
+            }
 
             fixed (uint* data = result.Data)
             {

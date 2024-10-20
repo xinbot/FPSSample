@@ -218,9 +218,9 @@ namespace Networking
                 // sending messages but potentially it could also happen in extreme cases of congestion or package loss. 
                 // We will try to send empty packages with low frequency to see if we can get the connection up and running again
 
-                if (Game.frameTime >= _chokedTimeToNextPackage)
+                if (Game.FrameTime >= _chokedTimeToNextPackage)
                 {
-                    _chokedTimeToNextPackage = Game.frameTime + NetworkConfig.NetChokeSendInterval.FloatValue;
+                    _chokedTimeToNextPackage = Game.FrameTime + NetworkConfig.NetChokeSendInterval.FloatValue;
 
                     // Treat the last package as lost
                     var info = OutstandingPackages.TryGetByIndex(OutSequence % OutstandingPackages.capacity,

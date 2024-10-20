@@ -1,4 +1,6 @@
-﻿public class PlayerSettings 
+﻿using Networking;
+
+public class PlayerSettings 
 {
     public string PlayerName;
     public int CharacterType;

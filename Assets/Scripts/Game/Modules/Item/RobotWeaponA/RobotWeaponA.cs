@@ -88,8 +88,8 @@ public class System_RobotWeaponA : BaseComponentSystem<RobotWeaponA,CharacterPre
             weapon.barrelSetup.states[index].animTime = 0;
             weapon.barrelSetup.muzzleFlash[index].Play();
             if (weapon.barrelSetup.fireSoundHandle.IsValid() && weapon.barrelSetup.fireSoundHandle.emitter.playing)
-                Game.SoundSystem.Stop(weapon.barrelSetup.fireSoundHandle, 0.1f);
-            weapon.barrelSetup.fireSoundHandle = Game.SoundSystem.Play(weapon.barrelSetup.fireSound, 
+                Game.soundSystem.Stop(weapon.barrelSetup.fireSoundHandle, 0.1f);
+            weapon.barrelSetup.fireSoundHandle = Game.soundSystem.Play(weapon.barrelSetup.fireSound, 
                 weapon.barrelSetup.muzzleFlash[index].transform.position);
         }
         
@@ -100,7 +100,7 @@ public class System_RobotWeaponA : BaseComponentSystem<RobotWeaponA,CharacterPre
         if (weapon.secFireEvent.Update(time, grenadeInterpolatedState.fireTick))
         {
             if (weapon.secondaryFireSound != null)
-                Game.SoundSystem.Play(weapon.secondaryFireSound, weapon.transform.position);
+                Game.soundSystem.Play(weapon.secondaryFireSound, weapon.transform.position);
 
             if (weapon.secondaryMuzzleFlash != null)
                 weapon.secondaryMuzzleFlash.Play();   
@@ -114,7 +114,7 @@ public class System_RobotWeaponA : BaseComponentSystem<RobotWeaponA,CharacterPre
         if (weapon.meleeImpactEvent.Update(time, meleeInterpolatedState.impactTick))
         {
             if(weapon.meleeImpactSound != null)
-                Game.SoundSystem.Play(weapon.meleeImpactSound, weapon.transform.position);// TODO this should be hand position
+                Game.soundSystem.Play(weapon.meleeImpactSound, weapon.transform.position);// TODO this should be hand position
                 
             if(weapon.meleeImpactEffect != null)
                 weapon.meleeImpactEffect.Play();

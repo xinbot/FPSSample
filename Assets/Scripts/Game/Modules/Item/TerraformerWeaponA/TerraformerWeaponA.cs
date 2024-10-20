@@ -79,8 +79,8 @@ public class UpdateTerraformerWeaponA : BaseComponentSystem<CharacterPresentatio
             if(weapon.primaryFireSound != null)
             {
                 if (weapon.primaryFireSoundHandle.IsValid() && weapon.primaryFireSoundHandle.emitter.playing)
-                    Game.SoundSystem.Stop(weapon.primaryFireSoundHandle, 0.05f);
-                weapon.primaryFireSoundHandle = Game.SoundSystem.Play(weapon.primaryFireSound, weapon.muzzle);
+                    Game.soundSystem.Stop(weapon.primaryFireSoundHandle, 0.05f);
+                weapon.primaryFireSoundHandle = Game.soundSystem.Play(weapon.primaryFireSound, weapon.muzzle);
             }
                 
             if(weapon.primaryMuzzleFlash != null)
@@ -115,7 +115,7 @@ public class UpdateTerraformerWeaponA : BaseComponentSystem<CharacterPresentatio
         if (weapon.secondaryFireEvent.Update(time, rocketLaunchInterpolatedState.fireTick))
         {
             if(weapon.secondaryFireSound != null)
-                Game.SoundSystem.Play(weapon.secondaryFireSound, weapon.muzzle);
+                Game.soundSystem.Play(weapon.secondaryFireSound, weapon.muzzle);
                 
             if(weapon.secondaryMuzzleFlash != null)
                 weapon.secondaryMuzzleFlash.Play();
@@ -128,7 +128,7 @@ public class UpdateTerraformerWeaponA : BaseComponentSystem<CharacterPresentatio
         if (weapon.meleeImpactEvent.Update(time, meleeInterpolatedState.impactTick))
         {
             if(weapon.meleeImpactSound != null)
-                Game.SoundSystem.Play(weapon.meleeImpactSound, weapon.transform.position);
+                Game.soundSystem.Play(weapon.meleeImpactSound, weapon.transform.position);
                 
             if(weapon.meleeImpactEffect != null)
                 weapon.meleeImpactEffect.Play();

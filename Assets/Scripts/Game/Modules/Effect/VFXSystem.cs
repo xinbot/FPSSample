@@ -115,7 +115,7 @@ public class VFXSystem : ComponentSystem
             effectType.eventAttribute.SetVector3(directionID, request.normal);
             effectType.visualEffect.Play(effectType.eventAttribute);
             effectType.visualEffect.pause = false;
-            effectType.lastTriggerTime = (float)Game.frameTime;
+            effectType.lastTriggerTime = (float)Game.FrameTime;
             effectType.active = true; 
         }
         m_pointEffectRequests.Clear();
@@ -132,7 +132,7 @@ public class VFXSystem : ComponentSystem
             effectType.eventAttribute.SetVector3(targetPositionID, request.end);
             effectType.visualEffect.Play(effectType.eventAttribute);
             effectType.visualEffect.pause = false;
-            effectType.lastTriggerTime = (float)Game.frameTime;
+            effectType.lastTriggerTime = (float)Game.FrameTime;
             effectType.active = true;
         }
         m_lineEffectRequests.Clear();
@@ -157,7 +157,7 @@ public class VFXSystem : ComponentSystem
         foreach (var effectTypeData in m_EffectTypeData.Values)
         {
             if (effectTypeData.active &&
-                (float) Game.frameTime > effectTypeData.lastTriggerTime + effectTypeData.maxDuration)
+                (float) Game.FrameTime > effectTypeData.lastTriggerTime + effectTypeData.maxDuration)
             {
 //                GameDebug.Log("Reinint effect:" + effectTypeData.visualEffect.name);
                 effectTypeData.visualEffect.pause = true;

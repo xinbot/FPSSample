@@ -90,7 +90,7 @@ public class Console
         if (consoleShowLastLine != null && consoleShowLastLine.IntValue > 0)
         {
             lastMsg = msg;
-            timeLastMsg = Game.frameTime;
+            timeLastMsg = Game.FrameTime;
         }
         OutputString(msg);
     }
@@ -169,7 +169,7 @@ public class Console
 
     public static void ConsoleUpdate()
     {
-        var lastMsgTime = Game.frameTime - timeLastMsg;
+        var lastMsgTime = Game.FrameTime - timeLastMsg;
         if (lastMsgTime < 1.0)
             DebugOverlay.Write(0, 0, lastMsg);
 
@@ -184,7 +184,7 @@ public class Console
             }
             if (s_PendingCommandsWaitForLoad)
             {
-                if (!Game.game.levelManager.IsCurrentLevelLoaded())
+                if (!Game.game.LevelManager.IsCurrentLevelLoaded())
                     break;
                 s_PendingCommandsWaitForLoad = false;
             }
@@ -344,7 +344,7 @@ public class Console
             OutputString("Usage: waitload\nWait for level load\n");
             return;
         }
-        if (!Game.game.levelManager.IsLoadingLevel())
+        if (!Game.game.LevelManager.IsLoadingLevel())
         {
             OutputString("waitload: not loading level; ignoring\n");
             return;

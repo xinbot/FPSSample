@@ -74,7 +74,7 @@ public class GameStatistics
             m_TicksPerFrame[0][l] = 1000.0f * world.worldTime.tickInterval * ticks;
             m_LastWorldTick = world.worldTime.Tick;
             double lastTickTime = world.nextTickTime - world.worldTime.tickInterval;
-            m_TicksPerFrame[1][l] = (float)(1000.0 * (Game.frameTime - lastTickTime));
+            m_TicksPerFrame[1][l] = (float)(1000.0 * (Game.FrameTime - lastTickTime));
         }
 
         // get timing & update average accumulators

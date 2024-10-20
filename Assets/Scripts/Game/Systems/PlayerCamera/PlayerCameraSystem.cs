@@ -84,7 +84,7 @@ public class UpdatePlayerCameras : BaseComponentSystem
                 if (eu.x > 180.0f) eu.x -= 360.0f;
                 eu.x = Mathf.Clamp(eu.x, -70.0f, 70.0f);
                 eu += new Vector3(-Input.GetAxisRaw("Mouse Y"), Input.GetAxisRaw("Mouse X"), 0);
-                float invertY = Game.configInvertY.IntValue > 0 ? 1.0f : -1.0f;
+                float invertY = Game.ConfigInvertY.IntValue > 0 ? 1.0f : -1.0f;
                 eu += Time.deltaTime * (new Vector3(- invertY * Input.GetAxisRaw("RightStickY")*InputSystem.s_JoystickLookSensitivity.y, Input.GetAxisRaw("RightStickX") * InputSystem.s_JoystickLookSensitivity.x, 0));
                 camera.transform.localEulerAngles = eu;
                 m_DetachedMoveSpeed += Input.GetAxisRaw("Mouse ScrollWheel");

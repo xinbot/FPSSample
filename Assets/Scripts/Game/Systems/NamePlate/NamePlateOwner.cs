@@ -120,7 +120,7 @@ public class UpdateNamePlates : BaseComponentSystem
 			var occluded = Physics.Raycast(rayStart, v.normalized, distance, defaultLayerMask);
 			
 			var friendly = plateOwner.team == localPlayer.playerState.teamIndex;
-            var color = friendly ? Game.game.gameColors[(int)Game.GameColor.Friend] : Game.game.gameColors[(int)Game.GameColor.Enemy];
+            var color = friendly ? Game.game.gameColors[(int)GameColor.Friend] : Game.game.gameColors[(int)GameColor.Enemy];
 
 			var showPlate = friendly || !occluded;
 

@@ -13,7 +13,7 @@ public class LoadSpinner : MonoBehaviour
 
     void Update()
     {
-        var loading = Game.game == null || Game.game.levelManager == null || Game.game.levelManager.IsLoadingLevel();
+        var loading = Game.game == null || Game.game.LevelManager == null || Game.game.LevelManager.IsLoadingLevel();
         if (loading && fadeInterp.targetValue < 1.0f)
             fadeInterp.MoveTo(1.0f, 0.5f);
         else if (!loading && fadeInterp.targetValue > 0.0f)

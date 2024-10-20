@@ -202,9 +202,9 @@ public class UpdateCharacterCamera : BaseComponentSystem<LocalPlayer,LocalPlayer
 
         // Update FOV
         if(characterChanged)
-            cameraSettings.fieldOfView = Game.configFov.FloatValue;
+            cameraSettings.fieldOfView = Game.ConfigFov.FloatValue;
         var settings = character.heroTypeData.sprintCameraSettings;
-        var targetFOV = animState.sprinting == 1 ? settings.FOVFactor* Game.configFov.FloatValue : Game.configFov.FloatValue;
+        var targetFOV = animState.sprinting == 1 ? settings.FOVFactor* Game.ConfigFov.FloatValue : Game.ConfigFov.FloatValue;
         var speed = targetFOV > cameraSettings.fieldOfView ? settings.FOVInceraetSpeed : settings.FOVDecreaseSpeed;
         cameraSettings.fieldOfView = Mathf.MoveTowards(cameraSettings.fieldOfView, targetFOV, speed);
         
