@@ -49,8 +49,8 @@ public class BuildTools
             File.SetAttributes(fileName, attributes);
         }
 
-        string bundlePathSrc = buildPath + "/" + SimpleBundleManager.assetBundleFolder;
-        string bundlePathDst = "Assets/StreamingAssets/" + SimpleBundleManager.assetBundleFolder;
+        string bundlePathSrc = buildPath + "/" + SimpleBundleManager.AssetBundleFolder;
+        string bundlePathDst = "Assets/StreamingAssets/" + SimpleBundleManager.AssetBundleFolder;
         if (target == BuildTarget.PS4)
         {
             if (!Directory.Exists(bundlePathSrc))
@@ -229,7 +229,7 @@ public class BuildTools
     {
         Debug.Log("Scene cooking started");
 
-        var path = bundlePath + "/" + SimpleBundleManager.assetBundleFolder;
+        var path = bundlePath + "/" + SimpleBundleManager.AssetBundleFolder;
 
         if (!Directory.Exists(path))
             Directory.CreateDirectory(path);

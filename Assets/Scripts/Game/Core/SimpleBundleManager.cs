@@ -1,11 +1,15 @@
 ﻿using UnityEngine;
-using System.Collections;
-using UnityEngine.SceneManagement;
 using System.Collections.Generic;
 
 public class SimpleBundleManager
 {
-    public static string assetBundleFolder = "AssetBundles";
+    public const string AssetBundleFolder = "AssetBundles";
+
+    [ConfigVar(Name = "res.runtimebundlepath", DefaultValue = "AssetBundles", Description = "Asset bundle folder",
+        Flags = ConfigVar.Flags.ServerInfo)]
+    public static ConfigVar RuntimeBundlePath;
+
+    private static readonly Dictionary<string, AssetBundle> LevelBundles = new Dictionary<string, AssetBundle>();
 
     public static string GetRuntimeBundlePath()
     {
@@ -13,9 +17,11 @@ public class SimpleBundleManager
         return Application.streamingAssetsPath + "/" + assetBundleFolder;
 #else
         if (Application.isEditor)
-            return "AutoBuild/" + assetBundleFolder;
-        else
-            return m_runtimeBundlePath.Value;
+        {
+            return "AutoBuild/" + AssetBundleFolder;
+        }
+
+        return RuntimeBundlePath.Value;
 #endif
     }
 
@@ -25,18 +31,18 @@ public class SimpleBundleManager
 
     public static AssetBundle LoadLevelAssetBundle(string name)
     {
-        var bundle_pathname = GetRuntimeBundlePath() + "/" + name;
-
-        GameDebug.Log("loading:" + bundle_pathname);
+        var bundlePathname = GetRuntimeBundlePath() + "/" + name;
+        GameDebug.Log("loading:" + bundlePathname);
 
         var cacheKey = name.ToLower();
-
         AssetBundle result;
-        if (!m_levelBundles.TryGetValue(cacheKey, out result))
+        if (!LevelBundles.TryGetValue(cacheKey, out result))
         {
-            result = AssetBundle.LoadFromFile(bundle_pathname);
+            result = AssetBundle.LoadFromFile(bundlePathname);
             if (result != null)
-                m_levelBundles.Add(cacheKey, result);
+            {
+                LevelBundles.Add(cacheKey, result);
+            }
         }
 
         return result;
@@ -44,13 +50,12 @@ public class SimpleBundleManager
 
     public static void ReleaseLevelAssetBundle(string name)
     {
-        // TODO (petera) : Implement unloading of asset bundles. Ideally not by name.
+        var cacheKey = name.ToLower();
+        if (!LevelBundles.ContainsKey(cacheKey))
+        {
+            AssetBundle result = LevelBundles[cacheKey];
+            result.Unload(true);
+            LevelBundles.Remove(cacheKey);
+        }
     }
-
-    static Dictionary<string, AssetBundle> m_levelBundles = new Dictionary<string, AssetBundle>();
-
-    [ConfigVar(Name = "res.runtimebundlepath", DefaultValue = "AssetBundles", Description = "Asset bundle folder", Flags = ConfigVar.Flags.ServerInfo)]
-    public static ConfigVar m_runtimeBundlePath;
-
-
 }

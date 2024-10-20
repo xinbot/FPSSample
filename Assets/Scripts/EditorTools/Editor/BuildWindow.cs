@@ -299,8 +299,8 @@ public class BuildWindow : EditorWindow
             if (buildTarget == BuildTarget.PS4)
             {
                 // Copy the asset bundles into the PS4 game folder too
-                var bundlePathSrc = GetBundlePath(buildTarget) + "/" + SimpleBundleManager.assetBundleFolder;
-                var bundlePathDst = GetBuildPath(buildTarget) + "/" + GetBuildExeName(buildTarget) + "/Media/StreamingAssets/" + SimpleBundleManager.assetBundleFolder;
+                var bundlePathSrc = GetBundlePath(buildTarget) + "/" + SimpleBundleManager.AssetBundleFolder;
+                var bundlePathDst = GetBuildPath(buildTarget) + "/" + GetBuildExeName(buildTarget) + "/Media/StreamingAssets/" + SimpleBundleManager.AssetBundleFolder;
                 BuildTools.CopyDirectory(bundlePathSrc, bundlePathDst);
             }
             GUIUtility.ExitGUI();
@@ -633,7 +633,7 @@ public class BuildWindow : EditorWindow
 
     static string GetAssetBundleFolder()
     {
-        return GetBundlePath(EditorUserBuildSettings.activeBuildTarget) + "/" + SimpleBundleManager.assetBundleFolder;
+        return GetBundlePath(EditorUserBuildSettings.activeBuildTarget) + "/" + SimpleBundleManager.AssetBundleFolder;
     }
 
     static DateTime TimeLastBuildBundles()
