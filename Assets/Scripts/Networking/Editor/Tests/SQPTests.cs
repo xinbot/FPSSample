@@ -6,8 +6,8 @@ using NUnit.Framework;
 using System.Net.Sockets;
 
 using UnityEngine;
-using SQP;
 using System.Text;
+using Networking;
 using Unity.Networking.Transport;
 
 namespace TransportTests
@@ -162,7 +162,7 @@ namespace TransportTests
             header.CurrentPacket = 12;
             header.LastPacket = 13;
 
-            var snd = new SQP.ServerInfo();
+            var snd = new Networking.ServerInfo();
             snd.QueryHeader = header;
             snd.ServerInfoData.CurrentPlayers = current;
             snd.ServerInfoData.MaxPlayers = max;
@@ -174,7 +174,7 @@ namespace TransportTests
 
             snd.ToStream(ref writer);
 
-            var rcv = new SQP.ServerInfo();
+            var rcv = new Networking.ServerInfo();
             reader = new DataStreamReader(writer, 0, writer.Length);
             context = default(DataStreamReader.Context);
             rcv.FromStream(reader, ref context);

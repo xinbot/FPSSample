@@ -5,7 +5,6 @@ using Networking;
 using Networking.Compression;
 using Networking.Socket;
 using UnityEngine.Profiling;
-using SQP;
 
 public class ServerGameWorld : ISnapshotGenerator, IClientCommandProcessor
 {
@@ -342,7 +341,7 @@ public class ServerGameLoop : Game.IGameLoop, INetworkCallbacks
         if (serverServerName.Value == "")
             serverServerName.Value = MakeServername();
 
-        m_ServerQueryProtocolServer = new SQP.SQPServer(NetworkConfig.ServerSqpPort.IntValue > 0? NetworkConfig.ServerSqpPort.IntValue : NetworkConfig.ServerPort.IntValue + NetworkConfig.SqpPortOffset);
+        m_ServerQueryProtocolServer = new SQPServer(NetworkConfig.ServerSqpPort.IntValue > 0? NetworkConfig.ServerSqpPort.IntValue : NetworkConfig.ServerPort.IntValue + NetworkConfig.SqpPortOffset);
 
 
 #if UNITY_EDITOR        

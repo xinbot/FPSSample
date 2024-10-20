@@ -589,7 +589,7 @@ namespace Networking
                 BeginSendPackage(ref rawOutputStream, out info);
 
                 var endOfHeaderPos = rawOutputStream.Align();
-                var output = default(TOutputStream); //  new TOutputStream(); due to bug new generate garbage here
+                var output = default(TOutputStream);
                 output.Initialize(NetworkCompressionModel.DefaultModel, PackageBuffer, endOfHeaderPos, null);
 
                 if (_sendClientConfig)

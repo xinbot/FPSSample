@@ -1,18 +1,17 @@
 using System;
-using System.Text;
+using System.Collections.Generic;
 using System.Net;
 using System.Net.Sockets;
-using System.Collections.Generic;
-
-using UnityEngine;
+using System.Text;
 using Unity.Networking.Transport;
-using Unity.Networking.Transport.LowLevel.Unsafe;
+using UnityEngine;
 
-/// <summary>
-/// An implementation of the ServerInfo part of the Server Query Protocol
-/// </summary>
-namespace SQP
+namespace Networking
 {
+    /// <summary>
+    /// An implementation of the ServerInfo part of the Server Query Protocol
+    /// </summary>
+
     [Flags]
     public enum SQPChunkType
     {
@@ -252,7 +251,7 @@ namespace SQP
 
     public static class UdpExtensions
     {
-        public static SocketError SetupAndBind(this Socket socket, int port = 0)
+        public static SocketError SetupAndBind(this System.Net.Sockets.Socket socket, int port = 0)
         {
             SocketError error = SocketError.Success;
             socket.Blocking = false;
@@ -273,7 +272,7 @@ namespace SQP
 
     public class SQPClient
     {
-        Socket m_Socket;
+        System.Net.Sockets.Socket m_Socket;
 
         byte[] m_Buffer = new byte[1472];
 
@@ -313,7 +312,7 @@ namespace SQP
 
         public SQPClient()
         {
-            m_Socket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
+            m_Socket = new System.Net.Sockets.Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
             m_Socket.SetupAndBind(0);
         }
 
@@ -462,12 +461,12 @@ namespace SQP
 
     public class SQPServer
     {
-        Socket m_Socket;
+        System.Net.Sockets.Socket m_Socket;
         System.Random m_Random;
 
-        SQP.ServerInfo m_ServerInfo = new ServerInfo();
+        ServerInfo m_ServerInfo = new ServerInfo();
 
-        public SQP.ServerInfo.Data ServerInfoData
+        public ServerInfo.Data ServerInfoData
         {
             get { return m_ServerInfo.ServerInfoData; }
             set { m_ServerInfo.ServerInfoData = value; }
@@ -480,7 +479,7 @@ namespace SQP
 
         public SQPServer(int port)
         {
-            m_Socket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
+            m_Socket = new System.Net.Sockets.Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
             m_Socket.SetupAndBind(port);
             m_Random = new System.Random();
             GameDebug.Log("SQP Initialized. Listening on port " + port);

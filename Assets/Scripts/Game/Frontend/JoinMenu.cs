@@ -42,7 +42,7 @@ public class JoinMenu : MonoBehaviour
         {
             // Update server list with any new results
             UpdateItem(server);
-            if (Time.time > server.nextUpdate && server.sqpQuery.m_State == SQP.SQPClient.SQPClientState.Idle)
+            if (Time.time > server.nextUpdate && server.sqpQuery.m_State == SQPClient.SQPClientState.Idle)
             {
                 Game.game.sqpClient.StartInfoQuery(server.sqpQuery);
                 server.nextUpdate = Time.time + 5.0f + UnityEngine.Random.Range(0.0f, 1.0f);
@@ -218,7 +218,7 @@ public class JoinMenu : MonoBehaviour
         public string hostname;
         public ServerListEntry listItem;
 
-        public SQP.SQPClient.SQPQuery sqpQuery;
+        public SQPClient.SQPQuery sqpQuery;
         public float nextUpdate;
     }
 

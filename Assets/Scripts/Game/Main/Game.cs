@@ -5,8 +5,8 @@ using UnityEngine.Experimental.Rendering;
 using UnityEngine.Experimental.Rendering.HDPipeline;
 using System;
 using System.Globalization;
+using Networking;
 using UnityEngine.Rendering.PostProcessing;
-using SQP;
 #if UNITY_EDITOR
 using UnityEditor;
 
@@ -416,7 +416,7 @@ public class Game : MonoBehaviour
             clientFrontend = go.GetComponentInChildren<ClientFrontend>();
         }
 
-        sqpClient = new SQP.SQPClient();
+        sqpClient = new SQPClient();
 
         GameDebug.Log("FPS Sample initialized");
 #if UNITY_EDITOR
