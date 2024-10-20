@@ -51,7 +51,7 @@ public class SimpleBundleManager
     public static void ReleaseLevelAssetBundle(string name)
     {
         var cacheKey = name.ToLower();
-        if (!LevelBundles.ContainsKey(cacheKey))
+        if (LevelBundles.ContainsKey(cacheKey))
         {
             AssetBundle result = LevelBundles[cacheKey];
             result.Unload(true);
