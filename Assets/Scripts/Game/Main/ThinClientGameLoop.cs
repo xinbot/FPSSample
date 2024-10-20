@@ -131,6 +131,8 @@ public class ThinClientGameWorld
         // The command stores final view direction
         PlayerModuleClient.SampleInput(_localPlayer, false, Time.deltaTime, _renderTime.Tick);
 
+        int prevTick = _predictedTime.Tick;
+
         // Increment time
         var deltaPredictedTime = frameDuration * FrameTimeScale;
         _predictedTime.AddDuration(deltaPredictedTime);
@@ -199,7 +201,6 @@ public class ThinClientGameWorld
             _renderTime.AddDuration(frameDuration * 0.01f);
         }
 
-        int prevTick = _predictedTime.Tick;
         // If predicted time has entered a new tick the stored commands should be sent to server 
         if (_predictedTime.Tick > prevTick)
         {
@@ -210,7 +211,6 @@ public class ThinClientGameWorld
                 PlayerModuleClient.SendCommand(_localPlayer, tick);
             }
 
-            //m_PlayerModule.ResetInput(userInputEnabled);
             PlayerModuleClient.StoreCommand(_localPlayer, _predictedTime.Tick);
         }
 
@@ -269,9 +269,9 @@ public class ThinClientGameLoop : Game.IGameLoop
             if (_thinClients.Count < ThinClientNum.IntValue)
             {
                 GameDebug.Log("Creating new thin client:" + _thinClients.Count);
-                var c = new ThinClient();
-                _thinClients.Add(c);
-                c.Connect(_targetServer);
+                var thinClient = new ThinClient();
+                _thinClients.Add(thinClient);
+                thinClient.Connect(_targetServer);
             }
             else if (_thinClients.Count > ThinClientNum.IntValue && _thinClients.Count > 0)
             {
