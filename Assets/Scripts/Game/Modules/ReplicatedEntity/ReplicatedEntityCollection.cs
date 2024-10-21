@@ -110,7 +110,7 @@ public class ReplicatedEntityCollection : IEntityReferenceSerializer
             var buffer = entityManager.GetBuffer<EntityGroupChildren>(entity);
             for (int i = 0; i < buffer.Length; i++)
             {
-                var childEntity = buffer[i].entity;
+                var childEntity = buffer[i].Entity;
                 if(m_showInfo.IntValue > 0)
                     GameDebug.Log(" ReplicatedEntityChildren: " + i + " = " + childEntity);
                 FindSerializers(entityManager, childEntity);

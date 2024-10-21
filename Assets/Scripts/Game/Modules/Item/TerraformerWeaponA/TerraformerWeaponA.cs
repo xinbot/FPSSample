@@ -64,7 +64,7 @@ public class UpdateTerraformerWeaponA : BaseComponentSystem<CharacterPresentatio
             return;
 
         var charRepAll = EntityManager.GetComponentData<CharacterReplicatedData>(charPresentation.character);
-        Update(m_world.worldTime, weapon, ref charRepAll);
+        Update(m_world.WorldTime, weapon, ref charRepAll);
     }
 
 

@@ -149,7 +149,7 @@ class GrenadeLauncher_Update : BaseComponentDataSystem<AbilityControl,Ability_Gr
     
     protected override void Update(Entity entity, AbilityControl abilityCtrl, Ability_GrenadeLauncher.PredictedState predictedState, Ability_GrenadeLauncher.Settings state)
     {
-        var time = m_world.worldTime;
+        var time = m_world.WorldTime;
         
         switch (predictedState.phase)
         {

@@ -110,7 +110,7 @@ public class AbilityCollection : ReplicatedEntityFactory
         {
             var elm = new EntityGroupChildren
             {
-                entity = entities[i]
+                Entity = entities[i]
             };
             buffer.Add(elm);
         }

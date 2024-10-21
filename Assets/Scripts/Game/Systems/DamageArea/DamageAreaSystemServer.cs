@@ -27,7 +27,7 @@ public class DamageAreaSystemServer : ComponentSystem
         {
             var area = damageAreaArray[idx];
             var damageAmount = area.damagePerHit;
-            var ticksBetweenDamage = Mathf.FloorToInt(1.0f / (area.hitsPerSecond * m_GameWorld.worldTime.tickInterval));
+            var ticksBetweenDamage = Mathf.FloorToInt(1.0f / (area.hitsPerSecond * m_GameWorld.WorldTime.tickInterval));
             if (area.instantKill)
                 damageAmount = 100000.0f;
             var charactersInside = area.charactersInside;
@@ -45,13 +45,13 @@ public class DamageAreaSystemServer : ComponentSystem
                 if (healthState.health <= 0)
                     continue;
                 
-                if (m_GameWorld.worldTime.Tick > charactersInside[i].nextDamageTick)
+                if (m_GameWorld.WorldTime.Tick > charactersInside[i].nextDamageTick)
                 {
                     var damageEventBuffer = EntityManager.GetBuffer<DamageEvent>(charactersInside[i].hitCollisionOwner);
                     DamageEvent.AddEvent(damageEventBuffer, Entity.Null, damageAmount, Vector3.zero, 0);
 
                     var info = charactersInside[i];
-                    info.nextDamageTick = m_GameWorld.worldTime.Tick + ticksBetweenDamage;
+                    info.nextDamageTick = m_GameWorld.WorldTime.Tick + ticksBetweenDamage;
                     charactersInside[i] = info;
                 }
             }

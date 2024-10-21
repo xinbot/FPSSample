@@ -45,7 +45,7 @@ public class MoverUpdate : BaseComponentSystem<Mover>
 		// TODO (mogensh) Platforms disabled until we get stable interplation delay that can be used when predicting on platform
 		return;
 		
-		var time = m_world.worldTime; 
+		var time = m_world.WorldTime; 
 		if (mover.target == null)
 			return;
 		

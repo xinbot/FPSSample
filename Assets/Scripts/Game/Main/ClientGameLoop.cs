@@ -138,9 +138,9 @@ public class ClientGameWorld
         // Advances time and accumulate input into the UserCommand being generated
         HandleTime(frameDuration);
 
-        _gameWorld.worldTime = _renderTime;
+        _gameWorld.WorldTime = _renderTime;
         _gameWorld.frameDuration = frameDuration;
-        _gameWorld.lastServerTick = _networkClient.serverTime;
+        _gameWorld.LastServerTick = _networkClient.serverTime;
 
         _playerModule.ResolveReferenceFromLocalPlayerToPlayer();
         _playerModule.HandleCommandReset();
@@ -173,20 +173,20 @@ public class ClientGameWorld
         _replicatedEntityModule.Interpolate(_renderTime);
 
         // Prediction
-        _gameWorld.worldTime = _predictedTime;
+        _gameWorld.WorldTime = _predictedTime;
         _projectileModule.StartPredictedMovement();
 
         if (IsPredictionAllowed())
         {
             // ROLLBACK. All predicted entities (with the ServerEntity component) are rolled back to last server state 
-            _gameWorld.worldTime.SetTime(_networkClient.serverTime, _predictedTime.tickInterval);
+            _gameWorld.WorldTime.SetTime(_networkClient.serverTime, _predictedTime.tickInterval);
             PredictionRollback();
 
             // PREDICT PREVIOUS TICKS. Replay every tick *after* the last tick we have from server up to the last stored command we have
             for (var tick = _networkClient.serverTime + 1; tick < _predictedTime.Tick; tick++)
             {
-                _gameWorld.worldTime.SetTime(tick, _predictedTime.tickInterval);
-                _playerModule.RetrieveCommand(_gameWorld.worldTime.Tick);
+                _gameWorld.WorldTime.SetTime(tick, _predictedTime.tickInterval);
+                _playerModule.RetrieveCommand(_gameWorld.WorldTime.Tick);
                 PredictionUpdate();
 #if UNITY_EDITOR
                 // We only want to store "full" tick to we use m_PredictedTime.tick-1 (as current can be fraction of tick)
@@ -195,11 +195,11 @@ public class ClientGameWorld
             }
 
             // PREDICT CURRENT TICK. Update current tick using duration of current tick
-            _gameWorld.worldTime = _predictedTime;
-            _playerModule.RetrieveCommand(_gameWorld.worldTime.Tick);
+            _gameWorld.WorldTime = _predictedTime;
+            _playerModule.RetrieveCommand(_gameWorld.WorldTime.Tick);
 
             // Do not update systems with close to zero time. 
-            if (_gameWorld.worldTime.TickDuration > 0.008f)
+            if (_gameWorld.WorldTime.TickDuration > 0.008f)
             {
                 PredictionUpdate();
             }
@@ -210,12 +210,12 @@ public class ClientGameWorld
         _gameModeSystem.Update();
 
         // Update Presentation
-        _gameWorld.worldTime = _predictedTime;
+        _gameWorld.WorldTime = _predictedTime;
         _characterModule.UpdatePresentation();
         _destructiblePropSystem.Update();
         _teleporterSystem.Update();
 
-        _gameWorld.worldTime = _renderTime;
+        _gameWorld.WorldTime = _renderTime;
         // Handle deSpawns
         _handlePresentationOwnerDeSpawn.Update();
         _handleNamePlateOwnerDeSpawn.Update();
@@ -243,7 +243,7 @@ public class ClientGameWorld
 
     public void LateUpdate(ChatSystemClient chatSystem, float frameDuration)
     {
-        _gameWorld.worldTime = _renderTime;
+        _gameWorld.WorldTime = _renderTime;
         _hitCollisionModule.StoreColliderState();
 
         _ragDollSystem.LateUpdate();
@@ -280,10 +280,10 @@ public class ClientGameWorld
 
         _characterModule.LateUpdate();
 
-        _gameWorld.worldTime = _renderTime;
+        _gameWorld.WorldTime = _renderTime;
         _projectileModule.UpdateClientProjectilesNonPredicted();
 
-        _gameWorld.worldTime = _predictedTime;
+        _gameWorld.WorldTime = _predictedTime;
         _projectileModule.UpdateClientProjectilesPredicted();
 
         _applyGrenadePresentation.Update();
@@ -401,7 +401,7 @@ public class ClientGameWorld
         int preferredTick = _networkClient.serverTime +
                             (int) (((_networkClient.timeSinceSnapshot + _networkStatisticsClient.rtt.average) /
                                     1000.0f) *
-                                   _gameWorld.worldTime.tickRate) + preferredBufferedCommandCount;
+                                   _gameWorld.WorldTime.tickRate) + preferredBufferedCommandCount;
 
         bool resetTime = false;
         if (_predictedTime.Tick < preferredTick - 3)
@@ -422,7 +422,7 @@ public class ClientGameWorld
             GameDebug.Log(string.Format("CATCHUP ({0} -> {1})", _predictedTime.Tick, preferredTick));
 
             _networkStatisticsClient.notifyHardCatchup = true;
-            _gameWorld.nextTickTime = Game.FrameTime;
+            _gameWorld.NextTickTime = Game.FrameTime;
             _predictedTime.Tick = preferredTick;
             _predictedTime.SetTime(preferredTick, 0);
         }

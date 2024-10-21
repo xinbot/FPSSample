@@ -124,10 +124,10 @@ class Sprint_Update : BaseComponentDataSystem<CharBehaviour, AbilityControl, Abi
 		if (startTerminate && predictedState.active == 1 && predictedState.terminating == 0)
 		{
 			predictedState.terminating = 1;
-			predictedState.terminateStartTick = m_world.worldTime.Tick;
+			predictedState.terminateStartTick = m_world.WorldTime.Tick;
 		}
 
-		if (predictedState.terminating == 1 && m_world.worldTime.DurationSinceTick(predictedState.terminateStartTick) >
+		if (predictedState.terminating == 1 && m_world.WorldTime.DurationSinceTick(predictedState.terminateStartTick) >
 		    settings.stopDelay)
 		{
 			abilityCtrl.behaviorState = AbilityControl.State.Idle;

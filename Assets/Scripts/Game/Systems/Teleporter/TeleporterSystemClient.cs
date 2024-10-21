@@ -26,7 +26,7 @@ public class TeleporterSystemClient : ComponentSystem
 			var teleporterClient = teleporterClientArray[i];
 			var teleporterPresentation = teleporterPresentationArray[i];
 			
-			if (teleporterClient.effectEvent.Update(m_GameWorld.worldTime, teleporterPresentation.effectTick))
+			if (teleporterClient.effectEvent.Update(m_GameWorld.WorldTime, teleporterPresentation.effectTick))
 			{
 				if (teleporterClient.effect != null)
 				{

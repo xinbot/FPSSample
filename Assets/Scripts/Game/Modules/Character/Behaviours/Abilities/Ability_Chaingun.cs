@@ -180,7 +180,7 @@ class Chaingun_Update : BaseComponentDataSystem<CharBehaviour, AbilityControl,Ab
     
     protected override void Update(Entity abilityEntity, CharBehaviour charAbility, AbilityControl abilityCtrl, Ability_Chaingun.PredictedState predictedState, Ability_Chaingun.Settings settings)
     {
-        var time = m_world.worldTime;
+        var time = m_world.WorldTime;
 
         // Adjust fire rate
         if (predictedState.state == Ability_Chaingun.State.Fire)

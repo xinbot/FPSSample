@@ -64,16 +64,16 @@ public class GameStatistics
     void RecordTimers()
     {
         int ticks = 0;
-        if (GameWorld.s_Worlds.Count > 0)
+        if (GameWorld.Worlds.Count > 0)
         {
-            var world = GameWorld.s_Worlds[0];
+            var world = GameWorld.Worlds[0];
 
             // Number of ticks in world since last frame.
-            ticks = world.worldTime.Tick - m_LastWorldTick;
+            ticks = world.WorldTime.Tick - m_LastWorldTick;
             int l = Time.frameCount % m_TicksPerFrame[0].Length;
-            m_TicksPerFrame[0][l] = 1000.0f * world.worldTime.tickInterval * ticks;
-            m_LastWorldTick = world.worldTime.Tick;
-            double lastTickTime = world.nextTickTime - world.worldTime.tickInterval;
+            m_TicksPerFrame[0][l] = 1000.0f * world.WorldTime.tickInterval * ticks;
+            m_LastWorldTick = world.WorldTime.Tick;
+            double lastTickTime = world.NextTickTime - world.WorldTime.tickInterval;
             m_TicksPerFrame[1][l] = (float)(1000.0 * (Game.FrameTime - lastTickTime));
         }
 
@@ -194,10 +194,10 @@ public class GameStatistics
 
         DebugOverlay.DrawGraph(0, y + 6, 40, 2, m_FrameTimes, Time.frameCount + 1, fpsColor, 20.0f);
 
-        if (GameWorld.s_Worlds.Count > 0)
+        if (GameWorld.Worlds.Count > 0)
         {
-            var world = GameWorld.s_Worlds[0];
-            DebugOverlay.Write(0, y + 8, "Tick: {0:##.#}", 1000.0f * world.worldTime.tickInterval);
+            var world = GameWorld.Worlds[0];
+            DebugOverlay.Write(0, y + 8, "Tick: {0:##.#}", 1000.0f * world.WorldTime.tickInterval);
         }
     }
 

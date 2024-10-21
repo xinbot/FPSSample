@@ -94,7 +94,7 @@ public class HandleCharacterSpawn : InitializeComponentGroupSystem<Character, Ha
             var buffer = EntityManager.GetBuffer<EntityGroupChildren>(characterRepAll.abilityCollection);
             for (int j = 0; j < buffer.Length; j++)
             {
-                var childEntity = buffer[j].entity;
+                var childEntity = buffer[j].Entity;
                 if (EntityManager.HasComponent<CharBehaviour>(childEntity))
                 {
                     var charBehaviour = EntityManager.GetComponentData<CharBehaviour>(childEntity);
@@ -172,7 +172,7 @@ public class UpdateTeleportation : BaseComponentSystem<Character>
 //            character.transform.position = character.m_TeleportToPosition;
 
             var userCommandComponent = EntityManager.GetComponentData<UserCommandComponentData>(entity);
-            userCommandComponent.ResetCommand(m_world.worldTime.Tick, character.m_TeleportToRotation.eulerAngles.y, 90); 
+            userCommandComponent.ResetCommand(m_world.WorldTime.Tick, character.m_TeleportToRotation.eulerAngles.y, 90); 
             EntityManager.SetComponentData(entity,userCommandComponent);
         }
     }
@@ -228,7 +228,7 @@ public class UpdateCharPresentationState : BaseComponentSystem
             // input keypresses
             if (charPredictedState.locoState == CharacterPredictedData.LocoState.Stand 
                 && animState.charLocoState == CharacterPredictedData.LocoState.GroundMove 
-                && m_world.worldTime.DurationSinceTick(animState.lastGroundMoveTick) < k_StopMovePenalty) 
+                && m_world.WorldTime.DurationSinceTick(animState.lastGroundMoveTick) < k_StopMovePenalty) 
             {
                 animState.charLocoState = CharacterPredictedData.LocoState.GroundMove;
             }
@@ -254,12 +254,12 @@ public class UpdateCharPresentationState : BaseComponentSystem
             // TODO (mogensh) perhaps we should not call presentation, but make system that updates presentation (and reads anim state) 
             // Update presentationstate animstatecontroller
             var animStateCtrl = EntityManager.GetComponentObject<AnimStateController>(character.presentation);    
-            animStateCtrl.UpdatePresentationState(m_world.worldTime, deltaTime);
+            animStateCtrl.UpdatePresentationState(m_world.WorldTime, deltaTime);
             
             if (charPredictedState.locoState == CharacterPredictedData.LocoState.GroundMove)
             {
                 animState = EntityManager.GetComponentData<CharacterInterpolatedData>(entity);
-                animState.lastGroundMoveTick = m_world.worldTime.Tick;
+                animState.lastGroundMoveTick = m_world.WorldTime.Tick;
                 EntityManager.SetComponentData(entity, animState);
             }
         }
@@ -357,7 +357,7 @@ public class ApplyPresentationState : BaseComponentSystem
         for (var i = 0; i < animStateCtrlArray.Length; i++)
         {
             var animStateCtrl = animStateCtrlArray[i];
-            animStateCtrl.ApplyPresentationState(m_world.worldTime, deltaTime);
+            animStateCtrl.ApplyPresentationState(m_world.WorldTime, deltaTime);
         }
         
         Profiler.EndSample();

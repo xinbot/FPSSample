@@ -156,7 +156,7 @@ class RocketJump_Update : BaseComponentDataSystem<CharBehaviour,AbilityControl, 
         Ability_RocketJump.PredictedState predictedState, Ability_RocketJump.InterpolatedState interpolatedState, 
         Ability_RocketJump.Settings settings)
     {
-        var time = m_world.worldTime;
+        var time = m_world.WorldTime;
 
         if (abilityCtrl.active == 0)
         {

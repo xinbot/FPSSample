@@ -40,7 +40,7 @@ public class HandleGrenadeRequest : BaseComponentDataSystem<GrenadeSpawnRequest>
         var grenadeEntity = m_resourceManager.CreateEntity(request.assetGuid);
         
         var internalState = EntityManager.GetComponentData<Grenade.InternalState>(grenadeEntity);       
-        internalState.startTick = m_world.worldTime.Tick;
+        internalState.startTick = m_world.WorldTime.Tick;
         internalState.owner = request.owner;
         internalState.teamId = request.teamId;
         internalState.velocity = request.velocity;
@@ -68,7 +68,7 @@ public class StartGrenadeMovement : BaseComponentSystem
 
     protected override void OnUpdate()  
     {
-        var time = m_world.worldTime;
+        var time = m_world.WorldTime;
 
         // Update movements  
         var entityArray = Group.GetEntityArray();      
@@ -131,7 +131,7 @@ public class FinalizeGrenadeMovement : BaseComponentSystem
     {
         Profiler.BeginSample("FinalizeGrenadeMovement");
         
-        var time = m_world.worldTime;
+        var time = m_world.WorldTime;
         var queryReciever = World.GetExistingManager<RaySphereQueryReciever>();
 
         var grenadeEntityArray = Group.GetEntityArray();
@@ -149,7 +149,7 @@ public class FinalizeGrenadeMovement : BaseComponentSystem
                 // Keep grenades around for a short duration so shortlived grenades gets a chance to get replicated 
                 // and explode effect played
                 
-                if(m_world.worldTime.DurationSinceTick(internalState.explodeTick) > 1.0f)
+                if(m_world.WorldTime.DurationSinceTick(internalState.explodeTick) > 1.0f)
                     m_world.RequestDespawn(PostUpdateCommands, entity);
                 
                 continue;
@@ -177,7 +177,7 @@ public class FinalizeGrenadeMovement : BaseComponentSystem
                     internalState.velocity = moveDir * moveVel * settings.bounciness;
 
                     if(moveVel > 1.0f)
-                        interpolatedState.bouncetick = m_world.worldTime.Tick;
+                        interpolatedState.bouncetick = m_world.WorldTime.Tick;
                 }
 
                 if (queryResult.hitCollisionOwner != Entity.Null)

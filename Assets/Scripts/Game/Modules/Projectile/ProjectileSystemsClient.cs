@@ -127,7 +127,7 @@ class ProjectilesSystemsClient
         }
 
         var projectileData = world.GetEntityManager().GetComponentData<ProjectileData>(clientProjectile.projectile);
-        var aliveDuration = world.worldTime.DurationSinceTick(projectileData.startTick);
+        var aliveDuration = world.WorldTime.DurationSinceTick(projectileData.startTick);
 
         // Interpolation delay can cause projectiles to be spawned before they should be shown.  
         if (aliveDuration < 0)
@@ -377,7 +377,7 @@ public class RemoveMispredictedProjectiles : BaseComponentSystem
         {
             var predictedEntity = predictedProjectileArray[i];
 
-            if (predictedEntity.startTick >= m_world.lastServerTick)
+            if (predictedEntity.startTick >= m_world.LastServerTick)
                 continue;
 
             var entity = predictedProjectileEntityArray[i]; 

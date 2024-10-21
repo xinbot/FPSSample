@@ -31,7 +31,7 @@ public class UpdateCharacterUI : BaseComponentSystem
 
     protected override void OnUpdate()
     {
-        var time = m_world.worldTime;
+        var time = m_world.WorldTime;
 
         var localPlayerArray = Group.GetComponentArray<LocalPlayer>();
         var playerCamSettingsArray = Group.GetComponentArray<PlayerCameraSettings>();

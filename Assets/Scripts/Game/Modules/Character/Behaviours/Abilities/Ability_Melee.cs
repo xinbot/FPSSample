@@ -154,7 +154,7 @@ class Melee_Update : BaseComponentDataSystem<CharBehaviour,AbilityControl, Abili
     protected override void Update(Entity abilityEntity, CharBehaviour charAbility, AbilityControl abilityCtrl, 
         Ability_Melee.LocalState localState, Ability_Melee.PredictedState predictedState, Ability_Melee.Settings settings)
     {
-        var time = m_world.worldTime;
+        var time = m_world.WorldTime;
 
         if (abilityCtrl.active == 0)
         {
@@ -268,7 +268,7 @@ class Melee_HandleCollision : BaseComponentDataSystem<Ability_Melee.LocalState>
             DamageEvent.AddEvent(damageEventBuffer, charAbility.character, settings.damage, query.direction, settings.damageImpulse);
 
             var interpolatedState = EntityManager.GetComponentData<Ability_Melee.InterpolatedState>(abilityEntity);
-            interpolatedState.impactTick = m_world.worldTime.Tick;            
+            interpolatedState.impactTick = m_world.WorldTime.Tick;            
             PostUpdateCommands.SetComponent(abilityEntity, interpolatedState);
         }
         

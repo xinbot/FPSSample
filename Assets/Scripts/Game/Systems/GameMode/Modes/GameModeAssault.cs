@@ -254,7 +254,7 @@ public class GameModeAssault : IGameMode
             if (attacking > 0)
             {
                 float attackMultiplier = Mathf.Sqrt(attacking); // Somewhat random sub-linear scale
-                m_ActiveCapturePoint.captured = Mathf.Clamp01(m_ActiveCapturePoint.captured + m_World.worldTime.tickInterval * attackMultiplier / m_ActiveCapturePoint.captureTime);
+                m_ActiveCapturePoint.captured = Mathf.Clamp01(m_ActiveCapturePoint.captured + m_World.WorldTime.tickInterval * attackMultiplier / m_ActiveCapturePoint.captureTime);
                 if (m_ActiveCapturePoint.captured == 1.0f)
                     status = CapturePoint.Status.Completed;
                 else
@@ -263,7 +263,7 @@ public class GameModeAssault : IGameMode
             else if (defending > 0)
             {
                 float defendMultiplier = Mathf.Sqrt(defending); // Somewhat random sub-linear scale
-                m_ActiveCapturePoint.captured = Mathf.Clamp01(m_ActiveCapturePoint.captured - m_World.worldTime.tickInterval * defendMultiplier / m_ActiveCapturePoint.captureTime);
+                m_ActiveCapturePoint.captured = Mathf.Clamp01(m_ActiveCapturePoint.captured - m_World.WorldTime.tickInterval * defendMultiplier / m_ActiveCapturePoint.captureTime);
                 status = CapturePoint.Status.Healing;
             }
             else

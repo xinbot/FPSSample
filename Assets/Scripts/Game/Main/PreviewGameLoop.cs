@@ -314,7 +314,7 @@ public class PreviewGameLoop : IGameLoop
         }
 
         bool commandWasConsumed = false;
-        while (Game.FrameTime > m_GameWorld.nextTickTime)
+        while (Game.FrameTime > m_GameWorld.NextTickTime)
         {
             gameTime.Tick++;
             gameTime.TickDuration = gameTime.tickInterval;
@@ -322,7 +322,7 @@ public class PreviewGameLoop : IGameLoop
             commandWasConsumed = true;
 
             PreviewTickUpdate();
-            m_GameWorld.nextTickTime += m_GameWorld.worldTime.tickInterval;
+            m_GameWorld.NextTickTime += m_GameWorld.WorldTime.tickInterval;
         }
 
         if (commandWasConsumed)
@@ -336,12 +336,12 @@ public class PreviewGameLoop : IGameLoop
 
     public void PreviewTickUpdate()
     {
-        m_GameWorld.worldTime = gameTime;
+        m_GameWorld.WorldTime = gameTime;
         m_GameWorld.frameDuration = gameTime.TickDuration;
 
         m_PlayerModuleClient.ResolveReferenceFromLocalPlayerToPlayer();
         m_PlayerModuleClient.HandleCommandReset();
-        m_PlayerModuleClient.StoreCommand(m_GameWorld.worldTime.Tick);
+        m_PlayerModuleClient.StoreCommand(m_GameWorld.WorldTime.Tick);
 
         // Game mode update
         m_previewGameMode.Update();
@@ -357,7 +357,7 @@ public class PreviewGameLoop : IGameLoop
         m_UpdateReplicatedOwnerFlag.Update();
 
         // Apply command for frame
-        m_PlayerModuleClient.RetrieveCommand(m_GameWorld.worldTime.Tick);
+        m_PlayerModuleClient.RetrieveCommand(m_GameWorld.WorldTime.Tick);
 
         // Handle spawn
         m_CharacterModule.HandleSpawns();

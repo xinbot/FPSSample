@@ -30,7 +30,7 @@ public struct CharacterReplicatedData : IComponentData, IReplicatedComponent
         var buffer = entityManager.GetBuffer<EntityGroupChildren>(abilityCollection);
         for (int j = 0; j < buffer.Length; j++)
         {
-            var childEntity = buffer[j].entity;
+            var childEntity = buffer[j].Entity;
             if (!entityManager.HasComponent<CharBehaviour>(childEntity))
                 continue;
             if (entityManager.HasComponent(childEntity, abilityType))

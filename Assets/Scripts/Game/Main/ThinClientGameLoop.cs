@@ -65,16 +65,16 @@ public class ThinClientGameWorld
         // Advances time and accumulate input into the UserCommand being generated
         HandleTime(frameDuration);
 
-        _gameWorld.worldTime = _renderTime;
+        _gameWorld.WorldTime = _renderTime;
         _gameWorld.frameDuration = frameDuration;
-        _gameWorld.lastServerTick = _networkClient.serverTime;
+        _gameWorld.LastServerTick = _networkClient.serverTime;
 
         // Prediction
-        _gameWorld.worldTime = _predictedTime;
+        _gameWorld.WorldTime = _predictedTime;
 
         // Update Presentation
-        _gameWorld.worldTime = _predictedTime;
-        _gameWorld.worldTime = _renderTime;
+        _gameWorld.WorldTime = _predictedTime;
+        _gameWorld.WorldTime = _renderTime;
 
 #if UNITY_EDITOR
         if (_gameWorld.GetEntityManager().Exists(_localPlayer.controlledEntity) &&
@@ -141,7 +141,7 @@ public class ThinClientGameWorld
         int preferredBufferedCommandCount = 2;
         int preferredTick = _networkClient.serverTime +
                             (int) (((_networkClient.timeSinceSnapshot + _networkStatistics.rtt.average) / 1000.0f) *
-                                   _gameWorld.worldTime.tickRate) + preferredBufferedCommandCount;
+                                   _gameWorld.WorldTime.tickRate) + preferredBufferedCommandCount;
 
         bool resetTime = false;
         if (_predictedTime.Tick < preferredTick - 3)
@@ -162,7 +162,7 @@ public class ThinClientGameWorld
             GameDebug.Log($"CATCHUP ({_predictedTime.Tick} -> {preferredTick})");
 
             _networkStatistics.notifyHardCatchup = true;
-            _gameWorld.nextTickTime = Game.FrameTime;
+            _gameWorld.NextTickTime = Game.FrameTime;
             _predictedTime.Tick = preferredTick;
             _predictedTime.SetTime(preferredTick, 0);
         }

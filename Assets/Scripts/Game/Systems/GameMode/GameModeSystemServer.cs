@@ -260,7 +260,7 @@ public class GameModeSystemServer : ComponentSystem
                 if (healthState.health == 0)
                 {
                     // Send kill msg
-                    if (healthState.deathTick == m_World.worldTime.Tick)
+                    if (healthState.deathTick == m_World.WorldTime.Tick)
                     {
                         var killerEntity = healthState.killedBy;
                         var killerIndex = FindPlayerControlling(ref playerStates, killerEntity);
@@ -282,8 +282,8 @@ public class GameModeSystemServer : ComponentSystem
                     }
 
                     // Respawn dead players except if in ended mode
-                    if (m_EnableRespawning && (m_World.worldTime.Tick - healthState.deathTick) *
-                        m_World.worldTime.tickInterval > respawnDelay.IntValue)
+                    if (m_EnableRespawning && (m_World.WorldTime.Tick - healthState.deathTick) *
+                        m_World.WorldTime.tickInterval > respawnDelay.IntValue)
                     {
                         // Despawn current controlled entity. New entity will be created later
                         if (EntityManager.HasComponent<Character>(controlledEntity))

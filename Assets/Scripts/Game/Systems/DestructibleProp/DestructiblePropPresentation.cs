@@ -84,7 +84,7 @@ public class DestructiblePropSystemClient : BaseComponentSystem
             }
             
             // Trigger effect if it just happened (otherwise late joiner will se effect when connecting)
-            var time  = m_world.worldTime;
+            var time  = m_world.WorldTime;
             if (time.DurationSinceTick(replicatedState.destroyedTick) < presentation.triggerEffectTimeThreshold)
             {
                 for (var j = 0; j < presentation.shatterSettings.rigidBodies.Length; j++)

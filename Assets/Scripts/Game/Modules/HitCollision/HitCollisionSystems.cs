@@ -155,7 +155,7 @@ public class StoreColliderStates : BaseComponentSystem<HitCollisionHistory>
 
     protected override void Update(Entity entity, HitCollisionHistory hitColliderHist)
     {
-        var sampleTick = m_world.worldTime.Tick;
+        var sampleTick = m_world.WorldTime.Tick;
         
         HitCollisionData.StoreBones(EntityManager, entity, hitColliderHist.collisiderParents, sampleTick);
         

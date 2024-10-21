@@ -56,7 +56,7 @@ public class System_RobotWeaponA : BaseComponentSystem<RobotWeaponA,CharacterPre
             return;
 
         var charRepAll = EntityManager.GetComponentData<CharacterReplicatedData>(charPresentation.character);
-        Update(m_world.worldTime, weapon, ref charRepAll, m_world.frameDuration);
+        Update(m_world.WorldTime, weapon, ref charRepAll, m_world.frameDuration);
     }
 
 

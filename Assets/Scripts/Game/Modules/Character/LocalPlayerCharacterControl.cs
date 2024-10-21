@@ -264,7 +264,7 @@ public class UpdateCharacterCamera : BaseComponentSystem<LocalPlayer,LocalPlayer
         // TODO (mogensh) find better place to put this. 
         if (LocalPlayerCharacterControl.ShowHistory.IntValue > 0)
         {
-            character.ShowHistory(m_world.worldTime.Tick);
+            character.ShowHistory(m_world.WorldTime.Tick);
         }
     }
 

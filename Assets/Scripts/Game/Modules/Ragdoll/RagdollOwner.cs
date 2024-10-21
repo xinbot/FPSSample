@@ -104,7 +104,7 @@ public class UpdateRagdolls : BaseComponentSystem<CharacterPresentationSetup, Ra
 
                 ragdollOwner.timeUntilStart -= m_world.frameDuration;
                 
-                if(ragdollOwner.timeUntilStart <= m_world.worldTime.tickInterval)
+                if(ragdollOwner.timeUntilStart <= m_world.WorldTime.tickInterval)
                 {
                     // Store bone transforms so they can be used to calculate bone velocity next frame
                     for (int boneIndex = 0; boneIndex < ragdollOwner.targeteBones.Length; boneIndex++)

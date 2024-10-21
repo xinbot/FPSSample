@@ -90,7 +90,7 @@ class Movement_Update : BaseComponentDataSystem<CharBehaviour, AbilityControl, A
         EntityManager.SetComponentData(abilityEntity, abilityCtrl);
         
         
-        var time = m_world.worldTime;
+        var time = m_world.WorldTime;
        
         var command = EntityManager.GetComponentData<UserCommandComponentData>(charAbility.character).command;
         var predictedState = EntityManager.GetComponentData<CharacterPredictedData>(charAbility.character);
@@ -310,7 +310,7 @@ class Movement_HandleCollision : BaseComponentDataSystem<CharBehaviour, AbilityC
             return;
 
         
-        var time = m_world.worldTime;
+        var time = m_world.WorldTime;
         var predictedState = EntityManager.GetComponentData<CharacterPredictedData>(charAbility.character);
         var query = EntityManager.GetComponentObject<CharacterMoveQuery>(charAbility.character);
         var command = EntityManager.GetComponentData<UserCommandComponentData>(charAbility.character).command;

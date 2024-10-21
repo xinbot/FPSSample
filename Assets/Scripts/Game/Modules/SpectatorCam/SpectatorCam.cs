@@ -83,7 +83,7 @@ public class UpdateSpectatorCam : BaseComponentSystem
 
             var forward = math.mul(spectatorCam.rotation,Vector3.forward);
             var right = math.mul(spectatorCam.rotation,Vector3.right);
-            var maxVel = 3 * m_world.worldTime.tickInterval;
+            var maxVel = 3 * m_world.WorldTime.tickInterval;
             var moveDir = forward * Mathf.Cos(command.moveYaw*Mathf.Deg2Rad)  + right * Mathf.Sin(command.moveYaw*Mathf.Deg2Rad);
             spectatorCam.position += moveDir * maxVel * command.moveMagnitude;
 

@@ -22,7 +22,7 @@ public class CreateProjectileMovementCollisionQueries : BaseComponentSystem
     {
         var entityArray = ProjectileGroup.GetEntityArray();
         var projectileDataArray = ProjectileGroup.GetComponentDataArray<ProjectileData>();
-        var time = m_world.worldTime;
+        var time = m_world.WorldTime;
         for (var i = 0; i < projectileDataArray.Length; i++)
         {
             var projectileData = projectileDataArray[i];
@@ -98,7 +98,7 @@ public class HandleProjectileMovementCollisionQuery : BaseComponentSystem
                 projectileData.impacted = 1;
                 projectileData.impactPos = queryResult.hitPoint;
                 projectileData.impactNormal = queryResult.hitNormal;
-                projectileData.impactTick = m_world.worldTime.Tick;
+                projectileData.impactTick = m_world.WorldTime.Tick;
 
                 // Owner can despawn while projectile is in flight, so we need to make sure we dont send non existing instigator
                 var damageInstigator = EntityManager.Exists(projectileData.projectileOwner) ? projectileData.projectileOwner : Entity.Null;
@@ -157,7 +157,7 @@ public class DespawnProjectiles : BaseComponentSystem
     
     protected override void OnUpdate()
     {
-        var time = m_world.worldTime;
+        var time = m_world.WorldTime;
         var entityArray = ProjectileGroup.GetEntityArray();
         var projectileDataArray = ProjectileGroup.GetComponentDataArray<ProjectileData>();
         for (var i = 0; i < projectileDataArray.Length; i++)
@@ -166,7 +166,7 @@ public class DespawnProjectiles : BaseComponentSystem
             
             if (projectileData.impactTick > 0)
             {
-                if (m_world.worldTime.DurationSinceTick(projectileData.impactTick) > 1.0f)
+                if (m_world.WorldTime.DurationSinceTick(projectileData.impactTick) > 1.0f)
                 {
                     PostUpdateCommands.AddComponent(entityArray[i],new DespawningEntity());
                 }

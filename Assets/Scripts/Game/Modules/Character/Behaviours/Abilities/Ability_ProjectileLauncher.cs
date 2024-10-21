@@ -134,7 +134,7 @@ class ProjectileLauncher_Update : BaseComponentDataSystem<AbilityControl,Ability
 
     protected override void Update(Entity entity, AbilityControl abilityCtrl, Ability_ProjectileLauncher.PredictedState predictedState, Ability_ProjectileLauncher.Settings state)
     {
-        var time = m_world.worldTime;
+        var time = m_world.WorldTime;
         switch (abilityCtrl.behaviorState)
         {
             case AbilityControl.State.RequestActive:

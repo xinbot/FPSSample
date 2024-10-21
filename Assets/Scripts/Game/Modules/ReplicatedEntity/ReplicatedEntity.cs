@@ -193,7 +193,7 @@ public class UpdateReplicatedOwnerFlag : BaseComponentSystem
             var buffer = EntityManager.GetBuffer<EntityGroupChildren>(entity);
             for (int i = 0; i < buffer.Length; i++)
             {
-                SetFlag(buffer[i].entity, set);
+                SetFlag(buffer[i].Entity, set);
             }
         } 
     }
