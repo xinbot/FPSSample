@@ -10,7 +10,7 @@ public class NullSnapshotConsumer : ISnapshotConsumer
     {
     }
 
-    public void ProcessEntitySpawn(int serverTime, int id, ushort typeId)
+    public void ProcessEntitySpawn(int serverTick, int id, ushort typeId)
     {
     }
 

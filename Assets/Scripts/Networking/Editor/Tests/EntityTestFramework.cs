@@ -109,7 +109,7 @@ namespace NetcodeTests
         }
 
         // Clientside spawning incoming entities
-        public void ProcessEntitySpawn(int serverTime, int entityId, ushort typeId)
+        public void ProcessEntitySpawn(int serverTick, int entityId, ushort typeId)
         {
             SpawnInternal(entityId, typeId, -1);
         }

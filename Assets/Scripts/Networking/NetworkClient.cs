@@ -9,7 +9,7 @@ namespace Networking
     public interface ISnapshotConsumer
     {
         void ProcessEntityDeSpawn(int serverTime, List<int> deSpawn);
-        void ProcessEntitySpawn(int serverTime, int id, ushort typeId);
+        void ProcessEntitySpawn(int serverTick, int id, ushort typeId);
         void ProcessEntityUpdate(int serverTime, int id, ref NetworkReader reader);
     }
 
