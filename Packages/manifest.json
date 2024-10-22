@@ -16,6 +16,7 @@
     "com.unity.textmeshpro": "1.4.1",
     "com.unity.visualeffectgraph": "4.9.0-preview",
     "com.unity.xr.oculus.standalone": "1.38.3",
+	"com.unity.transport": "0.1.0-preview",
     "com.unity.modules.ai": "1.0.0",
     "com.unity.modules.animation": "1.0.0",
     "com.unity.modules.assetbundle": "1.0.0",
