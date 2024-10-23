@@ -152,7 +152,7 @@ namespace Networking
             get
             {
                 return _clientConnection != null
-                    ? NetworkUtils.stopwatch.ElapsedMilliseconds - _clientConnection.SnapshotReceivedTime
+                    ? NetworkUtils.Stopwatch.ElapsedMilliseconds - _clientConnection.SnapshotReceivedTime
                     : -1;
             }
         }
@@ -369,7 +369,7 @@ namespace Networking
                 GameDebug.Log(string.Format("Last package sent : {0}. Last package received {1} {2} ms ago",
                     _clientConnection.OutSequence,
                     _clientConnection.InSequence,
-                    NetworkUtils.stopwatch.ElapsedMilliseconds - _clientConnection.InSequenceTime));
+                    NetworkUtils.Stopwatch.ElapsedMilliseconds - _clientConnection.InSequenceTime));
             }
             else if (_clientConnection.ConnectionState == ConnectionState.Connecting)
             {
@@ -750,7 +750,7 @@ namespace Networking
                 if (snapshotInfo.ServerTime > ServerTime)
                 {
                     ServerTime = snapshotInfo.ServerTime;
-                    SnapshotReceivedTime = NetworkUtils.stopwatch.ElapsedMilliseconds;
+                    SnapshotReceivedTime = NetworkUtils.Stopwatch.ElapsedMilliseconds;
                 }
                 else
                 {

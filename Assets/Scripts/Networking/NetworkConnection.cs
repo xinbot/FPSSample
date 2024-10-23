@@ -350,7 +350,7 @@ namespace Networking
                 }
 
                 InSequence = inSequenceNew;
-                InSequenceTime = NetworkUtils.stopwatch.ElapsedMilliseconds;
+                InSequenceTime = NetworkUtils.Stopwatch.ElapsedMilliseconds;
             }
             else if (inSequenceNew < InSequence)
             {
@@ -393,7 +393,7 @@ namespace Networking
                 var timeOnServer = (ushort) input.ReadBits(8);
                 if (OutstandingPackages.TryGetValue(outSequenceAckNew, out var info))
                 {
-                    var now = NetworkUtils.stopwatch.ElapsedMilliseconds;
+                    var now = NetworkUtils.Stopwatch.ElapsedMilliseconds;
                     RTT = (int) (now - info.SentTime - timeOnServer);
                 }
             }
@@ -476,7 +476,7 @@ namespace Networking
             // TODO should this be sent from client to server?
             if (OutSequence % 3 == 0)
             {
-                var now = NetworkUtils.stopwatch.ElapsedMilliseconds;
+                var now = NetworkUtils.Stopwatch.ElapsedMilliseconds;
                 // TODO Is 255 enough? 
                 var timeOnServer = (byte) Math.Min(now - InSequenceTime, 255);
                 output.WriteBits(timeOnServer, 8);
@@ -494,7 +494,7 @@ namespace Networking
         {
             Profiler.BeginSample("NetworkConnection.CompleteSendPackage()");
 
-            info.SentTime = NetworkUtils.stopwatch.ElapsedMilliseconds;
+            info.SentTime = NetworkUtils.Stopwatch.ElapsedMilliseconds;
             info.Content = (NetworkMessage) PackageBuffer[0];
             int packageSize = output.Flush();
 

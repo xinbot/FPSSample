@@ -4,7 +4,7 @@ using System.Net;
 using NUnit.Framework;
 
 using System.Net.Sockets;
-
+using Networking;
 using Unity.Networking.Transport;
 using Unity.Collections;
 using Unity.Networking.Transport.LowLevel.Unsafe;
@@ -343,7 +343,7 @@ namespace TransportTests
             using (UdpCClient c5     = new UdpCClient(12006, 12000))
             {
                 long start = 0, now = 0;
-                start = NetworkUtils.stopwatch.ElapsedMilliseconds;
+                start = NetworkUtils.Stopwatch.ElapsedMilliseconds;
 
                 while (now - start < 30000)
                 {
@@ -354,7 +354,7 @@ namespace TransportTests
                     c3.Update();
                     c4.Update();
                     c5.Update();
-                    now = NetworkUtils.stopwatch.ElapsedMilliseconds;
+                    now = NetworkUtils.Stopwatch.ElapsedMilliseconds;
                 }
 
                 GameDebug.Log(string.Format("con: {0}, disc {1}, data {2}", server.connectCounter,

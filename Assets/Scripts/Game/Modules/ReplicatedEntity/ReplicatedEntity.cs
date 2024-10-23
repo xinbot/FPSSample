@@ -129,7 +129,7 @@ public class ReplicatedEntity : ComponentDataProxy<ReplicatedEntityData>
         // Our guid is known and in use by another object??
         var oldReg = netGuidMap[netID];
         if (oldReg != null && oldReg.GetInstanceID() != this.GetInstanceID() &&
-            ByteArrayComp.instance.Equals(oldReg.netID, netID))
+            ByteArrayComp.Instance.Equals(oldReg.netID, netID))
         {
             // If actually *is* another ReplEnt that has our netID, *then* we give it up (usually happens because of copy / paste)
             netID = System.Guid.NewGuid().ToByteArray();

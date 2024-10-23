@@ -1,6 +1,7 @@
 ﻿using Unity.Entities;
 using UnityEngine;
 using UnityEngine.Networking;
+using NetworkReader = Networking.NetworkReader;
 using NetworkWriter = Networking.NetworkWriter;
 
 [System.Serializable]

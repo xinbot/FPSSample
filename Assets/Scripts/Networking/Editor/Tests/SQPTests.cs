@@ -250,7 +250,7 @@ namespace TransportTests
             sid.Map = "Great escape to the see";
             server.ServerInfoData = sid;
 
-            var start = NetworkUtils.stopwatch.ElapsedMilliseconds;
+            var start = NetworkUtils.Stopwatch.ElapsedMilliseconds;
             while(true)
             {
                 server.Update();
@@ -262,7 +262,7 @@ namespace TransportTests
                 }
                 */
 
-                if (NetworkUtils.stopwatch.ElapsedMilliseconds - start > 1000)
+                if (NetworkUtils.Stopwatch.ElapsedMilliseconds - start > 1000)
                     Debug.Log("Listening");
                 
             }

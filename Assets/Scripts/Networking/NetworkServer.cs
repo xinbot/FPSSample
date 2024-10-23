@@ -19,7 +19,7 @@ public interface IClientCommandProcessor
     void ProcessCommand(int connectionId, int tick, ref NetworkReader data);
 }
 
-unsafe public class NetworkServer
+public unsafe class NetworkServer
 {
     [ConfigVar(Name = "server.debug", DefaultValue = "0", Description = "Enable debug printing of server handshake etc.", Flags = ConfigVar.Flags.None)]
     public static ConfigVar serverDebug;
@@ -467,7 +467,7 @@ unsafe public class NetworkServer
             GameDebug.Log(string.Format("Last package sent : {0} . Last package received {1} {2} ms ago",
                 connection.OutSequence,
                 connection.InSequence,
-                NetworkUtils.stopwatch.ElapsedMilliseconds - connection.InSequenceTime));
+                NetworkUtils.Stopwatch.ElapsedMilliseconds - connection.InSequenceTime));
 
             connection.Shutdown();
             m_Connections.Remove(connectionId);

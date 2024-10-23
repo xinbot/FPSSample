@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using System.Collections.Generic;
+using Networking;
 using Object = UnityEngine.Object;
 using Unity.Entities;
 using UnityEngine.Profiling;
@@ -115,7 +116,7 @@ public class GameWorld
     {
         // Replicated entities are sorted by their netID and numbered accordingly
         var sceneEntities = new List<ReplicatedEntity>(Object.FindObjectsOfType<ReplicatedEntity>());
-        sceneEntities.Sort((a, b) => ByteArrayComp.instance.Compare(a.netID, b.netID));
+        sceneEntities.Sort((a, b) => ByteArrayComp.Instance.Compare(a.netID, b.netID));
         for (int i = 0; i < sceneEntities.Count; i++)
         {
             var gameObjectEntity = sceneEntities[i].GetComponent<GameObjectEntity>();

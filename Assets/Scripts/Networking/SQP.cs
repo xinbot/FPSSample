@@ -347,7 +347,7 @@ namespace Networking
         {
             GameDebug.Assert(q.m_State == SQPClientState.Idle);
 
-            q.StartTime = NetworkUtils.stopwatch.ElapsedMilliseconds;
+            q.StartTime = NetworkUtils.Stopwatch.ElapsedMilliseconds;
 
             var writer = new DataStreamWriter(m_Buffer.Length, Unity.Collections.Allocator.Temp);
             var req = new ChallangeRequest();
@@ -360,7 +360,7 @@ namespace Networking
 
         void SendServerInfoQuery(SQPQuery q)
         {
-            q.StartTime = NetworkUtils.stopwatch.ElapsedMilliseconds;
+            q.StartTime = NetworkUtils.Stopwatch.ElapsedMilliseconds;
             var req = new QueryRequest();
             req.Header.ChallangeId = q.ChallangeId;
             req.RequestedChunks = (byte)SQPChunkType.ServerInfo;
@@ -405,9 +405,9 @@ namespace Networking
                                 if ((SQPMessageType)header.Type == SQPMessageType.ChallangeResponse)
                                 {
                                     q.ChallangeId = header.ChallangeId;
-                                    q.RTT = NetworkUtils.stopwatch.ElapsedMilliseconds - q.StartTime;
+                                    q.RTT = NetworkUtils.Stopwatch.ElapsedMilliseconds - q.StartTime;
                                     // We restart timer so we can get an RTT that is an average between two measurements
-                                    q.StartTime = NetworkUtils.stopwatch.ElapsedMilliseconds;
+                                    q.StartTime = NetworkUtils.Stopwatch.ElapsedMilliseconds;
                                     SendServerInfoQuery(q);
                                 }
                                 break;
@@ -419,7 +419,7 @@ namespace Networking
                                     q.m_ServerInfo.FromStream(reader, ref ctx);
 
                                     // We report the average of two measurements
-                                    q.RTT = (q.RTT + (NetworkUtils.stopwatch.ElapsedMilliseconds - q.StartTime)) / 2;
+                                    q.RTT = (q.RTT + (NetworkUtils.Stopwatch.ElapsedMilliseconds - q.StartTime)) / 2;
 
                                     /*
                                     GameDebug.Log(string.Format("ServerName: {0}, BuildId: {1}, Current Players: {2}, Max Players: {3}, GameType: {4}, Map: {5}, Port: {6}",
@@ -449,7 +449,7 @@ namespace Networking
                 // Timeout if stuck in any state but idle for too long
                 if (q.m_State != SQPClientState.Idle)
                 {
-                    var now = NetworkUtils.stopwatch.ElapsedMilliseconds;
+                    var now = NetworkUtils.Stopwatch.ElapsedMilliseconds;
                     if (now - q.StartTime > 3000)
                     {
                         q.m_State = SQPClientState.Idle;
