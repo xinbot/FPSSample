@@ -90,8 +90,8 @@ public class NetworkProfiler : EditorWindow
         foreach (var entityTypePair in networkServer.GetEntityTypes())
         {
             var entityType = entityTypePair.Value;
-            var schema = entityType.schema;
-            GUILayout.Label(entityType.name + " Schema:", leftAlignStyle);
+            var schema = entityType.Schema;
+            GUILayout.Label(entityType.Name + " Schema:", leftAlignStyle);
 
             // header
             {

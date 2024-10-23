@@ -20,6 +20,58 @@ namespace Networking
         void ProcessCommand(int connectionId, int tick, ref NetworkReader data);
     }
 
+    public unsafe class MapInfo
+    {
+        // The server frame the map was initialized
+        public int ServerInitSequence;
+
+        // Unique sequence number for the map (to deal with redundant mapinfo messages)
+        public ushort MapId;
+
+        // Schema for the map info
+        public NetworkSchema Schema;
+
+        // Game specific payload
+        public uint* Data = (uint*) UnsafeUtility.Malloc(1024, UnsafeUtility.AlignOf<uint>(),
+            Unity.Collections.Allocator.Persistent);
+    }
+    
+    public unsafe class EntityTypeInfo
+    {
+        public string Name;
+        public ushort TypeId;
+        public int CreatedSequence;
+        public uint* Baseline;
+        public int StatsCount;
+        public int StatsBits;
+
+        public NetworkSchema Schema;
+    }
+
+    // Holds a information about a snapshot for an entity.
+    // Each entity has a circular history of these
+    public unsafe class EntitySnapshotInfo
+    {
+        // pointer into WorldSnapshot.data block (see below)
+        public uint* Start;
+
+        // length of data in words
+        public int Length;
+    }
+
+    // Each tick a WorldSnapshot is generated. The data buffer contains serialized data
+    // from all serializable entities
+    public unsafe class WorldSnapshot
+    {
+        // server tick for this snapshot
+        public int ServerTime;
+
+        // length of data in data field
+        public int Length;
+
+        public uint* Data;
+    }
+
     public unsafe class NetworkServer
     {
         [ConfigVar(Name = "server.debug", DefaultValue = "0",
@@ -124,7 +176,7 @@ namespace Networking
             for (int i = 0; i < m_Snapshots.Length; ++i)
             {
                 m_Snapshots[i] = new WorldSnapshot();
-                m_Snapshots[i].data = (uint*) UnsafeUtility.Malloc(NetworkConfig.MAXWorldSnapshotDataSize,
+                m_Snapshots[i].Data = (uint*) UnsafeUtility.Malloc(NetworkConfig.MAXWorldSnapshotDataSize,
                     UnsafeUtility.AlignOf<UInt32>(), Unity.Collections.Allocator.Persistent);
             }
 
@@ -140,7 +192,7 @@ namespace Networking
             UnsafeUtility.Free(m_Prediction, Unity.Collections.Allocator.Persistent);
             for (int i = 0; i < m_Snapshots.Length; ++i)
             {
-                UnsafeUtility.Free(m_Snapshots[i].data, Unity.Collections.Allocator.Persistent);
+                UnsafeUtility.Free(m_Snapshots[i].Data, Unity.Collections.Allocator.Persistent);
             }
         }
 
@@ -148,19 +200,19 @@ namespace Networking
         {
             // Generate schema the first time we set map info
             bool generateSchema = false;
-            if (m_MapInfo.schema == null)
+            if (m_MapInfo.Schema == null)
             {
-                m_MapInfo.schema = new NetworkSchema(NetworkConfig.MapSchemaId);
+                m_MapInfo.Schema = new NetworkSchema(NetworkConfig.MapSchemaId);
                 generateSchema = true;
             }
 
             // Update map info
-            var writer = new NetworkWriter(m_MapInfo.data, 1024, m_MapInfo.schema, generateSchema);
+            var writer = new NetworkWriter(m_MapInfo.Data, 1024, m_MapInfo.Schema, generateSchema);
             generator(ref writer);
             writer.Flush();
 
-            m_MapInfo.serverInitSequence = m_ServerSequence;
-            ++m_MapInfo.mapId;
+            m_MapInfo.ServerInitSequence = m_ServerSequence;
+            ++m_MapInfo.MapId;
 
             // Reset map and connection state
             serverTime = 0;
@@ -265,18 +317,21 @@ namespace Networking
             {
                 pair.Value.QueueEvent(info);
             }
+
             info.Release();
         }
 
         public void GenerateSnapshot(ISnapshotGenerator snapshotGenerator, float simTime)
         {
             var time = snapshotGenerator.worldTick;
-            GameDebug.Assert(time > serverTime); // Time should always flow forward
-            GameDebug.Assert(m_MapInfo.mapId > 0); // Initialize map before generating snapshot
+            // Time should always flow forward
+            GameDebug.Assert(time > serverTime);
+            // Initialize map before generating snapshot
+            GameDebug.Assert(m_MapInfo.MapId > 0);
 
             ++m_ServerSequence;
 
-            // We currently keep entities around until every client has ack'ed the snapshot with the despawn
+            // We currently keep entities around until every client has ack'ed the snapshot with the deSpawn
             // Then we delete them from our list and recycle the id
             // TODO: we do not need this anymore?
 
@@ -286,24 +341,32 @@ namespace Networking
             {
                 var c = pair.Value;
                 // If a client is so far behind that we have to send non-baseline updates to it
-                // there is no reason to keep despawned entities around for this clients sake
-                if (m_ServerSequence - c.maxSnapshotAck >= NetworkConfig.SnapshotDeltaCacheSize - 2
-                ) // -2 because we want 3 baselines!
+                // there is no reason to keep deSpawned entities around for this client's sake
+                // -2 because we want 3 baselines!
+                if (m_ServerSequence - c.maxSnapshotAck >= NetworkConfig.SnapshotDeltaCacheSize - 2)
+                {
                     continue;
+                }
+
                 var acked = c.maxSnapshotAck;
                 if (acked < minClientAck)
+                {
                     minClientAck = acked;
+                }
             }
 
-            // Recycle despawned entities that have been acked by all
+            // Recycle deSpawned entities that have been acked by all
             for (int i = 0; i < m_Entities.Count; i++)
             {
                 var e = m_Entities[i];
                 if (e.despawnSequence > 0 && e.despawnSequence < minClientAck)
                 {
                     if (ServerDebugEntityIds.IntValue > 1)
-                        GameDebug.Log("Recycling entity id: " + i + " because despawned in " + e.despawnSequence +
+                    {
+                        GameDebug.Log("Recycling entity id: " + i + " because deSpawned in " + e.despawnSequence +
                                       " and minAck is now " + minClientAck);
+                    }
+
                     e.Reset();
                     m_FreeEntities.Add(i);
                 }
@@ -311,13 +374,12 @@ namespace Networking
 
             serverTime = time;
             m_ServerSimTime = simTime;
-
             m_LastEntityCount = 0;
 
             // Grab world snapshot from circular buffer
-            var worldsnapshot = m_Snapshots[m_ServerSequence % m_Snapshots.Length];
-            worldsnapshot.serverTime = time;
-            worldsnapshot.length = 0;
+            var worldSnapshot = m_Snapshots[m_ServerSequence % m_Snapshots.Length];
+            worldSnapshot.ServerTime = time;
+            worldSnapshot.Length = 0;
 
             // Run through all the registered network entities and serialize the snapshot
             for (var id = 0; id < m_Entities.Count; id++)
@@ -326,13 +388,17 @@ namespace Networking
 
                 // Skip freed
                 if (entity.spawnSequence == 0)
+                {
                     continue;
+                }
 
-                // Skip entities that are depawned
+                // Skip entities that are deSpawned
                 if (entity.despawnSequence > 0)
+                {
                     continue;
+                }
 
-                // If we are here and are despawned, we must be a despawn/spawn in same frame situation
+                // If we are here and are deSpawned, we must be a deSpawn / spawn in same frame situation
                 GameDebug.Assert(entity.despawnSequence == 0 || entity.despawnSequence == entity.spawnSequence,
                     "Snapshotting entity that was deleted in the past?");
                 GameDebug.Assert(entity.despawnSequence == 0 || entity.despawnSequence == m_ServerSequence, "WUT");
@@ -344,11 +410,12 @@ namespace Networking
                 bool generateSchema = false;
                 if (!m_EntityTypes.TryGetValue(entity.typeId, out typeInfo))
                 {
-                    typeInfo = new EntityTypeInfo()
+                    typeInfo = new EntityTypeInfo
                     {
-                        name = snapshotGenerator.GenerateEntityName(id), typeId = entity.typeId,
-                        createdSequence = m_ServerSequence,
-                        schema = new NetworkSchema(entity.typeId + NetworkConfig.FirstEntitySchemaId)
+                        Name = snapshotGenerator.GenerateEntityName(id),
+                        TypeId = entity.typeId,
+                        CreatedSequence = m_ServerSequence,
+                        Schema = new NetworkSchema(entity.typeId + NetworkConfig.FirstEntitySchemaId)
                     };
                     m_EntityTypes.Add(entity.typeId, typeInfo);
                     generateSchema = true;
@@ -356,35 +423,35 @@ namespace Networking
 
                 // Generate entity snapshot
                 var snapshotInfo = entity.snapshots.Acquire(m_ServerSequence);
-                snapshotInfo.start = worldsnapshot.data + worldsnapshot.length;
+                snapshotInfo.Start = worldSnapshot.Data + worldSnapshot.Length;
 
-                var writer = new NetworkWriter(snapshotInfo.start,
-                    NetworkConfig.MAXWorldSnapshotDataSize / 4 - worldsnapshot.length, typeInfo.schema, generateSchema);
+                var bufferSize = NetworkConfig.MAXWorldSnapshotDataSize / 4 - worldSnapshot.Length;
+                var writer = new NetworkWriter(snapshotInfo.Start, bufferSize, typeInfo.Schema, generateSchema);
                 snapshotGenerator.GenerateEntitySnapshot(id, ref writer);
                 writer.Flush();
-                snapshotInfo.length = writer.GetLength();
+                snapshotInfo.Length = writer.GetLength();
 
-                worldsnapshot.length += snapshotInfo.length;
+                worldSnapshot.Length += snapshotInfo.Length;
 
                 if (entity.despawnSequence == 0)
                 {
                     m_LastEntityCount++;
                 }
 
-                GameDebug.Assert(snapshotInfo.length > 0,
+                GameDebug.Assert(snapshotInfo.Length > 0,
                     "Tried to generate a entity snapshot but no data was delivered by generator?");
 
                 if (generateSchema)
                 {
-                    GameDebug.Assert(typeInfo.baseline == null, "Generating schema twice?");
+                    GameDebug.Assert(typeInfo.Baseline == null, "Generating schema twice?");
                     // First time a type/schema is encountered, we clone the serialized data and
                     // use it as the type-baseline
-                    typeInfo.baseline = (uint*) UnsafeUtility.Malloc(snapshotInfo.length * 4,
-                        UnsafeUtility.AlignOf<UInt32>(),
-                        Unity.Collections.Allocator
-                            .Persistent); // new uint[snapshot.length];// (uint[])snapshot.data.Clone();
-                    for (int i = 0; i < snapshotInfo.length; i++)
-                        typeInfo.baseline[i] = *(snapshotInfo.start + i);
+                    typeInfo.Baseline = (uint*) UnsafeUtility.Malloc(snapshotInfo.Length * 4,
+                        UnsafeUtility.AlignOf<UInt32>(), Unity.Collections.Allocator.Persistent);
+                    for (int i = 0; i < snapshotInfo.Length; i++)
+                    {
+                        typeInfo.Baseline[i] = *(snapshotInfo.Start + i);
+                    }
                 }
 
                 // Check if it is different from the previous generated snapshot
@@ -392,21 +459,24 @@ namespace Networking
                 if (!dirty)
                 {
                     var previousSnapshot = entity.snapshots[m_ServerSequence - 1];
-                    if (previousSnapshot.length != snapshotInfo.length || // TODO (petera) how could length differ???
-                        UnsafeUtility.MemCmp(previousSnapshot.start, snapshotInfo.start, snapshotInfo.length) != 0)
+                    // TODO (petera) how could length differ???
+                    if (previousSnapshot.Length != snapshotInfo.Length ||
+                        UnsafeUtility.MemCmp(previousSnapshot.Start, snapshotInfo.Start, snapshotInfo.Length) != 0)
                     {
                         dirty = true;
                     }
                 }
 
                 if (dirty)
+                {
                     entity.updateSequence = m_ServerSequence;
+                }
 
                 statsGeneratedEntitySnapshots++;
-                statsSnapshotData += snapshotInfo.length;
+                statsSnapshotData += snapshotInfo.Length;
             }
 
-            statsGeneratedSnapshotSize += worldsnapshot.length * 4;
+            statsGeneratedSnapshotSize += worldSnapshot.Length * 4;
         }
 
         public void Update(INetworkCallbacks loop)
@@ -431,20 +501,20 @@ namespace Networking
             }
         }
 
-        private long accumSendDataTicks = 0;
-        private long lastUpdateTick = 0;
-
         public void SendData()
         {
             Profiler.BeginSample("NetworkServer.SendData");
 
             long startTick = 0;
-            if (NetworkServer.PrintSenddataTime.IntValue > 0)
+            if (PrintSenddataTime.IntValue > 0)
+            {
                 startTick = Game.clock.ElapsedTicks;
+            }
 
             foreach (var pair in m_Connections)
             {
-#pragma warning disable 0162 // unreachable code
+// unreachable code
+#pragma warning disable 0162
                 switch (NetworkConfig.IOStreamType)
                 {
                     case IOStreamType.Raw:
@@ -459,8 +529,7 @@ namespace Networking
 #pragma warning restore
             }
 
-
-            if (NetworkServer.PrintSenddataTime.IntValue > 0)
+            if (PrintSenddataTime.IntValue > 0)
             {
                 long stopTick = Game.clock.ElapsedTicks;
                 long ticksPerSecond = System.Diagnostics.Stopwatch.Frequency;
@@ -487,7 +556,7 @@ namespace Networking
             return m_EntityTypes;
         }
 
-        void OnConnect(int connectionId, INetworkCallbacks loop)
+        private void OnConnect(int connectionId, INetworkCallbacks loop)
         {
             GameDebug.Assert(!m_Connections.ContainsKey(connectionId));
 
@@ -502,20 +571,19 @@ namespace Networking
                           m_Transport.GetConnectionDescription(connectionId));
 
             var connection = new ServerConnection(this, connectionId, m_Transport);
-
             m_Connections.Add(connectionId, connection);
 
             loop.OnConnect(connectionId);
         }
 
-        void OnDisconnect(int connectionId, INetworkCallbacks loop)
+        private void OnDisconnect(int connectionId, INetworkCallbacks loop)
         {
             ServerConnection connection;
             if (m_Connections.TryGetValue(connectionId, out connection))
             {
                 loop.OnDisconnect(connectionId);
 
-                GameDebug.Log(string.Format("Client {0} disconnected", connectionId));
+                GameDebug.Log($"Client {connectionId} disconnected");
                 GameDebug.Log(string.Format("Last package sent : {0} . Last package received {1} {2} ms ago",
                     connection.OutSequence,
                     connection.InSequence,
@@ -526,9 +594,10 @@ namespace Networking
             }
         }
 
-        void OnData(int connectionId, byte[] data, int size, INetworkCallbacks loop)
+        private void OnData(int connectionId, byte[] data, int size, INetworkCallbacks loop)
         {
-#pragma warning disable 0162 // unreachable code
+// unreachable code
+#pragma warning disable 0162
             switch (NetworkConfig.IOStreamType)
             {
                 case IOStreamType.Raw:
@@ -549,45 +618,7 @@ namespace Networking
 #pragma warning restore
         }
 
-        unsafe class MapInfo
-        {
-            public int serverInitSequence; // The server frame the map was initialized
-            public ushort mapId; // Unique sequence number for the map (to deal with redudant mapinfo messages)
-            public NetworkSchema schema; // Schema for the map info
-
-            public uint* data = (uint*) UnsafeUtility.Malloc(1024, UnsafeUtility.AlignOf<uint>(),
-                Unity.Collections.Allocator.Persistent); // Game specific payload
-        }
-
-        unsafe public class EntityTypeInfo
-        {
-            public string name;
-            public ushort typeId;
-            public NetworkSchema schema;
-            public int createdSequence;
-            public uint* baseline;
-            public int stats_count;
-            public int stats_bits;
-        }
-
-        // Holds a information about a snapshot for an entity.
-        // Each entity has a circular history of these
-        unsafe class EntitySnapshotInfo
-        {
-            public uint* start; // pointer into WorldSnapshot.data block (see below)
-            public int length; // length of data in words
-        }
-
-        // Each tick a WorldSnapshot is generated. The data buffer contains serialized data
-        // from all serializable entitites
-        unsafe class WorldSnapshot
-        {
-            public int serverTime; // server tick for this snapshot
-            public int length; // length of data in data field
-            public uint* data;
-        }
-
-        unsafe class EntityInfo
+        public class EntityInfo
         {
             public EntityInfo()
             {
@@ -603,7 +634,10 @@ namespace Networking
                 updateSequence = 0;
                 snapshots.Clear();
                 for (var i = 0; i < fieldsChangedPrediction.Length; i++)
+                {
                     fieldsChangedPrediction[i] = 0;
+                }
+
                 predictingClientId = -1;
             }
 
@@ -647,7 +681,7 @@ namespace Networking
             }
         }
 
-        public class ServerConnection : NetworkConnection<NetworkServer.Counters, ServerPackageInfo>
+        public class ServerConnection : NetworkConnection<Counters, ServerPackageInfo>
         {
             public void SetSnapshotInterval(int _snapshotInterval)
             {
@@ -805,7 +839,7 @@ namespace Networking
                 }
                 else if (!mapAcked)
                 {
-                    if (server.m_MapInfo.serverInitSequence > 0)
+                    if (server.m_MapInfo.ServerInitSequence > 0)
                     {
                         // Keep sending map info until it is acked
                         WriteMapInfo(ref output);
@@ -877,15 +911,15 @@ namespace Networking
             {
                 AddMessageContentFlag(NetworkMessage.MapInfo);
 
-                output.WriteRawBits(server.m_MapInfo.mapId, 16);
+                output.WriteRawBits(server.m_MapInfo.MapId, 16);
 
                 // Write schema if client haven't acked it
                 output.WriteRawBits(mapSchemaAcked ? 0 : 1U, 1);
                 if (!mapSchemaAcked)
-                    NetworkSchema.WriteSchema(server.m_MapInfo.schema, ref output);
+                    NetworkSchema.WriteSchema(server.m_MapInfo.Schema, ref output);
 
                 // Write map data
-                NetworkSchema.CopyFieldsFromBuffer(server.m_MapInfo.schema, server.m_MapInfo.data, ref output);
+                NetworkSchema.CopyFieldsFromBuffer(server.m_MapInfo.Schema, server.m_MapInfo.Data, ref output);
             }
 
             unsafe void WriteSnapshot<TOutputStream>(ref TOutputStream output) where TOutputStream : IOutputStream
@@ -1067,25 +1101,25 @@ namespace Networking
 
                         uint num_baselines =
                             1; // if there is no normal baseline, we use schema baseline so there is always one
-                        uint* baseline0 = entityType.baseline;
+                        uint* baseline0 = entityType.Baseline;
                         int time0 = maxSnapshotTime;
 
                         if (haveBaseline && entity.spawnSequence <= maxSnapshotAck)
                         {
-                            baseline0 = entity.snapshots[snapshot0Baseline].start;
+                            baseline0 = entity.snapshots[snapshot0Baseline].Start;
                         }
 
                         if (enableNetworkPrediction)
                         {
-                            uint* baseline1 = entityType.baseline;
-                            uint* baseline2 = entityType.baseline;
+                            uint* baseline1 = entityType.Baseline;
+                            uint* baseline2 = entityType.Baseline;
                             int time1 = maxSnapshotTime;
                             int time2 = maxSnapshotTime;
 
                             if (haveBaseline && entity.spawnSequence <= maxSnapshotAck)
                             {
                                 GameDebug.Assert(
-                                    server.m_Snapshots[snapshot0Baseline % server.m_Snapshots.Length].serverTime ==
+                                    server.m_Snapshots[snapshot0Baseline % server.m_Snapshots.Length].ServerTime ==
                                     maxSnapshotTime, "serverTime == maxSnapshotTime");
                                 GameDebug.Assert(entity.snapshots.Exists(snapshot0Baseline),
                                     "Exists(snapshot0Baseline)");
@@ -1095,31 +1129,31 @@ namespace Networking
                                     entity.snapshots.Exists(snapshot1Baseline))
                                 {
                                     num_baselines = 2;
-                                    baseline1 = entity.snapshots[snapshot1Baseline].start;
+                                    baseline1 = entity.snapshots[snapshot1Baseline].Start;
                                     time1 = server.m_Snapshots[snapshot1Baseline % server.m_Snapshots.Length]
-                                        .serverTime;
+                                        .ServerTime;
 
                                     if (snapshot2Baseline != snapshot1Baseline &&
                                         entity.snapshots.Exists(snapshot2Baseline))
                                     {
                                         num_baselines = 3;
-                                        baseline2 = entity.snapshots[snapshot2Baseline].start;
+                                        baseline2 = entity.snapshots[snapshot2Baseline].Start;
                                         //time2 = entity.snapshots[snapshot2Baseline].serverTime;
                                         time2 = server.m_Snapshots[snapshot2Baseline % server.m_Snapshots.Length]
-                                            .serverTime;
+                                            .ServerTime;
                                     }
                                 }
                             }
 
                             entity.prediction = server.m_Prediction + server.m_PredictionIndex;
                             global::NetworkPrediction.PredictSnapshot(entity.prediction, entity.fieldsChangedPrediction,
-                                entityType.schema, num_baselines, (uint) time0, baseline0, (uint) time1, baseline1,
+                                entityType.Schema, num_baselines, (uint) time0, baseline0, (uint) time1, baseline1,
                                 (uint) time2, baseline2, (uint) server.serverTime, entity.GetFieldMask(ConnectionId));
-                            server.m_PredictionIndex += entityType.schema.GetByteSize() / 4;
-                            server.statsProcessedOutgoing += entityType.schema.GetByteSize();
+                            server.m_PredictionIndex += entityType.Schema.GetByteSize() / 4;
+                            server.statsProcessedOutgoing += entityType.Schema.GetByteSize();
 
-                            if (UnsafeUtility.MemCmp(entity.prediction, snapshot.start,
-                                entityType.schema.GetByteSize()) != 0)
+                            if (UnsafeUtility.MemCmp(entity.prediction, snapshot.Start,
+                                entityType.Schema.GetByteSize()) != 0)
                             {
                                 server.m_TempUpdateList.Add(id);
                             }
@@ -1146,7 +1180,7 @@ namespace Networking
                             for (int i = 0, l = fcp.Length; i < l; ++i)
                                 fcp[i] = 0;
 
-                            if (UnsafeUtility.MemCmp(prediction, snapshot.start, entityType.schema.GetByteSize()) != 0)
+                            if (UnsafeUtility.MemCmp(prediction, snapshot.Start, entityType.Schema.GetByteSize()) != 0)
                             {
                                 server.m_TempUpdateList.Add(id);
                             }
@@ -1174,18 +1208,18 @@ namespace Networking
 
                 foreach (var pair in server.m_EntityTypes)
                 {
-                    if (pair.Value.createdSequence > maxSnapshotAck)
+                    if (pair.Value.CreatedSequence > maxSnapshotAck)
                         server.m_TempTypeList.Add(pair.Value);
                 }
 
                 output.WritePackedUInt((uint) server.m_TempTypeList.Count, NetworkConfig.SchemaCountContext);
                 foreach (var typeInfo in server.m_TempTypeList)
                 {
-                    output.WritePackedUInt(typeInfo.typeId, NetworkConfig.SchemaTypeIdContext);
-                    NetworkSchema.WriteSchema(typeInfo.schema, ref output);
+                    output.WritePackedUInt(typeInfo.TypeId, NetworkConfig.SchemaTypeIdContext);
+                    NetworkSchema.WriteSchema(typeInfo.Schema, ref output);
 
-                    GameDebug.Assert(typeInfo.baseline != null);
-                    NetworkSchema.CopyFieldsFromBuffer(typeInfo.schema, typeInfo.baseline, ref output);
+                    GameDebug.Assert(typeInfo.Baseline != null);
+                    NetworkSchema.CopyFieldsFromBuffer(typeInfo.Schema, typeInfo.Baseline, ref output);
                 }
 
                 int previousId = 1;
@@ -1215,8 +1249,8 @@ namespace Networking
                 {
                     foreach (var t in server.m_EntityTypes)
                     {
-                        t.Value.stats_count = 0;
-                        t.Value.stats_bits = 0;
+                        t.Value.StatsCount = 0;
+                        t.Value.StatsBits = 0;
                     }
                 }
 
@@ -1232,10 +1266,10 @@ namespace Networking
                     }
                     else
                     {
-                        prediction = entityType.baseline;
+                        prediction = entityType.Baseline;
                         if (haveBaseline && entity.spawnSequence <= maxSnapshotAck)
                         {
-                            prediction = entity.snapshots[snapshot0Baseline].start;
+                            prediction = entity.snapshots[snapshot0Baseline].Start;
                         }
                     }
 
@@ -1271,13 +1305,13 @@ namespace Networking
                     // delta relative to 0 as we cannot know if we have a valid baseline on the client or not
                     uint entity_hash = 0;
                     var bef = output.GetBitPosition2();
-                    DeltaWriter.Write(ref output, entityType.schema, snapshotInfo.start, prediction,
+                    DeltaWriter.Write(ref output, entityType.Schema, snapshotInfo.Start, prediction,
                         entity.fieldsChangedPrediction, entity.GetFieldMask(ConnectionId), ref entity_hash);
                     var aft = output.GetBitPosition2();
                     if (ServerDebug.IntValue > 0)
                     {
-                        entityType.stats_count++;
-                        entityType.stats_bits += (aft - bef);
+                        entityType.StatsCount++;
+                        entityType.StatsBits += (aft - bef);
                     }
 
                     if (enableHashing)
@@ -1291,8 +1325,8 @@ namespace Networking
                               " Type breakdown:");
                     foreach (var c in server.m_EntityTypes)
                     {
-                        Debug.Log(c.Value.name + " " + c.Key + " #" + (c.Value.stats_count) + " " +
-                                  (c.Value.stats_bits / 8) + " bytes");
+                        Debug.Log(c.Value.Name + " " + c.Key + " #" + (c.Value.StatsCount) + " " +
+                                  (c.Value.StatsBits / 8) + " bytes");
                     }
                 }
 
@@ -1368,7 +1402,7 @@ namespace Networking
 
                     // Check if the client received the map info
                     if ((info.Content & NetworkMessage.MapInfo) != 0 &&
-                        info.serverSequence >= server.m_MapInfo.serverInitSequence)
+                        info.serverSequence >= server.m_MapInfo.ServerInitSequence)
                     {
                         mapAcked = true;
                         mapSchemaAcked = true;
@@ -1489,6 +1523,7 @@ namespace Networking
         public int statsSentOutgoing;
         public int statsGeneratedSnapshotSize;
 
-        //Counters m_Counters = new Counters();
+        private long accumSendDataTicks = 0;
+        private long lastUpdateTick = 0;
     }
 }
