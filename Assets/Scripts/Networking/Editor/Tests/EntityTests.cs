@@ -256,7 +256,7 @@ namespace NetcodeTests
             TestGameServer server = new TestGameServer(); server.Update();
             TestGameClient client = new TestGameClient(2);
 
-            NetworkServer.serverDebug.Value = "2";
+            NetworkServer.ServerDebug.Value = "2";
             NetworkClient.ClientDebug.Value = "2";
 
             // Handshake
@@ -308,7 +308,7 @@ namespace NetcodeTests
             TestGameServer server = new TestGameServer(); server.Update();
             TestGameClient client = new TestGameClient(2);
 
-            NetworkServer.serverDebug.Value = "2";
+            NetworkServer.ServerDebug.Value = "2";
             NetworkClient.ClientDebug.Value = "2";
 
             // Handshake

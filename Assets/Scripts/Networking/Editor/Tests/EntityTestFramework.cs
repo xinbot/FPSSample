@@ -178,7 +178,7 @@ namespace NetcodeTests
         static Dictionary<ushort, Type> s_IdToEntityType = new Dictionary<ushort, Type>();
         static Dictionary<Type, ushort> s_EntityTypeToId = new Dictionary<Type, ushort>();
 
-        public int WorldTick
+        public int worldTick
         {
             get
             {

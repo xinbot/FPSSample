@@ -153,7 +153,7 @@ internal class NetworkStatisticsServer
         int totalSnapshots = 0;
         foreach(var c in m_NetworkServer.GetConnections())
         {
-            totalSnapshots += c.Value.counters.snapshotsOut;
+            totalSnapshots += c.Value.counters.SnapshotsOut;
         }
         snapsPerFrame[Time.frameCount % snapsPerFrame.Length] = (totalSnapshots - totalSnapshotsLastFrame);
         totalSnapshotsLastFrame = totalSnapshots;

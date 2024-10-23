@@ -8,7 +8,7 @@ using UnityEngine.Profiling;
 
 public class ServerGameWorld : ISnapshotGenerator, IClientCommandProcessor
 {
-    public int WorldTick { get { return m_GameWorld.WorldTime.Tick; } }
+    public int worldTick { get { return m_GameWorld.WorldTime.Tick; } }
     public int TickRate
     {
         get
@@ -336,7 +336,7 @@ public class ServerGameLoop : IGameLoop, INetworkCallbacks
         }
 
         m_NetworkServer.UpdateClientInfo();
-        m_NetworkServer.serverInfo.compressionModel = m_Model;
+        m_NetworkServer.serverInfo.CompressionModel = m_Model;
 
         if (serverServerName.Value == "")
             serverServerName.Value = MakeServername();
@@ -411,7 +411,7 @@ public class ServerGameLoop : IGameLoop, INetworkCallbacks
         }
 
         m_SimStartTime = Game.clock.ElapsedTicks;
-        m_SimStartTimeTick = m_serverGameWorld != null ? m_serverGameWorld.WorldTick : 0;
+        m_SimStartTimeTick = m_serverGameWorld != null ? m_serverGameWorld.worldTick : 0;
 
         UpdateNetwork();
         m_StateMachine.Update();
@@ -641,7 +641,7 @@ public class ServerGameLoop : IGameLoop, INetworkCallbacks
 
     public void LateUpdate()
     {
-        if (m_serverGameWorld != null && m_SimStartTimeTick != m_serverGameWorld.WorldTick)
+        if (m_serverGameWorld != null && m_SimStartTimeTick != m_serverGameWorld.worldTick)
         {
             // Only update sim time if we actually simulatated
             // TODO : remove this when targetFrameRate works the way we want it.
@@ -779,7 +779,7 @@ public class ServerGameLoop : IGameLoop, INetworkCallbacks
         m_Model = new NetworkCompressionModel(modelData);
 
         if (networkServer != null)
-            networkServer.serverInfo.compressionModel = m_Model;
+            networkServer.serverInfo.CompressionModel = m_Model;
         Console.Write("Model Loaded");
     }
 

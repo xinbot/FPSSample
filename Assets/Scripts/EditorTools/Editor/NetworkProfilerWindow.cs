@@ -64,12 +64,12 @@ public class NetworkProfiler : EditorWindow
 
         GUILayout.BeginVertical(GUILayout.Width(serverPaneWidth));
         m_ScrollPos0 = GUILayout.BeginScrollView(m_ScrollPos0);
-        GUILayout.Label("serverTickRate: " + networkServer.serverInfo.serverTickRate);
+        GUILayout.Label("serverTickRate: " + networkServer.serverInfo.ServerTickRate);
 
         // server stats
         GUILayout.BeginHorizontal();
         GUILayout.Label("Tick: " + networkServer.serverTime);
-        GUILayout.Label("Tick rate: " + networkServer.serverInfo.serverTickRate);
+        GUILayout.Label("Tick rate: " + networkServer.serverInfo.ServerTickRate);
         GUILayout.Label("Number of entity types: " + networkServer.GetEntityTypes().Count);
         GUILayout.Label("Number of entities: " + networkServer.NumEntities);
         GUILayout.EndHorizontal();
