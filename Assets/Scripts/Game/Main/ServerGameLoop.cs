@@ -303,8 +303,6 @@ public class ServerGameWorld : ISnapshotGenerator, IClientCommandProcessor
 
 }
 
-
-
 public class ServerGameLoop : IGameLoop, INetworkCallbacks
 {
     public bool Init(string[] args)
@@ -336,7 +334,7 @@ public class ServerGameLoop : IGameLoop, INetworkCallbacks
         }
 
         m_NetworkServer.UpdateClientInfo();
-        m_NetworkServer.serverInfo.CompressionModel = m_Model;
+        m_NetworkServer.ServerInformation.CompressionModel = m_Model;
 
         if (serverServerName.Value == "")
             serverServerName.Value = MakeServername();
@@ -779,7 +777,7 @@ public class ServerGameLoop : IGameLoop, INetworkCallbacks
         m_Model = new NetworkCompressionModel(modelData);
 
         if (networkServer != null)
-            networkServer.serverInfo.CompressionModel = m_Model;
+            networkServer.ServerInformation.CompressionModel = m_Model;
         Console.Write("Model Loaded");
     }
 

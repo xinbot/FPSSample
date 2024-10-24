@@ -140,8 +140,8 @@ namespace NetcodeTests
             var c = server.networkServer.GetConnections()[server.clients[0]];
             GameDebug.Log("Sent bytes:  " + c.counters.BytesOut);
             GameDebug.Log("Sent packages: " + c.counters.PackagesOut);
-            GameDebug.Log("Generated snapshots: " + server.networkServer.statsGeneratedEntitySnapshots);
-            GameDebug.Log("Sent snapshotdata: " + server.networkServer.statsSentOutgoing);
+            GameDebug.Log("Generated snapshots: " + server.networkServer.StatsGeneratedEntitySnapshots);
+            GameDebug.Log("Sent snapshotdata: " + server.networkServer.StatsSentOutgoing);
         }
 
         [Test]
@@ -491,7 +491,7 @@ namespace NetcodeTests
             }
 
             // Then server should have deleted them all from its internal list
-            Assert.AreEqual(0, server.networkServer.NumEntities);
+            Assert.AreEqual(0, server.networkServer.numEntities);
         }
 
 

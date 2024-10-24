@@ -91,7 +91,7 @@ internal class NetworkStatisticsServer
         GameDebug.Log("Network stats");
         GameDebug.Log("=============");
         GameDebug.Log("Tick rate  : " + Game.ServerTickRate.IntValue);
-        GameDebug.Log("Num netents: " + m_NetworkServer.NumEntities);
+        GameDebug.Log("Num netents: " + m_NetworkServer.numEntities);
         Console.Write("--------------");
         Console.Write("Connections:");
         Console.Write("------------");
@@ -119,18 +119,18 @@ internal class NetworkStatisticsServer
 
         Console.Write("-------------------");
         var freq = NetworkConfig.NetPrintStats.IntValue;
-        GameDebug.Log("Entity snapshots generated /frame : " + m_NetworkServer.statsGeneratedEntitySnapshots / freq);
-        GameDebug.Log("Generated worldsnapsize    /frame : " + m_NetworkServer.statsGeneratedSnapshotSize / freq);
-        GameDebug.Log("Entity snapshots total size/frame : " + m_NetworkServer.statsSnapshotData / freq);
-        GameDebug.Log("Updates sent               /frame : " + m_NetworkServer.statsSentUpdates / freq);
-        GameDebug.Log("Processed data outgoing      /sec : " + m_NetworkServer.statsProcessedOutgoing / timePassed);
-        GameDebug.Log("Sent data outgoing         /frame : " + m_NetworkServer.statsSentOutgoing / freq);
-        m_NetworkServer.statsGeneratedEntitySnapshots = 0;
-        m_NetworkServer.statsGeneratedSnapshotSize = 0;
-        m_NetworkServer.statsSnapshotData = 0;
-        m_NetworkServer.statsSentUpdates = 0;
-        m_NetworkServer.statsProcessedOutgoing = 0;
-        m_NetworkServer.statsSentOutgoing= 0;
+        GameDebug.Log("Entity snapshots generated /frame : " + m_NetworkServer.StatsGeneratedEntitySnapshots / freq);
+        GameDebug.Log("Generated worldsnapsize    /frame : " + m_NetworkServer.StatsGeneratedSnapshotSize / freq);
+        GameDebug.Log("Entity snapshots total size/frame : " + m_NetworkServer.StatsSnapshotData / freq);
+        GameDebug.Log("Updates sent               /frame : " + m_NetworkServer.StatsSentUpdates / freq);
+        GameDebug.Log("Processed data outgoing      /sec : " + m_NetworkServer.StatsProcessedOutgoing / timePassed);
+        GameDebug.Log("Sent data outgoing         /frame : " + m_NetworkServer.StatsSentOutgoing / freq);
+        m_NetworkServer.StatsGeneratedEntitySnapshots = 0;
+        m_NetworkServer.StatsGeneratedSnapshotSize = 0;
+        m_NetworkServer.StatsSnapshotData = 0;
+        m_NetworkServer.StatsSentUpdates = 0;
+        m_NetworkServer.StatsProcessedOutgoing = 0;
+        m_NetworkServer.StatsSentOutgoing= 0;
         Console.Write("-------------------");
     }
 
@@ -141,7 +141,7 @@ internal class NetworkStatisticsServer
     {
         int y = 2;
         DebugOverlay.Write(2, y++, "  tick rate: {0}", Game.ServerTickRate.IntValue);
-        DebugOverlay.Write(2, y++, "  entities:  {0}", m_NetworkServer.NumEntities);
+        DebugOverlay.Write(2, y++, "  entities:  {0}", m_NetworkServer.numEntities);
 
         DebugOverlay.Write(2, y++, "  sim  : {0:0.0} / {1:0.0} / {2:0.0} ({3:0.0})",
             m_ServerSimTime.min,
