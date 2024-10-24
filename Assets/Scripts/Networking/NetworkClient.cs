@@ -813,8 +813,8 @@ namespace Networking
                     previousId = id;
 
                     // Register the entity
-                    var typeId =
-                        (ushort) input.ReadPackedUInt(NetworkConfig.SpawnTypeIdContext); //TODO: use another encoding
+                    // TODO: use another encoding
+                    var typeId = (ushort) input.ReadPackedUInt(NetworkConfig.SpawnTypeIdContext);
                     GameDebug.Assert(_entityTypes.ContainsKey(typeId), "Spawn request with unknown type id {0}",
                         typeId);
 
@@ -1000,9 +1000,14 @@ namespace Networking
                     {
                         var f = info.FieldsChangedPrediction;
                         for (var i = 0; i < f.Length; ++i)
+                        {
                             f[i] = 0;
+                        }
+
                         for (int i = 0, c = info.Type.Schema.GetByteSize() / 4; i < c; ++i)
+                        {
                             info.Prediction[i] = baseline0[i];
+                        }
                     }
                 }
 
@@ -1019,7 +1024,9 @@ namespace Networking
                     // Copy prediction to temp buffer as we now overwrite info.prediction with fully unpacked
                     // state by applying incoming delta to prediction.
                     for (int i = 0, c = info.Type.Schema.GetByteSize() / 4; i < c; ++i)
+                    {
                         _tempSnapshotBuffer[i] = info.Prediction[i];
+                    }
 
                     DeltaReader.Read(ref input, info.Type.Schema, info.Prediction, _tempSnapshotBuffer,
                         info.FieldsChangedPrediction, info.FieldMask, ref hash);
@@ -1046,12 +1053,9 @@ namespace Networking
                     }
                 }
 
-                if (enableNetworkPrediction)
-                    counters.AddSectionStats("snapShotUpdatesPredict", input.GetBitPosition2(),
-                        haveBaseline ? new Color(0.09f, 0.38f, 0.93f) : Color.cyan);
-                else
-                    counters.AddSectionStats("snapShotUpdatesNoPredict", input.GetBitPosition2(),
-                        haveBaseline ? new Color(0.09f, 0.38f, 0.93f) : Color.cyan);
+                var predictionMsgName = enableNetworkPrediction ? "snapShotUpdatesPredict" : "snapShotUpdatesNoPredict";
+                counters.AddSectionStats(predictionMsgName, input.GetBitPosition2(),
+                    haveBaseline ? new Color(0.09f, 0.38f, 0.93f) : Color.cyan);
 
                 uint numEnts = 0;
 
@@ -1059,11 +1063,15 @@ namespace Networking
                 {
                     var info = _entities[id];
                     if (info.Type == null)
+                    {
                         continue;
+                    }
 
                     // Skip despawned that have not also been spawned in this snapshot
                     if (info.DespawnSequence > 0 && !_spawns.Contains(id))
+                    {
                         continue;
+                    }
 
                     // If just spawned or if new snapshot is different from the last we deserialized,
                     // we need to deserialize. Otherwise just ignore; no reason to deserialize the same
@@ -1074,14 +1082,22 @@ namespace Networking
                     {
                         var data = info.Baselines.Insert(sequence);
                         for (int i = 0; i < schemaSize / 4; ++i)
+                        {
                             data[i] = info.Prediction[i];
+                        }
+
                         if (sequence > info.LastUpdateSequence)
                         {
                             if (!_updates.Contains(id))
+                            {
                                 _updates.Add(id);
+                            }
 
                             for (int i = 0; i < schemaSize / 4; ++i)
+                            {
                                 info.LastUpdate[i] = info.Prediction[i];
+                            }
+
                             info.LastUpdateSequence = sequence;
                         }
                     }
@@ -1092,7 +1108,6 @@ namespace Networking
                         numEnts++;
                     }
                 }
-
 
                 if (ClientDebug.IntValue > 1)
                 {
