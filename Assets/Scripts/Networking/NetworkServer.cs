@@ -1240,7 +1240,7 @@ namespace Networking
                             }
 
                             entity.Prediction = _server._prediction + _server._predictionIndex;
-                            global::NetworkPrediction.PredictSnapshot(entity.Prediction, entity.FieldsChangedPrediction,
+                            global::Networking.NetworkPrediction.PredictSnapshot(entity.Prediction, entity.FieldsChangedPrediction,
                                 entityType.Schema, num_baselines, (uint) time0, baseline0, (uint) time1, baseline1,
                                 (uint) time2, baseline2, (uint) _server.serverTime, entity.GetFieldMask(ConnectionId));
                             _server._predictionIndex += entityType.Schema.GetByteSize() / 4;
