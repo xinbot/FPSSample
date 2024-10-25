@@ -168,7 +168,7 @@ public class ThinClientGameWorld
         }
         else
         {
-            int bufferedCommands = _networkClient.lastAcknowlegdedCommandTime - _networkClient.serverTime;
+            int bufferedCommands = _networkClient.lastAcknowledgedCommandTime - _networkClient.serverTime;
             if (bufferedCommands < preferredBufferedCommandCount)
             {
                 FrameTimeScale = 1.01f;

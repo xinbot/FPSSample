@@ -1,9 +1,29 @@
 ﻿using System;
 using Networking.Compression;
 using Unity.Networking.Transport;
+using UnityEngine;
 
 namespace Networking
 {
+    public static class NetworkSectionColor
+    {
+        public static readonly Color MapInfoColor = new Color(0.65f, 0.16f, 0.16f);
+
+        public static readonly Color EventColor = new Color(1.0f, 0.84f, 0.0f);
+
+        public static readonly Color UnknownColor = Color.black;
+
+        public static readonly Color ClientInfoColor = Color.green;
+
+        public static readonly Color HeaderColor = Color.white;
+
+        public static readonly Color SnapshotHeaderColor = new Color(0.5f, 0.5f, 0.5f);
+
+        public static readonly Color SnapShotSpawnsColor = new Color(0, 0.58f, 0);
+
+        public static readonly Color SnapShotDeSpawnsColor = new Color(0.49f, 0, 0);
+    }
+
     public enum ConnectionState
     {
         Disconnected,
@@ -165,7 +185,7 @@ namespace Networking
         public const int SpawnCountContext = 7;
         public const int IDContext = 8;
         public const int SpawnTypeIdContext = 9;
-        public const int DespawnCountContext = 10;
+        public const int DeSpawnCountContext = 10;
         public const int UpdateCountContext = 11;
         public const int CommandTimeContext = 12;
         public const int EventCountContext = 13;

@@ -132,7 +132,7 @@ namespace Networking
             get { return _clientConnection != null ? _clientConnection.ServerTickRate : 60; }
         }
 
-        public int lastAcknowlegdedCommandTime
+        public int lastAcknowledgedCommandTime
         {
             get { return _clientConnection != null ? _clientConnection.LastAcknowledgedCommandTime : -1; }
         }
@@ -151,9 +151,8 @@ namespace Networking
         {
             get
             {
-                return _clientConnection != null
-                    ? NetworkUtils.Stopwatch.ElapsedMilliseconds - _clientConnection.SnapshotReceivedTime
-                    : -1;
+                var deltaTime = NetworkUtils.Stopwatch.ElapsedMilliseconds - _clientConnection.SnapshotReceivedTime;
+                return _clientConnection != null ? deltaTime : -1;
             }
         }
 
@@ -366,10 +365,12 @@ namespace Networking
             if (_clientConnection.ConnectionState == ConnectionState.Connected)
             {
                 GameDebug.Log("Disconnected from server");
-                GameDebug.Log(string.Format("Last package sent : {0}. Last package received {1} {2} ms ago",
-                    _clientConnection.OutSequence,
-                    _clientConnection.InSequence,
-                    NetworkUtils.Stopwatch.ElapsedMilliseconds - _clientConnection.InSequenceTime));
+
+                var outSequence = _clientConnection.OutSequence;
+                var inSequence = _clientConnection.InSequence;
+                var deltaTime = NetworkUtils.Stopwatch.ElapsedMilliseconds - _clientConnection.InSequenceTime;
+                GameDebug.Log(
+                    $"Last package sent : {outSequence}. Last package received {inSequence} {deltaTime} ms ago");
             }
             else if (_clientConnection.ConnectionState == ConnectionState.Connecting)
             {
@@ -503,7 +504,7 @@ namespace Networking
 
                 // Reset stats
                 counters.ClearSectionStats();
-                counters.AddSectionStats("header", headerSize * 8, Color.white);
+                counters.AddSectionStats("header", headerSize * 8, NetworkSectionColor.HeaderColor);
 
                 // The package was dropped (duplicate or too old) or if it was a fragment not yet assembled, bail out here
                 if (packageSequence == 0)
@@ -511,7 +512,7 @@ namespace Networking
                     return;
                 }
 
-                var input = default(TInputStream); //  new TInputStream(); due to bug new generates garbage here
+                var input = default(TInputStream);
                 input.Initialize(model, assembledData, headerSize);
 
                 if ((content & NetworkMessage.ClientInfo) != 0)
@@ -519,14 +520,14 @@ namespace Networking
                     ReadClientInfo(ref input);
                 }
 
-                counters.AddSectionStats("clientInfo", input.GetBitPosition2(), Color.green);
+                counters.AddSectionStats("clientInfo", input.GetBitPosition2(), NetworkSectionColor.ClientInfoColor);
 
                 if ((content & NetworkMessage.MapInfo) != 0)
                 {
                     ReadMapInfo(ref input);
                 }
 
-                counters.AddSectionStats("mapInfo", input.GetBitPosition2(), new Color(0.65f, 0.16f, 0.16f));
+                counters.AddSectionStats("mapInfo", input.GetBitPosition2(), NetworkSectionColor.MapInfoColor);
 
                 /*
                  * The package was received out of order but older than the last map reset, 
@@ -556,9 +557,9 @@ namespace Networking
                     ReadEvents(ref input, networkClientConsumer);
                 }
 
-                counters.AddSectionStats("events", input.GetBitPosition2(), new Color(1.0f, 0.84f, 0.0f));
+                counters.AddSectionStats("events", input.GetBitPosition2(), NetworkSectionColor.EventColor);
 
-                counters.AddSectionStats("unknown", assembledSize * 8, Color.black);
+                counters.AddSectionStats("unknown", assembledSize * 8, NetworkSectionColor.UnknownColor);
 
                 counters.PackageContentStatsPackageSequence = packageSequence;
             }
@@ -713,17 +714,21 @@ namespace Networking
 
                 if (ClientDebug.IntValue > 2)
                 {
+                    string networkPredictionMsg;
                     if (enableNetworkPrediction)
                     {
-                        GameDebug.Log((haveBaseline ? "Snap [BL]" : "Snap [  ]") + "(" + sequence + ")  " +
-                                      baseSequence +
-                                      " - " + baseSequence1 + " - " + baseSequence2);
+                        networkPredictionMsg = haveBaseline
+                            ? $"Snap [BL] ({sequence}) {baseSequence} - {baseSequence1} - {baseSequence2}"
+                            : $"Snap [  ] ({sequence}) {baseSequence} - {baseSequence1} - {baseSequence2}";
                     }
                     else
                     {
-                        GameDebug.Log(
-                            (haveBaseline ? "Snap [BL]" : "Snap [  ]") + "(" + sequence + ")  " + baseSequence);
+                        networkPredictionMsg = haveBaseline
+                            ? $"Snap [BL] ({sequence}) {baseSequence}"
+                            : $"Snap [  ] ({sequence}) {baseSequence}";
                     }
+
+                    GameDebug.Log(networkPredictionMsg);
                 }
 
                 if (!haveBaseline)
@@ -755,10 +760,11 @@ namespace Networking
                 else
                 {
                     GameDebug.Log(
-                        $"NetworkClient. Dropping out of order snaphot. Server time:{ServerTime} snapshot time:{snapshotInfo.ServerTime}");
+                        $"NetworkClient. Dropping out of order snapshot. Server time:{ServerTime} snapshot time:{snapshotInfo.ServerTime}");
                 }
 
-                counters.AddSectionStats("snapShotHeader", input.GetBitPosition2(), new Color(0.5f, 0.5f, 0.5f));
+                counters.AddSectionStats("snapShotHeader", input.GetBitPosition2(),
+                    NetworkSectionColor.SnapshotHeaderColor);
 
                 // Used by thin client that wants to very cheaply just do minimal handling of snapshots
                 if (DropSnapshots)
@@ -772,10 +778,10 @@ namespace Networking
                 {
                     var typeId = (ushort) input.ReadPackedUInt(NetworkConfig.SchemaTypeIdContext);
 
-                    var entityType = new EntityTypeInfo {TypeId = typeId};
-                    entityType.Schema = NetworkSchema.ReadSchema(ref input);
+                    var entityType = new EntityTypeInfo {TypeId = typeId, Schema = NetworkSchema.ReadSchema(ref input)};
                     counters.AddSectionStats("snapShotSchemas", input.GetBitPosition2(),
                         new Color(0.0f, (schemaIndex & 1) == 1 ? 0.5f : 1.0f, 1.0f));
+
                     entityType.Baseline = new uint[NetworkConfig.MAXEntitySnapshotDataSize];
                     NetworkSchema.CopyFieldsToBuffer(entityType.Schema, ref input, entityType.Baseline);
 
@@ -797,7 +803,7 @@ namespace Networking
                         continue;
                     }
 
-                    if (e.DespawnSequence > 0 && e.DespawnSequence <= baseSequence)
+                    if (e.DeSpawnSequence > 0 && e.DeSpawnSequence <= baseSequence)
                     {
                         e.Reset();
                     }
@@ -815,8 +821,7 @@ namespace Networking
                     // Register the entity
                     // TODO: use another encoding
                     var typeId = (ushort) input.ReadPackedUInt(NetworkConfig.SpawnTypeIdContext);
-                    GameDebug.Assert(_entityTypes.ContainsKey(typeId), "Spawn request with unknown type id {0}",
-                        typeId);
+                    GameDebug.Assert(_entityTypes.ContainsKey(typeId), $"Spawn request with unknown type id {typeId}");
 
                     var fieldMask = (byte) input.ReadRawBits(8);
 
@@ -852,10 +857,11 @@ namespace Networking
                     _tempSpawnList.Add(id);
                 }
 
-                counters.AddSectionStats("snapShotSpawns", input.GetBitPosition2(), new Color(0, 0.58f, 0));
+                counters.AddSectionStats("snapShotSpawns", input.GetBitPosition2(),
+                    NetworkSectionColor.SnapShotSpawnsColor);
 
                 // Read deSpawns
-                var deSpawnCount = input.ReadPackedUInt(NetworkConfig.DespawnCountContext);
+                var deSpawnCount = input.ReadPackedUInt(NetworkConfig.DeSpawnCountContext);
 
                 // If we have no baseline, we need to clear all entities that are not being spawned
                 if (!haveBaseline)
@@ -880,7 +886,7 @@ namespace Networking
                     }
                 }
 
-                for (var despawnIndex = 0; despawnIndex < deSpawnCount; ++despawnIndex)
+                for (var deSpawnIndex = 0; deSpawnIndex < deSpawnCount; ++deSpawnIndex)
                 {
                     var id = input.ReadPackedIntDelta(previousId, NetworkConfig.IDContext);
                     previousId = id;
@@ -895,18 +901,18 @@ namespace Networking
 
                     var entity = _entities[id];
 
-                    // Already in the process of being despawned. This happens with same-snapshot spawn/despawn cases
-                    if (entity.DespawnSequence > 0)
+                    // Already in the process of being deSpawned. This happens with same-snapshot spawn / deSpawn cases
+                    if (entity.DeSpawnSequence > 0)
                     {
                         continue;
                     }
 
-                    // If we are spawning and despawning in same snapshot, delay actual deletion of
+                    // If we are spawning and deSpawning in same snapshot, delay actual deletion of
                     // entity as we need it around to be able to read the update part of the snapshot
                     if (_tempSpawnList.Contains(id))
                     {
-                        // keep until baseSequence >= despawnSequence
-                        entity.DespawnSequence = sequence;
+                        // keep until baseSequence >= deSpawnSequence
+                        entity.DeSpawnSequence = sequence;
                     }
                     else
                     {
@@ -919,7 +925,8 @@ namespace Networking
                     _deSpawns.Add(id);
                 }
 
-                counters.AddSectionStats("snapShotDespawns", input.GetBitPosition2(), new Color(0.49f, 0, 0));
+                counters.AddSectionStats("snapShotDeSpawns", input.GetBitPosition2(),
+                    NetworkSectionColor.SnapShotDeSpawnsColor);
 
                 // Predict all active entities
                 for (var id = 0; id < _entities.Count; id++)
@@ -1068,7 +1075,7 @@ namespace Networking
                     }
 
                     // Skip despawned that have not also been spawned in this snapshot
-                    if (info.DespawnSequence > 0 && !_spawns.Contains(id))
+                    if (info.DeSpawnSequence > 0 && !_spawns.Contains(id))
                     {
                         continue;
                     }
@@ -1102,7 +1109,7 @@ namespace Networking
                         }
                     }
 
-                    if (enableHashing && info.DespawnSequence == 0)
+                    if (enableHashing && info.DeSpawnSequence == 0)
                     {
                         NetworkUtils.SimpleHash(info.Prediction, schemaSize);
                         numEnts++;
@@ -1120,7 +1127,7 @@ namespace Networking
                             var e = _entities[i];
                             entityIds += e.Type == null
                                 ? ",-"
-                                : (e.DespawnSequence > 0 ? "," + i + "(" + e.DespawnSequence + ")" : "," + i);
+                                : (e.DeSpawnSequence > 0 ? "," + i + "(" + e.DeSpawnSequence + ")" : "," + i);
                         }
 
                         string despawnIds = string.Join(",", _deSpawns);
@@ -1187,8 +1194,7 @@ namespace Networking
                 Profiler.EndSample();
             }
 
-            private void WriteClientConfig<TOutputStream>(ref TOutputStream output)
-                where TOutputStream : IOutputStream
+            private void WriteClientConfig<TOutputStream>(ref TOutputStream output) where TOutputStream : IOutputStream
             {
                 AddMessageContentFlag(NetworkMessage.ClientConfig);
 
@@ -1306,7 +1312,7 @@ namespace Networking
                 public EntityTypeInfo Type;
                 public byte FieldMask;
                 public int LastUpdateSequence;
-                public int DespawnSequence;
+                public int DeSpawnSequence;
 
                 public readonly uint[] LastUpdate = new uint[NetworkConfig.MAXEntitySnapshotDataSize];
                 public readonly uint[] Prediction = new uint[NetworkConfig.MAXEntitySnapshotDataSize];
@@ -1319,7 +1325,7 @@ namespace Networking
                 {
                     Type = null;
                     LastUpdateSequence = 0;
-                    DespawnSequence = 0;
+                    DeSpawnSequence = 0;
                     FieldMask = 0;
                     // TODO(petera) needed?
                     for (var i = 0; i < LastUpdate.Length; i++)

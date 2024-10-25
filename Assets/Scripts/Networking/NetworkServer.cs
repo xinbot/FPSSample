@@ -1329,7 +1329,7 @@ namespace Networking
                     output.WriteRawBits(entity.GetFieldMask(ConnectionId), 8);
                 }
 
-                output.WritePackedUInt((uint) _server._tempDespawnList.Count, NetworkConfig.DespawnCountContext);
+                output.WritePackedUInt((uint) _server._tempDespawnList.Count, NetworkConfig.DeSpawnCountContext);
                 foreach (var id in _server._tempDespawnList)
                 {
                     output.WritePackedIntDelta(id, previousId, NetworkConfig.IDContext);

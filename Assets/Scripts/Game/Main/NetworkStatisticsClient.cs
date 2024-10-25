@@ -51,7 +51,7 @@ public class NetworkStatisticsClient
 
         m_Latency.Update(m_NetworkClient.timeSinceSnapshot);
         m_RTT.Update(m_NetworkClient.rtt);
-        m_CMDQ.Update(m_NetworkClient.lastAcknowlegdedCommandTime - m_NetworkClient.serverTime);
+        m_CMDQ.Update(m_NetworkClient.lastAcknowledgedCommandTime - m_NetworkClient.serverTime);
         m_Interp.Update(interpTime * 1000);
 
         m_SnapshotsIn.Update(clientCounters != null ? clientCounters.SnapshotsIn : 0);
