@@ -22,6 +22,8 @@ namespace Networking
         public static readonly Color SnapShotSpawnsColor = new Color(0, 0.58f, 0);
 
         public static readonly Color SnapShotDeSpawnsColor = new Color(0.49f, 0, 0);
+
+        public static readonly Color SnapShotChecksumColor = new Color(0.2f, 0.2f, 0.2f);
     }
 
     public enum ConnectionState

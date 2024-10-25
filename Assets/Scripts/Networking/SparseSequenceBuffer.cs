@@ -1,122 +1,150 @@
 ﻿using System;
-using UnityEngine;
 
-public class SparseSequenceBuffer
+namespace Networking
 {
-    public SparseSequenceBuffer(int size, int snapSize)
+    public class SparseSequenceBuffer
     {
-        m_Elements = new uint[size][];
-        m_Sequences = new int[size];
+        private int _count;
 
-        for (int i = 0; i < m_Elements.Length; ++i)
-            m_Elements[i] = new uint[snapSize];
-    }
+        private readonly int[] _sequences;
+        private readonly uint[][] _elements;
 
-    public uint[] Insert(int sequence)
-    {
-        if (m_Count == m_Sequences.Length)
-            Remove(m_Sequences[0]);
-
-        if (m_Count == 0 || m_Sequences[m_Count - 1] < sequence)
+        public SparseSequenceBuffer(int size, int snapSize)
         {
-            m_Sequences[m_Count] = sequence;
-            var result = m_Elements[m_Count];
-            ++m_Count;
-            return result;
-        }
+            _sequences = new int[size];
+            _elements = new uint[size][];
 
-        for(int i = 0; i < m_Count; ++i)
-        {
-            if(m_Sequences[i] == sequence)
-                return m_Elements[i];
-            else if(m_Sequences[i] > sequence)
+            for (int i = 0; i < _elements.Length; ++i)
             {
-                var tmp = m_Elements[m_Count];
-                for (int j = m_Count; j > i; --j)
-                {
-                    m_Sequences[j] = m_Sequences[j - 1];
-                    m_Elements[j] = m_Elements[j - 1];
-                }
-                m_Elements[i] = tmp;
-                ++m_Count;
-                return tmp;
+                _elements[i] = new uint[snapSize];
             }
         }
 
-        // Should never reach this point
-        throw new InvalidOperationException();
-    }
-
-    public bool Remove(int sequence)
-    {
-        for (int i = 0; i < m_Count; ++i)
+        public uint[] Insert(int sequence)
         {
-            if (m_Sequences[i] == sequence)
+            if (_count == _sequences.Length)
             {
-                var tmpElement = m_Elements[i];
-                for (var j = i; j < m_Count - 1; ++j)
-                {
-                    m_Sequences[j] = m_Sequences[j + 1];
-                    m_Elements[j] = m_Elements[j + 1];
-                }
-                m_Elements[m_Count - 1] = tmpElement;
-                --m_Count;
-                return true;
+                Remove(_sequences[0]);
             }
-        }
-        return false;
-    }
 
-    public uint[] FindMax(int sequence)
-    {
-        var index = -1;
-        for (int i = 0; i < m_Count; ++i)
+            if (_count == 0 || _sequences[_count - 1] < sequence)
+            {
+                _sequences[_count] = sequence;
+                var result = _elements[_count];
+                ++_count;
+                return result;
+            }
+
+            for (int i = 0; i < _count; ++i)
+            {
+                if (_sequences[i] == sequence)
+                {
+                    return _elements[i];
+                }
+
+                if (_sequences[i] > sequence)
+                {
+                    var tmp = _elements[_count];
+                    for (int j = _count; j > i; --j)
+                    {
+                        _sequences[j] = _sequences[j - 1];
+                        _elements[j] = _elements[j - 1];
+                    }
+
+                    _elements[i] = tmp;
+                    ++_count;
+                    return tmp;
+                }
+            }
+
+            // Should never reach this point
+            throw new InvalidOperationException();
+        }
+
+        public bool Remove(int sequence)
         {
-            if (m_Sequences[i] <= sequence)
-                index = i;
-            else
-                break;
-        }
-        return index != -1 ? m_Elements[index] : null;
-    }
+            for (int i = 0; i < _count; ++i)
+            {
+                if (_sequences[i] == sequence)
+                {
+                    var tmpElement = _elements[i];
+                    for (var j = i; j < _count - 1; ++j)
+                    {
+                        _sequences[j] = _sequences[j + 1];
+                        _elements[j] = _elements[j + 1];
+                    }
 
-    public uint[] FindMin(int sequence)
-    {
-        var index = -1;
-        for (int i = m_Count - 1; i >= 0; --i)
+                    _elements[_count - 1] = tmpElement;
+                    --_count;
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        public uint[] FindMax(int sequence)
         {
-            if (m_Sequences[i] >= sequence)
-                index = i;
-            else
-                break;
-        }
-        return index != -1 ? m_Elements[index] : null;
-    }
+            var index = -1;
+            for (int i = 0; i < _count; ++i)
+            {
+                if (_sequences[i] <= sequence)
+                {
+                    index = i;
+                }
+                else
+                {
+                    break;
+                }
+            }
 
-    public uint[] TryGetValue(int sequence)
-    {
-        for (int i = 0; i < m_Count; ++i)
+            return index != -1 ? _elements[index] : null;
+        }
+
+        public uint[] FindMin(int sequence)
         {
-            if (m_Sequences[i] == sequence)
-                return m_Elements[i];
-            else if (m_Sequences[i] > sequence)
-                return null;
+            var index = -1;
+            for (int i = _count - 1; i >= 0; --i)
+            {
+                if (_sequences[i] >= sequence)
+                {
+                    index = i;
+                }
+                else
+                {
+                    break;
+                }
+            }
+
+            return index != -1 ? _elements[index] : null;
         }
-        return null;
+
+        public uint[] TryGetValue(int sequence)
+        {
+            for (int i = 0; i < _count; ++i)
+            {
+                if (_sequences[i] == sequence)
+                {
+                    return _elements[i];
+                }
+
+                if (_sequences[i] > sequence)
+                {
+                    return null;
+                }
+            }
+
+            return null;
+        }
+
+        public void Clear()
+        {
+            _count = 0;
+        }
+
+        public int GetSize()
+        {
+            return _count;
+        }
     }
-
-
-    public void Clear()
-    {
-        m_Count = 0;
-    }
-
-    public int GetSize()
-    {
-        return m_Count;
-    }
-
-    int m_Count;
-    uint[][] m_Elements;
-    int[] m_Sequences;
 }

@@ -36,35 +36,35 @@ namespace TransportTests
         [Test]
         public void SQP_SerializeChallangeRequest_NoError()
         {
-            var snd = new ChallangeRequest();
+            var snd = new ChallengeRequest();
             snd.ToStream(ref writer);
 
             reader = new DataStreamReader(writer, 0, writer.Length);
             context = default(DataStreamReader.Context);
-            var rcv = new ChallangeRequest();
+            var rcv = new ChallengeRequest();
             rcv.FromStream(reader, ref context);
 
-            Assert.AreEqual((byte)SQPMessageType.ChallangeRequest, rcv.Header.Type);
+            Assert.AreEqual((byte)SqpMessageType.ChallengeRequest, rcv.Header.type);
         }
 
         [Test]
         public void SQP_SerializeChallangeResponse_NoError()
         {
             var id = (uint)1337;
-            var snd = new ChallangeResponse();
+            var snd = new ChallengeResponse();
 
-            snd.Header.ChallangeId = id;
+            snd.Header.ChallengeId = id;
 
             snd.ToStream(ref writer);
 
-            var rcv = new ChallangeResponse();
+            var rcv = new ChallengeResponse();
 
             reader = new DataStreamReader(writer, 0, writer.Length);
             context = default(DataStreamReader.Context);
             rcv.FromStream(reader, ref context);
 
-            Assert.AreEqual((byte)SQPMessageType.ChallangeResponse, rcv.Header.Type);
-            Assert.AreEqual(id, (uint)rcv.Header.ChallangeId);
+            Assert.AreEqual((byte)SqpMessageType.ChallengeResponse, rcv.Header.type);
+            Assert.AreEqual(id, (uint)rcv.Header.ChallengeId);
         }
 
         [Test]
@@ -75,7 +75,7 @@ namespace TransportTests
 
             var snd = new QueryRequest();
 
-            snd.Header.ChallangeId = id;
+            snd.Header.ChallengeId = id;
             snd.RequestedChunks = chunk;
 
             snd.ToStream(ref writer);
@@ -85,8 +85,8 @@ namespace TransportTests
             context = default(DataStreamReader.Context);
             rcv.FromStream(reader, ref context);
 
-            Assert.AreEqual((byte)SQPMessageType.QueryRequest, rcv.Header.Type);
-            Assert.AreEqual(id, (uint)rcv.Header.ChallangeId);
+            Assert.AreEqual((byte)SqpMessageType.QueryRequest, rcv.Header.type);
+            Assert.AreEqual(id, (uint)rcv.Header.ChallengeId);
             Assert.AreEqual(chunk, rcv.RequestedChunks);
         }
 
@@ -100,7 +100,7 @@ namespace TransportTests
 
             var snd = new QueryResponseHeader();
 
-            snd.Header.ChallangeId = id;
+            snd.Header.ChallengeId = id;
             snd.Version = version;
             snd.CurrentPacket = packet;
             snd.LastPacket = last;
@@ -112,8 +112,8 @@ namespace TransportTests
             context = default(DataStreamReader.Context);
             rcv.FromStream(reader, ref context);
 
-            Assert.AreEqual((byte)SQPMessageType.QueryResponse, rcv.Header.Type);
-            Assert.AreEqual(id, (uint)rcv.Header.ChallangeId);
+            Assert.AreEqual((byte)SqpMessageType.QueryResponse, rcv.Header.type);
+            Assert.AreEqual(id, (uint)rcv.Header.ChallengeId);
             Assert.AreEqual(version, rcv.Version);
             Assert.AreEqual(packet, rcv.CurrentPacket);
             Assert.AreEqual(last, rcv.LastPacket);
@@ -157,7 +157,7 @@ namespace TransportTests
 
             var header = new QueryResponseHeader();
 
-            header.Header.ChallangeId = 1337;
+            header.Header.ChallengeId = 1337;
             header.Version = 12345;
             header.CurrentPacket = 12;
             header.LastPacket = 13;
@@ -179,8 +179,8 @@ namespace TransportTests
             context = default(DataStreamReader.Context);
             rcv.FromStream(reader, ref context);
 
-            Assert.AreEqual((byte)SQPMessageType.QueryResponse, rcv.QueryHeader.Header.Type);
-            Assert.AreEqual((uint)header.Header.ChallangeId, (uint)rcv.QueryHeader.Header.ChallangeId);
+            Assert.AreEqual((byte)SqpMessageType.QueryResponse, rcv.QueryHeader.Header.type);
+            Assert.AreEqual((uint)header.Header.ChallengeId, (uint)rcv.QueryHeader.Header.ChallengeId);
             Assert.AreEqual(header.Version, rcv.QueryHeader.Version);
             Assert.AreEqual(header.CurrentPacket, rcv.QueryHeader.CurrentPacket);
             Assert.AreEqual(header.LastPacket, rcv.QueryHeader.LastPacket);
