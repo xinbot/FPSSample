@@ -797,15 +797,15 @@ namespace Networking
                 // Remove any deSpawning entities that belong to older base sequences
                 for (var i = 0; i < _entities.Count; i++)
                 {
-                    var e = _entities[i];
-                    if (e.Type == null)
+                    var entity = _entities[i];
+                    if (entity.Type == null)
                     {
                         continue;
                     }
 
-                    if (e.DeSpawnSequence > 0 && e.DeSpawnSequence <= baseSequence)
+                    if (entity.DeSpawnSequence > 0 && entity.DeSpawnSequence <= baseSequence)
                     {
-                        e.Reset();
+                        entity.Reset();
                     }
                 }
 
@@ -848,9 +848,9 @@ namespace Networking
                     // has reached the server. Only pass on spawn to game layer once
                     if (_entities[id].Type == null)
                     {
-                        var e = _entities[id];
-                        e.Type = _entityTypes[typeId];
-                        e.FieldMask = fieldMask;
+                        var entity = _entities[id];
+                        entity.Type = _entityTypes[typeId];
+                        entity.FieldMask = fieldMask;
                         _spawns.Add(id);
                     }
 
