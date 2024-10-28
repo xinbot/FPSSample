@@ -155,8 +155,8 @@ namespace Networking
 
         public static readonly System.Text.UTF8Encoding Encoding = new System.Text.UTF8Encoding();
 
-        public static readonly float[] EncoderPrecisionScales = new float[] {1.0f, 10.0f, 100.0f, 1000.0f};
-        public static readonly float[] DecoderPrecisionScales = new float[] {1.0f, 0.1f, 0.01f, 0.001f};
+        public static readonly float[] EncoderPrecisionScales = {1.0f, 10.0f, 100.0f, 1000.0f};
+        public static readonly float[] DecoderPrecisionScales = {1.0f, 0.1f, 0.01f, 0.001f};
 
         // compression //TODO: make this dynamic
         public const IOStreamType IOStreamType = Compression.IOStreamType.Huffman;

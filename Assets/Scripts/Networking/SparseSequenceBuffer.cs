@@ -12,9 +12,9 @@ namespace Networking
         public SparseSequenceBuffer(int size, int snapSize)
         {
             _sequences = new int[size];
-            _elements = new uint[size][];
 
-            for (int i = 0; i < _elements.Length; ++i)
+            _elements = new uint[size][];
+            for (var i = 0; i < _elements.Length; ++i)
             {
                 _elements[i] = new uint[snapSize];
             }
@@ -35,7 +35,7 @@ namespace Networking
                 return result;
             }
 
-            for (int i = 0; i < _count; ++i)
+            for (var i = 0; i < _count; ++i)
             {
                 if (_sequences[i] == sequence)
                 {
@@ -45,7 +45,7 @@ namespace Networking
                 if (_sequences[i] > sequence)
                 {
                     var tmp = _elements[_count];
-                    for (int j = _count; j > i; --j)
+                    for (var j = _count; j > i; --j)
                     {
                         _sequences[j] = _sequences[j - 1];
                         _elements[j] = _elements[j - 1];
@@ -63,18 +63,18 @@ namespace Networking
 
         public bool Remove(int sequence)
         {
-            for (int i = 0; i < _count; ++i)
+            for (var i = 0; i < _count; ++i)
             {
                 if (_sequences[i] == sequence)
                 {
-                    var tmpElement = _elements[i];
+                    var tmp = _elements[i];
                     for (var j = i; j < _count - 1; ++j)
                     {
                         _sequences[j] = _sequences[j + 1];
                         _elements[j] = _elements[j + 1];
                     }
 
-                    _elements[_count - 1] = tmpElement;
+                    _elements[_count - 1] = tmp;
                     --_count;
                     return true;
                 }
@@ -86,7 +86,7 @@ namespace Networking
         public uint[] FindMax(int sequence)
         {
             var index = -1;
-            for (int i = 0; i < _count; ++i)
+            for (var i = 0; i < _count; ++i)
             {
                 if (_sequences[i] <= sequence)
                 {
@@ -104,7 +104,7 @@ namespace Networking
         public uint[] FindMin(int sequence)
         {
             var index = -1;
-            for (int i = _count - 1; i >= 0; --i)
+            for (var i = _count - 1; i >= 0; --i)
             {
                 if (_sequences[i] >= sequence)
                 {
@@ -121,7 +121,7 @@ namespace Networking
 
         public uint[] TryGetValue(int sequence)
         {
-            for (int i = 0; i < _count; ++i)
+            for (var i = 0; i < _count; ++i)
             {
                 if (_sequences[i] == sequence)
                 {

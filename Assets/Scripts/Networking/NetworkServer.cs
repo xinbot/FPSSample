@@ -78,7 +78,7 @@ namespace Networking
         public int PredictingClientId = -1;
 
         public int SpawnSequence;
-        public int DespawnSequence;
+        public int DeSpawnSequence;
         public int UpdateSequence;
 
         public readonly SequenceBuffer<EntitySnapshotInfo> Snapshots;
@@ -97,7 +97,7 @@ namespace Networking
         {
             TypeId = 0;
             SpawnSequence = 0;
-            DespawnSequence = 0;
+            DeSpawnSequence = 0;
             UpdateSequence = 0;
             Snapshots.Clear();
             for (var i = 0; i < FieldsChangedPrediction.Length; i++)
@@ -392,7 +392,7 @@ namespace Networking
         public void UnregisterEntity(int id)
         {
             Profiler.BeginSample("NetworkServer.UnregisterEntity()");
-            _entities[id].DespawnSequence = _serverSequence + 1;
+            _entities[id].DeSpawnSequence = _serverSequence + 1;
             Profiler.EndSample();
         }
 
@@ -464,11 +464,11 @@ namespace Networking
             for (int i = 0; i < _entities.Count; i++)
             {
                 var e = _entities[i];
-                if (e.DespawnSequence > 0 && e.DespawnSequence < minClientAck)
+                if (e.DeSpawnSequence > 0 && e.DeSpawnSequence < minClientAck)
                 {
                     if (ServerDebugEntityIds.IntValue > 1)
                     {
-                        GameDebug.Log("Recycling entity id: " + i + " because deSpawned in " + e.DespawnSequence +
+                        GameDebug.Log("Recycling entity id: " + i + " because deSpawned in " + e.DeSpawnSequence +
                                       " and minAck is now " + minClientAck);
                     }
 
@@ -498,15 +498,15 @@ namespace Networking
                 }
 
                 // Skip entities that are deSpawned
-                if (entity.DespawnSequence > 0)
+                if (entity.DeSpawnSequence > 0)
                 {
                     continue;
                 }
 
                 // If we are here and are deSpawned, we must be a deSpawn / spawn in same frame situation
-                GameDebug.Assert(entity.DespawnSequence == 0 || entity.DespawnSequence == entity.SpawnSequence,
+                GameDebug.Assert(entity.DeSpawnSequence == 0 || entity.DeSpawnSequence == entity.SpawnSequence,
                     "Snapshotting entity that was deleted in the past?");
-                GameDebug.Assert(entity.DespawnSequence == 0 || entity.DespawnSequence == _serverSequence, "WUT");
+                GameDebug.Assert(entity.DeSpawnSequence == 0 || entity.DeSpawnSequence == _serverSequence, "WUT");
 
                 // For now we generate the entity type info the first time we generate a snapshot
                 // for the particular entity as a more lightweight approach rather than introducing
@@ -538,7 +538,7 @@ namespace Networking
 
                 worldSnapshot.Length += snapshotInfo.Length;
 
-                if (entity.DespawnSequence == 0)
+                if (entity.DeSpawnSequence == 0)
                 {
                     _lastEntityCount++;
                 }
@@ -1142,7 +1142,7 @@ namespace Networking
                         continue;
 
                     bool spawnedSinceBaseline = (entity.SpawnSequence > baseline);
-                    bool despawned = (entity.DespawnSequence > 0);
+                    bool despawned = (entity.DeSpawnSequence > 0);
 
                     // Note to future self: This is a bit tricky... We consider lifetimes of entities
                     // re the baseline (last ack'ed, so in the past) and the snapshot we are building (now)
@@ -1161,7 +1161,7 @@ namespace Networking
                     //  6.                                         S----------D          INVALID (FUTURE)
                     //
 
-                    if (despawned && entity.DespawnSequence <= baseline)
+                    if (despawned && entity.DeSpawnSequence <= baseline)
                         continue; // case 1: ignore
 
                     if (despawned && !spawnedSinceBaseline)
@@ -1182,7 +1182,7 @@ namespace Networking
                     var tickToSend = _server._serverSequence;
                     // If despawned, however, we have stopped generating updates so pick latest valid
                     if (despawned)
-                        tickToSend = Mathf.Max(entity.UpdateSequence, entity.DespawnSequence - 1);
+                        tickToSend = Mathf.Max(entity.UpdateSequence, entity.DeSpawnSequence - 1);
                     //GameDebug.Assert(tickToSend == server.m_ServerSequence || tickToSend == entity.despawnSequence - 1, "Sending snapshot. Expect to send either current tick or last tick before despawn.");
 
                     {
@@ -1372,8 +1372,8 @@ namespace Networking
 
                     // TODO (petera) It is a mess that we have to repeat the logic about tickToSend from above here
                     int tickToSend = _server._serverSequence;
-                    if (entity.DespawnSequence > 0)
-                        tickToSend = Mathf.Max(entity.DespawnSequence - 1, entity.UpdateSequence);
+                    if (entity.DeSpawnSequence > 0)
+                        tickToSend = Mathf.Max(entity.DeSpawnSequence - 1, entity.UpdateSequence);
 
                     GameDebug.Assert(_server._serverSequence - tickToSend < NetworkConfig.SnapshotDeltaCacheSize);
 
@@ -1382,7 +1382,7 @@ namespace Networking
                         GameDebug.Log("maxSnapAck: " + MAXSnapshotAck);
                         GameDebug.Log("lastWritten: " + _snapshotServerLastWritten);
                         GameDebug.Log("spawn: " + entity.SpawnSequence);
-                        GameDebug.Log("despawn: " + entity.DespawnSequence);
+                        GameDebug.Log("despawn: " + entity.DeSpawnSequence);
                         GameDebug.Log("update: " + entity.UpdateSequence);
                         GameDebug.Log("tick: " + _server._serverSequence);
                         GameDebug.Log("id: " + id);

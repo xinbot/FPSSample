@@ -64,20 +64,20 @@ namespace Networking
 
     public class SequenceBuffer<T> where T : class
     {
-        public readonly int[] Sequences;
         public readonly T[] Elements;
-
+        
+        public readonly int[] Sequences;
         public int capacity => Sequences.Length;
 
         public SequenceBuffer(int capacity, Func<T> factory)
         {
-            Sequences = new int[capacity];
             Elements = new T[capacity];
-
+            Sequences = new int[capacity];
+            
             for (var i = 0; i < capacity; ++i)
             {
-                Sequences[i] = -1;
                 Elements[i] = factory();
+                Sequences[i] = -1;
             }
         }
 
