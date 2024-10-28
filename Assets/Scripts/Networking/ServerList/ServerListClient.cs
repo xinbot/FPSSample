@@ -3,127 +3,136 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Networking;
 
-public class ServerListClient
+namespace Networking.ServerList
 {
-    public ServerListConfig Config { get; }
-
-    public List<ServerInfo> KnownServers { get; private set; }
-
-    private float nextUpdate;
-
-    public ServerListClient(ServerListConfig config)
+    public class ServerListClient
     {
-        this.Config = config;
-        this.KnownServers = new List<ServerInfo>();
-        this.nextUpdate = Time.time;
-    }
+        private float _nextUpdate;
 
-    public void UpdateKnownServers()
-    {
-        // This is called every cycle. Use the configured period to throttle the number of REST calls being made offbox
-        float now = Time.time;
-        if (m_WebRequestAsyncOp == null)
+        private UnityWebRequest _request;
+        private UnityWebRequestAsyncOperation _webRequestAsyncOp;
+
+        private readonly ServerListConfig _config;
+        private readonly List<global::ServerInfo> _knownServers = new List<global::ServerInfo>();
+
+        public ServerListClient(ServerListConfig config)
         {
-            if (now > nextUpdate)
+            _config = config;
+            _nextUpdate = Time.time;
+        }
+
+        public void UpdateKnownServers()
+        {
+            // This is called every cycle. Use the configured period to throttle the number of REST calls being made.
+            float now = Time.time;
+            if (_webRequestAsyncOp == null)
             {
-                nextUpdate = now + this.Config.Period;
-                StartGetRequest(this.Config.Url);
+                if (now > _nextUpdate)
+                {
+                    _nextUpdate = now + _config.period;
+                    StartGetRequest(_config.url);
+                }
             }
-        }
-        else if (!m_WebRequestAsyncOp.isDone)
-        {
-            return;
-        }
-        else
-        {
-            var response = ProcessRequestReponse();
 
+            if (_webRequestAsyncOp == null || !_webRequestAsyncOp.isDone)
+            {
+                return;
+            }
+
+            var response = ProcessRequestResponse();
             // Add or update servers 
-            foreach (ServerListInfo serverInfo in response.Servers)
+            foreach (ServerListInfo serverInfo in response.servers)
             {
                 // Check if server info already known
-                var idx = -1;
-                for(var i = 0; i < KnownServers.Count; i++)
+                var index = -1;
+                for (var i = 0; i < _knownServers.Count; i++)
                 {
-                    if(KnownServers[i].Address == serverInfo.Ip && KnownServers[i].Port == serverInfo.Port)
+                    if (_knownServers[i].Address != serverInfo.ip || _knownServers[i].Port != serverInfo.port)
                     {
-                        idx = i;
-                        break;
+                        continue;
                     }
+
+                    index = i;
+                    break;
                 }
 
-                // .. if not create one
-                if (idx == -1)
+                if (index == -1)
                 {
-                    this.KnownServers.Add(new ServerInfo());
-                    idx = this.KnownServers.Count - 1;
+                    _knownServers.Add(new global::ServerInfo());
+                    index = _knownServers.Count - 1;
                 }
-                var s = this.KnownServers[idx];
-                s.Address = serverInfo.Ip;
-                s.Port = serverInfo.Port;
-                s.Name = serverInfo.Name;
-                s.LevelName = serverInfo.Map;
-                s.GameMode = serverInfo.Description;
-                s.Players = serverInfo.PlayerCount;
-                s.MaxPlayers = serverInfo.MaxPlayerCount;
-                s.LastSeenTime = now;
+
+                var server = _knownServers[index];
+                server.Address = serverInfo.ip;
+                server.Port = serverInfo.port;
+                server.Name = serverInfo.name;
+                server.LevelName = serverInfo.map;
+                server.GameMode = serverInfo.description;
+                server.Players = serverInfo.playerCount;
+                server.MaxPlayers = serverInfo.maxPlayerCount;
+                server.LastSeenTime = now;
             }
 
             // Remove servers that wasn't in the response
-            for (var i = this.KnownServers.Count - 1; i > 0; --i)
+            for (var i = _knownServers.Count - 1; i > 0; --i)
             {
-                if (this.KnownServers[i].LastSeenTime < now)
-                    this.KnownServers.RemoveAt(i);
+                if (_knownServers[i].LastSeenTime < now)
+                {
+                    _knownServers.RemoveAt(i);
+                }
             }
         }
-    }
 
-    private UnityWebRequestAsyncOperation m_WebRequestAsyncOp;
-    private UnityWebRequest m_Request;
-
-    private void StartGetRequest(string url)
-    {
-        m_Request = UnityWebRequest.Get(url);
-        m_Request.downloadHandler = new DownloadHandlerBuffer();
-        m_WebRequestAsyncOp = m_Request.SendWebRequest();
-    }
-
-    private ServerListResponse ProcessRequestReponse()
-    {
-        if (m_Request.isNetworkError || m_Request.isHttpError || m_Request.isNetworkError)
+        private void StartGetRequest(string url)
         {
-            GameDebug.LogError("There was an error calling server list. Error: " + m_WebRequestAsyncOp.webRequest.error);
-            return new ServerListResponse(); // TODO: What is the current methodolgy for handling exceptions and errors?
+            _request = UnityWebRequest.Get(url);
+            _request.downloadHandler = new DownloadHandlerBuffer();
+            _webRequestAsyncOp = _request.SendWebRequest();
         }
-        m_WebRequestAsyncOp = null;
 
-        return JsonUtility.FromJson<ServerListResponse>(m_Request.downloadHandler.text);
-    }
+        private ServerListResponse ProcessRequestResponse()
+        {
+            if (_request.isNetworkError || _request.isHttpError || _request.isNetworkError)
+            {
+                var message = $"There was an error calling server list. Error: {_webRequestAsyncOp.webRequest.error}";
+                GameDebug.LogError(message);
 
-#pragma warning disable 0649 // unassigned variables
-    [Serializable]
-    private class ServerListResponse
-    {
-        public int Skip;
-        public int Take;
-        public int Total;
-        public List<ServerListInfo> Servers;
-    }
+                // TODO: What is the current methodology for handling exceptions and errors?
+                return new ServerListResponse();
+            }
+
+            _webRequestAsyncOp = null;
+
+            return JsonUtility.FromJson<ServerListResponse>(_request.downloadHandler.text);
+        }
+
+        // unassigned variables
+#pragma warning disable 0649
+        [Serializable]
+        private class ServerListResponse
+        {
+            public int skip;
+            public int take;
+            public int total;
+            public List<ServerListInfo> servers;
+        }
 #pragma warning restore
 
-#pragma warning disable 0649 // unassigned variables
-    [Serializable]
-    private class ServerListInfo
-    {
-        public string Id;
-        public string Ip;
-        public int Port;
-        public string Name;
-        public string Description;
-        public string Map;
-        public int PlayerCount;
-        public int MaxPlayerCount;
-        public string Custom;
-    }
+        // unassigned variables
+#pragma warning disable 0649
+        [Serializable]
+        private class ServerListInfo
+        {
+            public string id;
+            public string ip;
+            public int port;
+            public string name;
+            public string description;
+            public string map;
+            public int playerCount;
+            public int maxPlayerCount;
+            public string custom;
+        }
 #pragma warning restore
+    }
 }

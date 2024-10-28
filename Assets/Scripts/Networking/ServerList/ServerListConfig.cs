@@ -1,17 +1,20 @@
-public class ServerListConfig
+namespace Networking.ServerList
 {
-    // The Url of the serverlist service endpoint
-    public string Url { get; set; }
-
-    // The time in seconds between serverlist GET calls
-    public int Period { get; set; }
-
-    public static ServerListConfig BasicConfig(string projectId)
+    public class ServerListConfig
     {
-        return new ServerListConfig() 
+        // The Url of the server list service endpoint
+        public string url { get; private set; }
+
+        // The time in seconds between server list GET calls
+        public int period { get; private set; }
+
+        public static ServerListConfig BasicConfig(string projectId)
         {
-            Url = string.Format("http://104.154.156.161:8080/api/projects/{0}/servers?multiplay=true", projectId),
-            Period = 5
-        };
+            return new ServerListConfig
+            {
+                url = $"http://104.154.156.161:8080/api/projects/{projectId}/servers?multiplay=true",
+                period = 5
+            };
+        }
     }
 }
