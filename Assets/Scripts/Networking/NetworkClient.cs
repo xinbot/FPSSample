@@ -997,18 +997,19 @@ namespace Networking
                         fixed (uint* prediction = entity.Prediction, baseline0P = baseline0, baseline1P =
                             baseline1, baseline2P = baseline2)
                         {
-                            NetworkPrediction.PredictSnapshot(prediction, entity.FieldsChangedPrediction,
-                                entity.Type.Schema,
-                                numBaselines, (uint) baseline0Time, baseline0P, (uint) baseline1Time, baseline1P,
-                                (uint) baseline2Time, baseline2P, (uint) snapshotInfo.ServerTime, entity.FieldMask);
+                            NetworkPrediction.PredictSnapshot(prediction,
+                                entity.FieldsChangedPrediction, entity.Type.Schema, numBaselines,
+                                (uint) baseline0Time, baseline0P,
+                                (uint) baseline1Time, baseline1P,
+                                (uint) baseline2Time, baseline2P,
+                                (uint) snapshotInfo.ServerTime, entity.FieldMask);
                         }
                     }
                     else
                     {
-                        var f = entity.FieldsChangedPrediction;
-                        for (var i = 0; i < f.Length; ++i)
+                        for (var i = 0; i < entity.FieldsChangedPrediction.Length; ++i)
                         {
-                            f[i] = 0;
+                            entity.FieldsChangedPrediction[i] = 0;
                         }
 
                         for (int i = 0, c = entity.Type.Schema.GetByteSize() / 4; i < c; ++i)
@@ -1037,28 +1038,49 @@ namespace Networking
 
                     DeltaReader.Read(ref input, entity.Type.Schema, entity.Prediction, _tempSnapshotBuffer,
                         entity.FieldsChangedPrediction, entity.FieldMask, ref hash);
+
                     if (enableHashing)
                     {
                         uint hashCheck = input.ReadRawBits(32);
-
                         if (hash != hashCheck)
                         {
-                            GameDebug.Log("Hash check fail for entity " + id);
+                            GameDebug.Log($"Hash check fail for entity {id}");
+
                             if (enableNetworkPrediction)
                             {
-                                GameDebug.Assert(false,
-                                    "Snapshot (" + snapshotInfo.ServerTime + ") " +
-                                    (haveBaseline ? "Snap [BL]" : "Snap [  ]") + "  " + baseSequence + " - " +
-                                    baseSequence1 + " - " + baseSequence2 + ". Sche: " + schemaCount + " Spwns: " +
-                                    spawnCount + " Desp: " + deSpawnCount + " Upd: " + updateCount);
+                                string msg;
+                                if (haveBaseline)
+                                {
+                                    msg =
+                                        $"Snapshot ({snapshotInfo.ServerTime}) Snap [BL] {baseSequence}-{baseSequence1}-{baseSequence2}. " +
+                                        $"Schema : {schemaCount} Spawns : {spawnCount} DeSpawns : {deSpawnCount} Upd : {updateCount}";
+                                }
+                                else
+                                {
+                                    msg =
+                                        $"Snapshot ({snapshotInfo.ServerTime}) Snap [  ] {baseSequence}-{baseSequence1}-{baseSequence2}. " +
+                                        $"Schema : {schemaCount} Spawns : {spawnCount} DeSpawns : {deSpawnCount} Upd : {updateCount}";
+                                }
+
+                                GameDebug.Assert(false, msg);
                             }
                             else
                             {
-                                GameDebug.Assert(false,
-                                    "Snapshot (" + snapshotInfo.ServerTime + ") " +
-                                    (haveBaseline ? "Snap [BL]" : "Snap [  ]") + "  " + baseSequence + ". Sche: " +
-                                    schemaCount + " Spwns: " + spawnCount + " Desp: " + deSpawnCount + " Upd: " +
-                                    updateCount);
+                                string msg;
+                                if (haveBaseline)
+                                {
+                                    msg =
+                                        $"Snapshot ({snapshotInfo.ServerTime}) Snap [BL] {baseSequence}. Schema : {schemaCount} " +
+                                        $"Spawns : {spawnCount} DeSpawns : {deSpawnCount} Upd : {updateCount}";
+                                }
+                                else
+                                {
+                                    msg =
+                                        $"Snapshot ({snapshotInfo.ServerTime}) Snap [  ] {baseSequence}. Schema : {schemaCount} " +
+                                        $"Spawns : {spawnCount} DeSpawns : {deSpawnCount} Upd : {updateCount}";
+                                }
+
+                                GameDebug.Assert(false, msg);
                             }
                         }
                     }
@@ -1066,7 +1088,7 @@ namespace Networking
 
                 var predictionMsgName = enableNetworkPrediction ? "snapShotUpdatesPredict" : "snapShotUpdatesNoPredict";
                 counters.AddSectionStats(predictionMsgName, input.GetBitPosition2(),
-                    haveBaseline ? new Color(0.09f, 0.38f, 0.93f) : Color.cyan);
+                    haveBaseline ? NetworkSectionColor.SnapShotUpdateColor : Color.cyan);
 
                 uint numEntities = 0;
 
@@ -1085,8 +1107,7 @@ namespace Networking
                     }
 
                     // If just spawned or if new snapshot is different from the last we deserialized,
-                    // we need to deserialize. Otherwise just ignore; no reason to deserialize the same
-                    // values again
+                    // we need to deserialize. Otherwise just ignore; no reason to deserialize the same values again
                     int schemaSize = entity.Type.Schema.GetByteSize();
                     if (entity.Baselines.GetSize() == 0 ||
                         NetworkUtils.MemCmp(entity.Prediction, 0, entity.LastUpdate, 0, schemaSize) != 0)
@@ -1122,8 +1143,8 @@ namespace Networking
 
                 if (ClientDebug.IntValue > 1)
                 {
-                    if (ClientDebug.IntValue > 2 || spawnCount > 0 || deSpawnCount > 0 || schemaCount > 0 ||
-                        !haveBaseline)
+                    if (ClientDebug.IntValue > 2 || 
+                        spawnCount > 0 || deSpawnCount > 0 || schemaCount > 0 || !haveBaseline)
                     {
                         string entityIds = "";
                         for (var i = 0; i < _entities.Count; i++)
@@ -1142,20 +1163,21 @@ namespace Networking
                         {
                             GameDebug.Log(("SEQ:" + snapshotInfo.ServerTime + ":" + sequence) +
                                           (haveBaseline ? "Snap [BL]" : "Snap [  ]") + "  " + baseSequence + " - " +
-                                          baseSequence1 + " - " + baseSequence2 + ". Sche: " + schemaCount +
-                                          " Spwns: " +
-                                          spawnCount + "(" + spawnIds + ") Desp: " + deSpawnCount + "(" + deSpawnIds +
-                                          ") Upd: " + updateCount + "(" + updateIds + ")  Ents:" + _entities.Count +
+                                          baseSequence1 + " - " + baseSequence2 + ". Schema: " + schemaCount +
+                                          " Spawns: " +
+                                          spawnCount + "(" + spawnIds + ") DeSpawns: " + deSpawnCount + "(" +
+                                          deSpawnIds +
+                                          ") Upd: " + updateCount + "(" + updateIds + ")  Entities:" + _entities.Count +
                                           " EntityIds:" + entityIds);
                         }
                         else
                         {
                             GameDebug.Log(("SEQ:" + snapshotInfo.ServerTime + ":" + sequence) +
                                           (haveBaseline ? "Snap [BL]" : "Snap [  ]") + "  " + baseSequence +
-                                          ". Sche: " +
-                                          schemaCount + " Spwns: " + spawnCount + "(" + spawnIds + ") Desp: " +
+                                          ". Schema: " +
+                                          schemaCount + " Spawns: " + spawnCount + "(" + spawnIds + ") DeSpawns: " +
                                           deSpawnCount + "(" + deSpawnIds + ") Upd: " + updateCount + "(" + updateIds +
-                                          ")  Ents:" + _entities.Count + " EntityIds:" + entityIds);
+                                          ")  Entities:" + _entities.Count + " EntityIds:" + entityIds);
                         }
                     }
                 }

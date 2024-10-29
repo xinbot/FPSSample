@@ -8,7 +8,7 @@ public class ReplicatedEntityModuleClient : ISnapshotConsumer
 {
     [ConfigVar(Name = "replicatedentity.showclientinfo", DefaultValue = "0",
         Description = "Show replicated system info")]
-    private static ConfigVar _showInfo;
+    public static ConfigVar ShowInfo;
 
     private readonly GameWorld _world;
     private readonly GameObject _systemRoot;
@@ -48,9 +48,9 @@ public class ReplicatedEntityModuleClient : ISnapshotConsumer
 
     public void ProcessEntitySpawn(int serverTick, int id, ushort typeId)
     {
-        if (_showInfo.IntValue > 0)
+        if (ShowInfo.IntValue > 0)
         {
-            GameDebug.Log("ProcessEntitySpawns. Server tick:" + serverTick + " id:" + id + " typeid:" + typeId);
+            GameDebug.Log($"ProcessEntitySpawns. Server tick:{serverTick} id:{id} typeid:{typeId}");
         }
 
         // If this is a replicated entity from the scene it only needs to be registered (not instantiated)
@@ -58,24 +58,22 @@ public class ReplicatedEntityModuleClient : ISnapshotConsumer
         {
             var e = _world.SceneEntities[id];
             var gameObjectEntity = e.gameObject.GetComponent<GameObjectEntity>();
-            GameDebug.Assert(gameObjectEntity != null,
-                "Replicated entity " + e.name + " has no GameObjectEntity component");
+            GameDebug.Assert(gameObjectEntity != null, $"Replicated entity {e.name} has no GameObjectEntity component");
 
             _entityCollection.Register(_world.GetEntityManager(), id, gameObjectEntity.Entity);
             return;
         }
 
         int index = typeId;
-
         // If factory present it should be used to create entity
         GameDebug.Assert(index < _assetRegistry.entries.Count,
-            "TypeId:" + typeId + " not in range. Array Length:" + _assetRegistry.entries.Count);
+            $"TypeId:{typeId} not in range. Array Length:{_assetRegistry.entries.Count}");
 
         var entity = _resourceSystem.CreateEntity(_assetRegistry.entries[index].guid);
         if (entity == Entity.Null)
         {
             var guid = _assetRegistry.entries[index].guid;
-            GameDebug.LogError("Failed to create entity for index:" + index + " guid:" + guid);
+            GameDebug.LogError($"Failed to create entity for index:{index} guid:{guid}");
             return;
         }
 
@@ -92,9 +90,9 @@ public class ReplicatedEntityModuleClient : ISnapshotConsumer
 
     public void ProcessEntityUpdate(int serverTick, int id, ref NetworkReader reader)
     {
-        if (_showInfo.IntValue > 1)
+        if (ShowInfo.IntValue > 1)
         {
-            GameDebug.Log("ApplyEntitySnapshot. ServerTick:" + serverTick + " entityId:" + id);
+            GameDebug.Log($"ApplyEntitySnapshot. ServerTick:{serverTick} entityId:{id}");
         }
 
         _entityCollection.ProcessEntityUpdate(serverTick, id, ref reader);
@@ -102,14 +100,14 @@ public class ReplicatedEntityModuleClient : ISnapshotConsumer
 
     public void ProcessEntityDeSpawn(int serverTime, List<int> deSpawns)
     {
-        if (_showInfo.IntValue > 0)
+        if (ShowInfo.IntValue > 0)
         {
-            GameDebug.Log("ProcessEntityDespawns. Server tick:" + serverTime + " ids:" + string.Join(",", deSpawns));
+            GameDebug.Log($"ProcessEntityDeSpawn. Server tick:{serverTime} ids:{string.Join(",", deSpawns)}");
         }
 
-        foreach (var id in deSpawns)
+        for (var i = 0; i < deSpawns.Count; i++)
         {
-            var entity = _entityCollection.Unregister(_world.GetEntityManager(), id);
+            var entity = _entityCollection.Unregister(_world.GetEntityManager(), deSpawns[i]);
 
             if (_world.GetEntityManager().HasComponent<ReplicatedEntity>(entity))
             {
