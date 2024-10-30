@@ -8,80 +8,111 @@ using UnityEngine.Profiling;
 
 public class ServerGameWorld : ISnapshotGenerator, IClientCommandProcessor
 {
-    public int worldTick { get { return m_GameWorld.WorldTime.Tick; } }
-    public int TickRate
+    public int worldTick => _gameWorld.WorldTime.Tick;
+
+    public int tickRate
     {
-        get
-        {
-            return m_GameWorld.WorldTime.tickRate;
-        }
-        set
-        {
-            m_GameWorld.WorldTime.tickRate = value;
-        }
+        get => _gameWorld.WorldTime.tickRate;
+        set => _gameWorld.WorldTime.tickRate = value;
     }
-    public float TickInterval { get { return m_GameWorld.WorldTime.tickInterval; } }
 
-    public ServerGameWorld(GameWorld world, NetworkServer networkServer, Dictionary<int, ServerGameLoop.ClientInfo> clients, ChatSystemServer m_ChatSystem, BundledResourceManager resourceSystem)
+    public float tickInterval => _gameWorld.WorldTime.tickInterval;
+
+    // External systems
+    private readonly NetworkServer _networkServer;
+    private readonly Dictionary<int, ServerGameLoop.ClientInfo> _clients;
+    private readonly ChatSystemServer _chatSystemServer;
+
+    // Internal systems
+    private GameWorld _gameWorld;
+    private readonly CharacterModuleServer _characterModule;
+    private readonly ProjectileModuleServer _projectileModule;
+    private readonly HitCollisionModule _hitCollisionModule;
+    private readonly PlayerModuleServer _playerModule;
+    private readonly SpectatorCamModuleServer _spectatorCamModule;
+    private readonly ReplicatedEntityModuleServer _replicatedEntityModule;
+    private readonly ItemModule _itemModule;
+
+    private readonly ServerCameraSystem _cameraSystem;
+    private readonly GameModeSystemServer _gameModeSystem;
+
+    private readonly DamageAreaSystemServer _damageAreaSystem;
+    private readonly TeleporterSystemServer _teleporterSystem;
+
+    private readonly HandleGrenadeRequest _handleGrenadeRequests;
+    private readonly StartGrenadeMovement _startGrenadeMovement;
+    private readonly FinalizeGrenadeMovement _finalizeGrenadeMovement;
+
+    private readonly MoverUpdate _platformSystem;
+    private readonly UpdateDestructableProps _destructiblePropSystem;
+    private readonly MovableSystemServer _moveableSystem;
+
+    private char[] _msgBuf = new char[256];
+
+    public ServerGameWorld(GameWorld world, NetworkServer networkServer,
+        Dictionary<int, ServerGameLoop.ClientInfo> clients, ChatSystemServer chatSystemServer,
+        BundledResourceManager resourceSystem)
     {
-        m_NetworkServer = networkServer;
-        m_Clients = clients;
-        this.m_ChatSystem = m_ChatSystem;
+        _networkServer = networkServer;
+        _clients = clients;
+        _chatSystemServer = chatSystemServer;
 
-        m_GameWorld = world;
+        _gameWorld = world;
 
-        m_CharacterModule = new CharacterModuleServer(m_GameWorld, resourceSystem);
-        m_ProjectileModule = new ProjectileModuleServer(m_GameWorld, resourceSystem);
-        m_HitCollisionModule = new HitCollisionModule(m_GameWorld, 128, 1);
-        m_PlayerModule = new PlayerModuleServer(m_GameWorld, resourceSystem);
-        m_SpectatorCamModule = new SpectatorCamModuleServer(m_GameWorld, resourceSystem);
-        m_ReplicatedEntityModule = new ReplicatedEntityModuleServer(m_GameWorld, resourceSystem, m_NetworkServer);
-        m_ReplicatedEntityModule.ReserveSceneEntities(networkServer);
-        m_ItemModule = new ItemModule(m_GameWorld);
+        _characterModule = new CharacterModuleServer(_gameWorld, resourceSystem);
+        _projectileModule = new ProjectileModuleServer(_gameWorld, resourceSystem);
+        _hitCollisionModule = new HitCollisionModule(_gameWorld, 128, 1);
+        _playerModule = new PlayerModuleServer(_gameWorld, resourceSystem);
+        _spectatorCamModule = new SpectatorCamModuleServer(_gameWorld, resourceSystem);
+        _replicatedEntityModule = new ReplicatedEntityModuleServer(_gameWorld, resourceSystem, _networkServer);
+        _replicatedEntityModule.ReserveSceneEntities(networkServer);
+        _itemModule = new ItemModule(_gameWorld);
 
-        m_GameModeSystem = m_GameWorld.GetECSWorld().CreateManager<GameModeSystemServer>(m_GameWorld, m_ChatSystem, resourceSystem);
+        _gameModeSystem = _gameWorld.GetECSWorld()
+            .CreateManager<GameModeSystemServer>(_gameWorld, chatSystemServer, resourceSystem);
 
-        m_DestructablePropSystem = m_GameWorld.GetECSWorld().CreateManager<UpdateDestructableProps>(m_GameWorld);
+        _destructiblePropSystem = _gameWorld.GetECSWorld().CreateManager<UpdateDestructableProps>(_gameWorld);
 
-        m_DamageAreaSystem = m_GameWorld.GetECSWorld().CreateManager<DamageAreaSystemServer>(m_GameWorld);
+        _damageAreaSystem = _gameWorld.GetECSWorld().CreateManager<DamageAreaSystemServer>(_gameWorld);
 
-        m_TeleporterSystem = m_GameWorld.GetECSWorld().CreateManager<TeleporterSystemServer>(m_GameWorld);
+        _teleporterSystem = _gameWorld.GetECSWorld().CreateManager<TeleporterSystemServer>(_gameWorld);
 
-        m_HandleGrenadeRequests = m_GameWorld.GetECSWorld().CreateManager<HandleGrenadeRequest>(m_GameWorld, resourceSystem);
-        m_StartGrenadeMovement = m_GameWorld.GetECSWorld().CreateManager<StartGrenadeMovement>(m_GameWorld);
-        m_FinalizeGrenadeMovement = m_GameWorld.GetECSWorld().CreateManager<FinalizeGrenadeMovement>(m_GameWorld);
+        _handleGrenadeRequests =
+            _gameWorld.GetECSWorld().CreateManager<HandleGrenadeRequest>(_gameWorld, resourceSystem);
+        _startGrenadeMovement = _gameWorld.GetECSWorld().CreateManager<StartGrenadeMovement>(_gameWorld);
+        _finalizeGrenadeMovement = _gameWorld.GetECSWorld().CreateManager<FinalizeGrenadeMovement>(_gameWorld);
 
-        m_platformSystem = m_GameWorld.GetECSWorld().CreateManager<MoverUpdate>(m_GameWorld);
+        _platformSystem = _gameWorld.GetECSWorld().CreateManager<MoverUpdate>(_gameWorld);
 
-        m_MoveableSystem = new MovableSystemServer(m_GameWorld, resourceSystem);
-        m_CameraSystem = new ServerCameraSystem(m_GameWorld);
+        _moveableSystem = new MovableSystemServer(_gameWorld, resourceSystem);
+        _cameraSystem = new ServerCameraSystem(_gameWorld);
     }
 
     public void Shutdown()
     {
-        m_CharacterModule.Shutdown();
-        m_ProjectileModule.Shutdown();
-        m_HitCollisionModule.Shutdown();
-        m_PlayerModule.Shutdown();
-        m_SpectatorCamModule.Shutdown();
+        _characterModule.Shutdown();
+        _projectileModule.Shutdown();
+        _hitCollisionModule.Shutdown();
+        _playerModule.Shutdown();
+        _spectatorCamModule.Shutdown();
 
-        m_GameWorld.GetECSWorld().DestroyManager(m_DestructablePropSystem);
-        m_GameWorld.GetECSWorld().DestroyManager(m_DamageAreaSystem);
-        m_GameWorld.GetECSWorld().DestroyManager(m_TeleporterSystem);
+        _gameWorld.GetECSWorld().DestroyManager(_destructiblePropSystem);
+        _gameWorld.GetECSWorld().DestroyManager(_damageAreaSystem);
+        _gameWorld.GetECSWorld().DestroyManager(_teleporterSystem);
 
-        m_GameWorld.GetECSWorld().DestroyManager(m_HandleGrenadeRequests);
-        m_GameWorld.GetECSWorld().DestroyManager(m_StartGrenadeMovement);
-        m_GameWorld.GetECSWorld().DestroyManager(m_FinalizeGrenadeMovement);
+        _gameWorld.GetECSWorld().DestroyManager(_handleGrenadeRequests);
+        _gameWorld.GetECSWorld().DestroyManager(_startGrenadeMovement);
+        _gameWorld.GetECSWorld().DestroyManager(_finalizeGrenadeMovement);
 
-        m_GameWorld.GetECSWorld().DestroyManager(m_platformSystem);
+        _gameWorld.GetECSWorld().DestroyManager(_platformSystem);
 
-        m_ReplicatedEntityModule.Shutdown();
-        m_ItemModule.Shutdown();
+        _replicatedEntityModule.Shutdown();
+        _itemModule.Shutdown();
 
-        m_CameraSystem.Shutdown();
-        m_MoveableSystem.Shutdown();
+        _cameraSystem.Shutdown();
+        _moveableSystem.Shutdown();
 
-        m_GameWorld = null;
+        _gameWorld = null;
     }
 
     public void RespawnPlayer(PlayerState player)
@@ -89,13 +120,12 @@ public class ServerGameWorld : ISnapshotGenerator, IClientCommandProcessor
         if (player.controlledEntity == Entity.Null)
             return;
 
-        if (m_GameWorld.GetEntityManager().HasComponent<Character>(player.controlledEntity))
-            CharacterDespawnRequest.Create(m_GameWorld, player.controlledEntity);
+        if (_gameWorld.GetEntityManager().HasComponent<Character>(player.controlledEntity))
+            CharacterDespawnRequest.Create(_gameWorld, player.controlledEntity);
 
         player.controlledEntity = Entity.Null;
     }
 
-    char[] _msgBuf = new char[256];
     public void HandlePlayerSetupEvent(PlayerState player, PlayerSettings settings)
     {
         if (player.playerName != settings.PlayerName)
@@ -104,13 +134,14 @@ public class ServerGameWorld : ISnapshotGenerator, IClientCommandProcessor
             if (player.playerName == "")
                 l = StringFormatter.Write(ref _msgBuf, 0, "{0} joined", settings.PlayerName);
             else
-                l = StringFormatter.Write(ref _msgBuf, 0, "{0} is now known as {1}", player.playerName, settings.PlayerName);
-            m_ChatSystem.SendChatAnnouncement(new CharBufView(_msgBuf, l));
+                l = StringFormatter.Write(ref _msgBuf, 0, "{0} is now known as {1}", player.playerName,
+                    settings.PlayerName);
+            _chatSystemServer.SendChatAnnouncement(new CharBufView(_msgBuf, l));
             player.playerName = settings.PlayerName;
         }
 
         var playerEntity = player.gameObject.GetComponent<GameObjectEntity>().Entity;
-        var charControl = m_GameWorld.GetEntityManager().GetComponentObject<PlayerCharacterControl>(playerEntity);
+        var charControl = _gameWorld.GetEntityManager().GetComponentObject<PlayerCharacterControl>(playerEntity);
 
         charControl.requestedCharacterType = settings.CharacterType;
     }
@@ -118,32 +149,32 @@ public class ServerGameWorld : ISnapshotGenerator, IClientCommandProcessor
     public void ProcessCommand(int connectionId, int tick, ref NetworkReader data)
     {
         ServerGameLoop.ClientInfo client;
-        if (!m_Clients.TryGetValue(connectionId, out client))
+        if (!_clients.TryGetValue(connectionId, out client))
             return;
 
         if (client.player)
         {
             var serializeContext = new SerializeContext
             {
-                entityManager = m_GameWorld.GetEntityManager(),
+                entityManager = _gameWorld.GetEntityManager(),
                 entity = Entity.Null,
                 refSerializer = null,
                 tick = tick
             };
-                
-            if (tick == m_GameWorld.WorldTime.Tick)
+
+            if (tick == _gameWorld.WorldTime.Tick)
                 client.latestCommand.Deserialize(ref serializeContext, ref data);
 
             // Pass on command to controlled entity
             if (client.player.controlledEntity != Entity.Null)
             {
-                var userCommand = m_GameWorld.GetEntityManager().GetComponentData<UserCommandComponentData>(
+                var userCommand = _gameWorld.GetEntityManager().GetComponentData<UserCommandComponentData>(
                     client.player.controlledEntity);
 
                 userCommand.command = client.latestCommand;
 
-                m_GameWorld.GetEntityManager().SetComponentData<UserCommandComponentData>(
-                    client.player.controlledEntity,userCommand);
+                _gameWorld.GetEntityManager().SetComponentData<UserCommandComponentData>(
+                    client.player.controlledEntity, userCommand);
             }
         }
     }
@@ -153,12 +184,13 @@ public class ServerGameWorld : ISnapshotGenerator, IClientCommandProcessor
         if (v == "nextchar")
         {
             GameDebug.Log("nextchar for client " + client.id);
-            m_GameModeSystem.RequestNextChar(client.player);
+            _gameModeSystem.RequestNextChar(client.player);
         }
         else
         {
             return false;
         }
+
         return true;
     }
 
@@ -166,74 +198,75 @@ public class ServerGameWorld : ISnapshotGenerator, IClientCommandProcessor
     {
         Profiler.BeginSample("ServerGameWorld.ServerTickUpdate()");
 
-        m_GameWorld.WorldTime.Tick++;
-        m_GameWorld.WorldTime.TickDuration = m_GameWorld.WorldTime.tickInterval;
-        m_GameWorld.frameDuration = m_GameWorld.WorldTime.tickInterval;
+        _gameWorld.WorldTime.Tick++;
+        _gameWorld.WorldTime.TickDuration = _gameWorld.WorldTime.tickInterval;
+        _gameWorld.frameDuration = _gameWorld.WorldTime.tickInterval;
 
         Profiler.BeginSample("HandleClientCommands");
 
         // This call backs into ProcessCommand
-        m_NetworkServer.HandleClientCommands(m_GameWorld.WorldTime.Tick, this);
+        _networkServer.HandleClientCommands(_gameWorld.WorldTime.Tick, this);
 
         Profiler.EndSample();
 
-        GameTime gameTime = new GameTime(m_GameWorld.WorldTime.tickRate);
-        gameTime.SetTime(m_GameWorld.WorldTime.Tick, m_GameWorld.WorldTime.tickInterval);
+        GameTime gameTime = new GameTime(_gameWorld.WorldTime.tickRate);
+        gameTime.SetTime(_gameWorld.WorldTime.Tick, _gameWorld.WorldTime.tickInterval);
 
         // Handle spawn requests. All creation of game entities should happen in this phase        
-        m_CharacterModule.HandleSpawnRequests();
-        m_SpectatorCamModule.HandleSpawnRequests();
-        m_ProjectileModule.HandleRequests();         
-        m_HandleGrenadeRequests.Update();
+        _characterModule.HandleSpawnRequests();
+        _spectatorCamModule.HandleSpawnRequests();
+        _projectileModule.HandleRequests();
+        _handleGrenadeRequests.Update();
 
         // Handle newly spawned entities          
-        m_CharacterModule.HandleSpawns();
-        m_HitCollisionModule.HandleSpawning();
-        m_ReplicatedEntityModule.HandleSpawning();
-        m_ItemModule.HandleSpawn();
+        _characterModule.HandleSpawns();
+        _hitCollisionModule.HandleSpawning();
+        _replicatedEntityModule.HandleSpawning();
+        _itemModule.HandleSpawn();
 
         // Handle controlled entity changed
-        m_CharacterModule.HandleControlledEntityChanged();
+        _characterModule.HandleControlledEntityChanged();
 
         // Start movement of scene objects. Scene objects that player movement
         // depends on should finish movement in this phase
-        m_MoveableSystem.Update();
-        m_platformSystem.Update();
-        m_ProjectileModule.MovementStart();
-        m_StartGrenadeMovement.Update();
-        m_CameraSystem.Update();
+        _moveableSystem.Update();
+        _platformSystem.Update();
+        _projectileModule.MovementStart();
+        _startGrenadeMovement.Update();
+        _cameraSystem.Update();
 
         // Update movement of player controlled units 
-        m_TeleporterSystem.Update();
-        m_CharacterModule.AbilityRequestUpdate();
-        m_CharacterModule.MovementStart();
-        m_CharacterModule.MovementResolve();
-        m_CharacterModule.AbilityStart();
-        m_CharacterModule.AbilityResolve();
+        _teleporterSystem.Update();
+        _characterModule.AbilityRequestUpdate();
+        _characterModule.MovementStart();
+        _characterModule.MovementResolve();
+        _characterModule.AbilityStart();
+        _characterModule.AbilityResolve();
 
         // Finalize movement of modules that only depend on data from previous frames
         // We want to wait as long as possible so queries potentially can be handled in jobs  
-        m_ProjectileModule.MovementResolve();
-        m_FinalizeGrenadeMovement.Update();
+        _projectileModule.MovementResolve();
+        _finalizeGrenadeMovement.Update();
 
         // Handle damage
-        m_DestructablePropSystem.Update();
-        m_DamageAreaSystem.Update();
-        m_HitCollisionModule.HandleSplashDamage();
-        m_CharacterModule.HandleDamage();
+        _destructiblePropSystem.Update();
+        _damageAreaSystem.Update();
+        _hitCollisionModule.HandleSplashDamage();
+        _characterModule.HandleDamage();
 
         // 
-        m_CharacterModule.PresentationUpdate();
+        _characterModule.PresentationUpdate();
 
         // Update gamemode. Run last to allow picking up deaths etc.
-        m_GameModeSystem.Update();
+        _gameModeSystem.Update();
 
 
         // Handle despawns
-        m_CharacterModule.HandleDepawns(); // TODO (mogensh) this destroys presentations and needs to be done first so its picked up. We need better way of handling destruction ordering
-        m_HitCollisionModule.HandleDespawn();
-        m_ReplicatedEntityModule.HandleDespawning();
-        m_GameWorld.ProcessDespawns();
+        _characterModule
+            .HandleDepawns(); // TODO (mogensh) this destroys presentations and needs to be done first so its picked up. We need better way of handling destruction ordering
+        _hitCollisionModule.HandleDespawn();
+        _replicatedEntityModule.HandleDespawning();
+        _gameWorld.ProcessDespawns();
 
         Profiler.EndSample();
     }
@@ -241,66 +274,35 @@ public class ServerGameWorld : ISnapshotGenerator, IClientCommandProcessor
     // This is called every render frame where an tick update has been performed
     public void LateUpdate()
     {
-        m_CharacterModule.AttachmentUpdate();
+        _characterModule.AttachmentUpdate();
 
-        m_HitCollisionModule.StoreColliderState();
+        _hitCollisionModule.StoreColliderState();
     }
 
     public void HandleClientConnect(ServerGameLoop.ClientInfo client)
     {
-        client.player = m_PlayerModule.CreatePlayer(m_GameWorld, client.id, "", client.isReady);
+        client.player = _playerModule.CreatePlayer(_gameWorld, client.id, "", client.isReady);
     }
 
     public void HandleClientDisconnect(ServerGameLoop.ClientInfo client)
     {
-        m_PlayerModule.CleanupPlayer(client.player);
-        m_CharacterModule.CleanupPlayer(client.player);
+        _playerModule.CleanupPlayer(client.player);
+        _characterModule.CleanupPlayer(client.player);
     }
 
     public void GenerateEntitySnapshot(int entityId, ref NetworkWriter writer)
     {
         Profiler.BeginSample("ServerGameLoop.GenerateEntitySnapshot()");
 
-        m_ReplicatedEntityModule.GenerateEntitySnapshot(entityId, ref writer);
+        _replicatedEntityModule.GenerateEntitySnapshot(entityId, ref writer);
 
         Profiler.EndSample();
     }
 
     public string GenerateEntityName(int entityId)
     {
-        return m_ReplicatedEntityModule.GenerateName(entityId);
+        return _replicatedEntityModule.GenerateName(entityId);
     }
-
-    // External systems
-    NetworkServer m_NetworkServer;
-    Dictionary<int, ServerGameLoop.ClientInfo> m_Clients;
-    readonly ChatSystemServer m_ChatSystem;
-
-    // Internal systems
-    GameWorld m_GameWorld;
-    readonly CharacterModuleServer m_CharacterModule;
-    readonly ProjectileModuleServer m_ProjectileModule;
-    readonly HitCollisionModule m_HitCollisionModule;
-    readonly PlayerModuleServer m_PlayerModule;
-    readonly SpectatorCamModuleServer m_SpectatorCamModule;
-    readonly ReplicatedEntityModuleServer m_ReplicatedEntityModule;
-    readonly ItemModule m_ItemModule;
-
-    readonly ServerCameraSystem m_CameraSystem;
-    readonly GameModeSystemServer m_GameModeSystem;
-
-    readonly DamageAreaSystemServer m_DamageAreaSystem;
-    readonly TeleporterSystemServer m_TeleporterSystem;
-
-
-    readonly HandleGrenadeRequest m_HandleGrenadeRequests;
-    readonly StartGrenadeMovement m_StartGrenadeMovement;
-    readonly FinalizeGrenadeMovement m_FinalizeGrenadeMovement;
-
-    readonly MoverUpdate m_platformSystem;
-    readonly UpdateDestructableProps m_DestructablePropSystem;
-    readonly MovableSystemServer m_MoveableSystem;
-
 }
 
 public class ServerGameLoop : IGameLoop, INetworkCallbacks
@@ -319,7 +321,8 @@ public class ServerGameLoop : IGameLoop, INetworkCallbacks
         var listenAddresses = NetworkUtils.GetLocalInterfaceAddresses();
         if (listenAddresses.Count > 0)
             Console.SetPrompt(listenAddresses[0] + ":" + NetworkConfig.ServerPort.Value + "> ");
-        GameDebug.Log("Listening on " + string.Join(", ", NetworkUtils.GetLocalInterfaceAddresses()) + " on port " + NetworkConfig.ServerPort.IntValue);
+        GameDebug.Log("Listening on " + string.Join(", ", NetworkUtils.GetLocalInterfaceAddresses()) + " on port " +
+                      NetworkConfig.ServerPort.IntValue);
         m_NetworkServer = new NetworkServer(m_NetworkTransport);
 
         if (Game.game.clientFrontend != null)
@@ -339,12 +342,14 @@ public class ServerGameLoop : IGameLoop, INetworkCallbacks
         if (serverServerName.Value == "")
             serverServerName.Value = MakeServername();
 
-        m_ServerQueryProtocolServer = new SQPServer(NetworkConfig.ServerSqpPort.IntValue > 0? NetworkConfig.ServerSqpPort.IntValue : NetworkConfig.ServerPort.IntValue + NetworkConfig.SqpPortOffset);
+        m_ServerQueryProtocolServer = new SQPServer(NetworkConfig.ServerSqpPort.IntValue > 0
+            ? NetworkConfig.ServerSqpPort.IntValue
+            : NetworkConfig.ServerPort.IntValue + NetworkConfig.SqpPortOffset);
 
 
-#if UNITY_EDITOR        
+#if UNITY_EDITOR
         Game.game.LevelManager.UnloadLevel();
-#endif        
+#endif
         m_GameWorld = new GameWorld("ServerWorld");
 
         m_NetworkStatistics = new NetworkStatisticsServer(m_NetworkServer);
@@ -355,11 +360,15 @@ public class ServerGameLoop : IGameLoop, INetworkCallbacks
 
         Console.AddCommand("load", CmdLoad, "Load a named scene", this.GetHashCode());
         Console.AddCommand("unload", CmdUnload, "Unload current scene", this.GetHashCode());
-        Console.AddCommand("respawn", CmdRespawn, "Respawn character (usage : respawn playername|playerId)", this.GetHashCode());
+        Console.AddCommand("respawn", CmdRespawn, "Respawn character (usage : respawn playername|playerId)",
+            this.GetHashCode());
         Console.AddCommand("servername", CmdSetServerName, "Set name of the server", this.GetHashCode());
-        Console.AddCommand("beginnetworkprofile", CmdBeginNetworkProfile, "begins a network profile", this.GetHashCode());
-        Console.AddCommand("endnetworkprofile", CmdEndNetworkProfile, "Ends a network profile and analyzes. [optional] filepath for model data", this.GetHashCode());
-        Console.AddCommand("loadcompressionmodel", CmdLoadNetworkCompressionModel, "Loads a network compression model from a filepath", this.GetHashCode());
+        Console.AddCommand("beginnetworkprofile", CmdBeginNetworkProfile, "begins a network profile",
+            this.GetHashCode());
+        Console.AddCommand("endnetworkprofile", CmdEndNetworkProfile,
+            "Ends a network profile and analyzes. [optional] filepath for model data", this.GetHashCode());
+        Console.AddCommand("loadcompressionmodel", CmdLoadNetworkCompressionModel,
+            "Loads a network compression model from a filepath", this.GetHashCode());
         Console.AddCommand("list", CmdList, "List clients", this.GetHashCode());
 
         CmdLoad(args);
@@ -457,7 +466,7 @@ public class ServerGameLoop : IGameLoop, INetworkCallbacks
         {
             var reader = new NetworkReader(data, info.Type.Schema);
 
-            switch ((GameNetworkEvents.EventType)type)
+            switch ((GameNetworkEvents.EventType) type)
             {
                 case GameNetworkEvents.EventType.PlayerReady:
                     m_NetworkServer.MapReady(clientId); // TODO (petera) hacky
@@ -503,17 +512,17 @@ public class ServerGameLoop : IGameLoop, INetworkCallbacks
             ConfigVar.DirtyFlags &= ~ConfigVar.Flags.ServerInfo;
         }
 
-        if (m_serverGameWorld != null && m_serverGameWorld.TickRate != Game.ServerTickRate.IntValue)
-            m_serverGameWorld.TickRate = Game.ServerTickRate.IntValue;
+        if (m_serverGameWorld != null && m_serverGameWorld.tickRate != Game.ServerTickRate.IntValue)
+            m_serverGameWorld.tickRate = Game.ServerTickRate.IntValue;
 
         // Update SQP data with current values
         var sid = m_ServerQueryProtocolServer.ServerInfoData;
         sid.BuildId = Game.game.buildId;
-        sid.Port = (ushort)NetworkConfig.ServerPort.IntValue;
-        sid.CurrentPlayers = (ushort)m_Clients.Count;
+        sid.Port = (ushort) NetworkConfig.ServerPort.IntValue;
+        sid.CurrentPlayers = (ushort) m_Clients.Count;
         sid.GameType = GameModeSystemServer.modeName.Value;
         sid.Map = Game.game.LevelManager.currentLevel.Name;
-        sid.MaxPlayers = (ushort)serverMaxClients.IntValue;
+        sid.MaxPlayers = (ushort) serverMaxClients.IntValue;
         sid.ServerName = serverServerName.Value;
 
         m_ServerQueryProtocolServer.Update();
@@ -528,7 +537,6 @@ public class ServerGameLoop : IGameLoop, INetworkCallbacks
     /// </summary>
     void UpdateIdleState()
     {
-
     }
 
     /// <summary>
@@ -549,14 +557,15 @@ public class ServerGameLoop : IGameLoop, INetworkCallbacks
 
         m_GameWorld.RegisterSceneEntities();
 
-        m_resourceSystem = new BundledResourceManager(m_GameWorld,"BundledResources/Server");
+        m_resourceSystem = new BundledResourceManager(m_GameWorld, "BundledResources/Server");
 
         m_NetworkServer.InitializeMap((ref NetworkWriter data) =>
         {
             data.WriteString("name", Game.game.LevelManager.currentLevel.Name);
         });
 
-        m_serverGameWorld = new ServerGameWorld(m_GameWorld, m_NetworkServer, m_Clients, m_ChatSystem, m_resourceSystem);
+        m_serverGameWorld =
+            new ServerGameWorld(m_GameWorld, m_NetworkServer, m_Clients, m_ChatSystem, m_resourceSystem);
         foreach (var pair in m_Clients)
         {
             m_serverGameWorld.HandleClientConnect(pair.Value);
@@ -564,6 +573,7 @@ public class ServerGameLoop : IGameLoop, INetworkCallbacks
     }
 
     Dictionary<int, int> m_TickStats = new Dictionary<int, int>();
+
     void UpdateActiveState()
     {
         GameDebug.Assert(m_serverGameWorld != null);
@@ -578,7 +588,7 @@ public class ServerGameLoop : IGameLoop, INetworkCallbacks
             m_NetworkServer.GenerateSnapshot(m_serverGameWorld, m_LastSimTime);
             Profiler.EndSample();
 
-            m_nextTickTime += m_serverGameWorld.TickInterval;
+            m_nextTickTime += m_serverGameWorld.tickInterval;
 
             m_performLateUpdate = true;
         }
@@ -593,12 +603,12 @@ public class ServerGameLoop : IGameLoop, INetworkCallbacks
         //
         if (Game.IsHeadless())
         {
-            float remainTime = (float)(m_nextTickTime - Game.FrameTime);
+            float remainTime = (float) (m_nextTickTime - Game.FrameTime);
 
-            int rate = m_serverGameWorld.TickRate;
-            if (remainTime > 0.75f * m_serverGameWorld.TickInterval)
+            int rate = m_serverGameWorld.tickRate;
+            if (remainTime > 0.75f * m_serverGameWorld.tickInterval)
                 rate -= 2;
-            else if (remainTime < 0.25f * m_serverGameWorld.TickInterval)
+            else if (remainTime < 0.25f * m_serverGameWorld.tickInterval)
                 rate += 2;
 
             Application.targetFrameRate = rate;
@@ -722,7 +732,9 @@ public class ServerGameLoop : IGameLoop, INetworkCallbacks
             m_serverGameWorld.RespawnPlayer(client.player);
         }
 
-        Console.Write("Could not find character. Unknown player, invalid character id or player doesn't have a character" + args[0]);
+        Console.Write(
+            "Could not find character. Unknown player, invalid character id or player doesn't have a character" +
+            args[0]);
     }
 
     void CmdBeginNetworkProfile(string[] args)
@@ -792,15 +804,23 @@ public class ServerGameLoop : IGameLoop, INetworkCallbacks
             var client = c.Value;
             Console.Write(string.Format("   {0:00} {1,-15}", client.id, client.playerSettings.PlayerName));
         }
+
         Console.Write("-------------------");
         Console.Write(string.Format("Total: {0}/{0} players connected", m_Clients.Count, serverMaxClients.IntValue));
     }
 
     string MakeServername()
     {
-
-        var f = new string[] { "Ultimate", "Furry", "Quick", "Laggy", "Hot", "Curious", "Flappy", "Sneaky", "Nested", "Deep", "Blue", "Hipster", "Artificial" };
-        var l = new string[] { "Speedrun", "Fragfest", "Win", "Exception", "Prefab", "Scene", "Garbage", "System", "Souls", "Whitespace", "Dolphin" };
+        var f = new string[]
+        {
+            "Ultimate", "Furry", "Quick", "Laggy", "Hot", "Curious", "Flappy", "Sneaky", "Nested", "Deep", "Blue",
+            "Hipster", "Artificial"
+        };
+        var l = new string[]
+        {
+            "Speedrun", "Fragfest", "Win", "Exception", "Prefab", "Scene", "Garbage", "System", "Souls", "Whitespace",
+            "Dolphin"
+        };
         return f[Random.Range(0, f.Length)] + " " + l[Random.Range(0, l.Length)];
     }
 
@@ -833,6 +853,7 @@ public class ServerGameLoop : IGameLoop, INetworkCallbacks
         Loading,
         Active,
     }
+
     StateMachine<ServerState> m_StateMachine;
 
     public class ClientInfo
@@ -869,19 +890,23 @@ public class ServerGameLoop : IGameLoop, INetworkCallbacks
     [ConfigVar(Name = "show.gameloopinfo", DefaultValue = "0", Description = "Show gameloop info")]
     static ConfigVar showGameLoopInfo;
 
-    [ConfigVar(Name = "server.quitwhenempty", DefaultValue = "0", Description = "If enabled, quit when last client disconnects.")]
+    [ConfigVar(Name = "server.quitwhenempty", DefaultValue = "0",
+        Description = "If enabled, quit when last client disconnects.")]
     static ConfigVar serverQuitWhenEmpty;
 
-    [ConfigVar(Name = "server.recycleinterval", DefaultValue = "0", Description = "Exit when N seconds old AND when 0 players. 0 means never.")]
+    [ConfigVar(Name = "server.recycleinterval", DefaultValue = "0",
+        Description = "Exit when N seconds old AND when 0 players. 0 means never.")]
     static ConfigVar serverRecycleInterval;
 
-    [ConfigVar(Name = "debug.servertickstats", DefaultValue = "0", Description = "Show stats about how many ticks we run per Unity update (headless only)")]
+    [ConfigVar(Name = "debug.servertickstats", DefaultValue = "0",
+        Description = "Show stats about how many ticks we run per Unity update (headless only)")]
     static ConfigVar debugServerTickStats;
 
     [ConfigVar(Name = "server.maxclients", DefaultValue = "8", Description = "Maximum allowed clients")]
     public static ConfigVar serverMaxClients;
 
-    [ConfigVar(Name = "server.disconnecttimeout", DefaultValue = "30000", Description = "Timeout in ms. Server will kick clients after this interval if nothing has been heard.")]
+    [ConfigVar(Name = "server.disconnecttimeout", DefaultValue = "30000",
+        Description = "Timeout in ms. Server will kick clients after this interval if nothing has been heard.")]
     public static ConfigVar serverDisconnectTimeout;
 
     [ConfigVar(Name = "server.servername", DefaultValue = "", Description = "Servername")]

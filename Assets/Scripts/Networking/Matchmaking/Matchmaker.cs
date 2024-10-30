@@ -1,7 +1,8 @@
 using System;
-using System.Net;
+using UnityEngine;
+using UnityEngine.Ucg.Matchmaking;
 
-namespace UnityEngine.Ucg.Matchmaking
+namespace Networking.Matchmaking
 {
     public class Matchmaker 
     {
@@ -113,9 +114,7 @@ namespace UnityEngine.Ucg.Matchmaking
 
             return request;
         }
-
-
-
+        
         void GetAssignment()
         {
             matchmakingController.StartGetAssignment(request.Players[0].Id, OnSuccess, OnError);
