@@ -56,26 +56,26 @@ public class ChatSystemServer
         {
             if (target != null)
             {
-                var fromLine = string.Format("<color=#ffffffff>[{0}:{1:00}]</color><color=#ff00ffff> [From {2}] {3}</color>", minutes, seconds, from.playerSettings.PlayerName, text);
-                SendChatMessage(target.id, fromLine);
+                var fromLine = string.Format("<color=#ffffffff>[{0}:{1:00}]</color><color=#ff00ffff> [From {2}] {3}</color>", minutes, seconds, from.PlayerSettings.PlayerName, text);
+                SendChatMessage(target.ID, fromLine);
 
-                var toLine = string.Format("<color=#ffffffff>[{0}:{1:00}]</color><color=#ff00ffff> [To {2}] {3}</color>", minutes, seconds, target.playerSettings.PlayerName, text);
-                SendChatMessage(from.id, toLine);
+                var toLine = string.Format("<color=#ffffffff>[{0}:{1:00}]</color><color=#ff00ffff> [To {2}] {3}</color>", minutes, seconds, target.PlayerSettings.PlayerName, text);
+                SendChatMessage(from.ID, toLine);
             }
             else
-                SendChatMessage(from.id, string.Format("<color=#ff0000ff> Player not found</color>"));
+                SendChatMessage(from.ID, string.Format("<color=#ff0000ff> Player not found</color>"));
         }
         else if(type == ChatMessageType.All || type == ChatMessageType.Team)
         {
             var marker = type == ChatMessageType.All ? "[All] " : "";
 
-            var friendly = string.Format("[{0}:{1:00}] <color=#1D89CC>{2}{3}</color> {4}", minutes, seconds, marker, from.playerSettings.PlayerName, text);
-            var hostile = string.Format("[{0}:{1:00}] <color=#FF3E3E>{2}{3}</color> {4}", minutes, seconds, marker, from.playerSettings.PlayerName, text);
+            var friendly = string.Format("[{0}:{1:00}] <color=#1D89CC>{2}{3}</color> {4}", minutes, seconds, marker, from.PlayerSettings.PlayerName, text);
+            var hostile = string.Format("[{0}:{1:00}] <color=#FF3E3E>{2}{3}</color> {4}", minutes, seconds, marker, from.PlayerSettings.PlayerName, text);
 
-            var fromTeamIndex = from.player != null ? from.player.teamIndex : -1;
+            var fromTeamIndex = from.Player != null ? from.Player.teamIndex : -1;
             foreach (var pair in m_Clients)
             {
-                var targetTeamIndex = pair.Value.player != null ? pair.Value.player.teamIndex : -1;
+                var targetTeamIndex = pair.Value.Player != null ? pair.Value.Player.teamIndex : -1;
                 if(fromTeamIndex == targetTeamIndex)
                     SendChatMessage(pair.Key, friendly);
                 else if(type == ChatMessageType.All)
@@ -112,7 +112,7 @@ public class ChatSystemServer
                         var name = !String.IsNullOrEmpty(match2.Groups[1].Value) ? match2.Groups[1].Value : match2.Groups[2].Value;
                         foreach (var pair in m_Clients)
                         {
-                            if (pair.Value.playerSettings.PlayerName.Equals(name, StringComparison.InvariantCultureIgnoreCase))
+                            if (pair.Value.PlayerSettings.PlayerName.Equals(name, StringComparison.InvariantCultureIgnoreCase))
                             {
                                 target = pair.Value;
                                 m_ReplyTracker[target] = from;

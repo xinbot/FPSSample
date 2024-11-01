@@ -118,10 +118,14 @@ public class ServerGameWorld : ISnapshotGenerator, IClientCommandProcessor
     public void RespawnPlayer(PlayerState player)
     {
         if (player.controlledEntity == Entity.Null)
+        {
             return;
+        }
 
         if (_gameWorld.GetEntityManager().HasComponent<Character>(player.controlledEntity))
+        {
             CharacterDespawnRequest.Create(_gameWorld, player.controlledEntity);
+        }
 
         player.controlledEntity = Entity.Null;
     }
@@ -130,13 +134,18 @@ public class ServerGameWorld : ISnapshotGenerator, IClientCommandProcessor
     {
         if (player.playerName != settings.PlayerName)
         {
-            int l = 0;
+            int length;
             if (player.playerName == "")
-                l = StringFormatter.Write(ref _msgBuf, 0, "{0} joined", settings.PlayerName);
+            {
+                length = StringFormatter.Write(ref _msgBuf, 0, "{0} joined", settings.PlayerName);
+            }
             else
-                l = StringFormatter.Write(ref _msgBuf, 0, "{0} is now known as {1}", player.playerName,
+            {
+                length = StringFormatter.Write(ref _msgBuf, 0, "{0} is now known as {1}", player.playerName,
                     settings.PlayerName);
-            _chatSystemServer.SendChatAnnouncement(new CharBufView(_msgBuf, l));
+            }
+
+            _chatSystemServer.SendChatAnnouncement(new CharBufView(_msgBuf, length));
             player.playerName = settings.PlayerName;
         }
 
@@ -150,9 +159,11 @@ public class ServerGameWorld : ISnapshotGenerator, IClientCommandProcessor
     {
         ServerGameLoop.ClientInfo client;
         if (!_clients.TryGetValue(connectionId, out client))
+        {
             return;
+        }
 
-        if (client.player)
+        if (client.Player)
         {
             var serializeContext = new SerializeContext
             {
@@ -163,28 +174,29 @@ public class ServerGameWorld : ISnapshotGenerator, IClientCommandProcessor
             };
 
             if (tick == _gameWorld.WorldTime.Tick)
-                client.latestCommand.Deserialize(ref serializeContext, ref data);
+            {
+                client.LatestCommand.Deserialize(ref serializeContext, ref data);
+            }
 
             // Pass on command to controlled entity
-            if (client.player.controlledEntity != Entity.Null)
+            if (client.Player.controlledEntity != Entity.Null)
             {
                 var userCommand = _gameWorld.GetEntityManager().GetComponentData<UserCommandComponentData>(
-                    client.player.controlledEntity);
+                    client.Player.controlledEntity);
 
-                userCommand.command = client.latestCommand;
+                userCommand.command = client.LatestCommand;
 
-                _gameWorld.GetEntityManager().SetComponentData<UserCommandComponentData>(
-                    client.player.controlledEntity, userCommand);
+                _gameWorld.GetEntityManager().SetComponentData(client.Player.controlledEntity, userCommand);
             }
         }
     }
 
-    public bool HandleClientCommand(ServerGameLoop.ClientInfo client, string v)
+    public bool HandleClientCommand(ServerGameLoop.ClientInfo client, string command)
     {
-        if (v == "nextchar")
+        if (command == "nextchar")
         {
-            GameDebug.Log("nextchar for client " + client.id);
-            _gameModeSystem.RequestNextChar(client.player);
+            GameDebug.Log("nextchar for client " + client.ID);
+            _gameModeSystem.RequestNextChar(client.Player);
         }
         else
         {
@@ -254,16 +266,14 @@ public class ServerGameWorld : ISnapshotGenerator, IClientCommandProcessor
         _hitCollisionModule.HandleSplashDamage();
         _characterModule.HandleDamage();
 
-        // 
         _characterModule.PresentationUpdate();
 
-        // Update gamemode. Run last to allow picking up deaths etc.
+        // Update gameMode. Run last to allow picking up deaths etc.
         _gameModeSystem.Update();
 
-
-        // Handle despawns
-        _characterModule
-            .HandleDepawns(); // TODO (mogensh) this destroys presentations and needs to be done first so its picked up. We need better way of handling destruction ordering
+        // Handle deSpawns
+        // TODO (mogensh) this destroys presentations and needs to be done first so its picked up. We need better way of handling destruction ordering
+        _characterModule.HandleDepawns();
         _hitCollisionModule.HandleDespawn();
         _replicatedEntityModule.HandleDespawning();
         _gameWorld.ProcessDespawns();
@@ -281,13 +291,13 @@ public class ServerGameWorld : ISnapshotGenerator, IClientCommandProcessor
 
     public void HandleClientConnect(ServerGameLoop.ClientInfo client)
     {
-        client.player = _playerModule.CreatePlayer(_gameWorld, client.id, "", client.isReady);
+        client.Player = _playerModule.CreatePlayer(_gameWorld, client.ID, "", client.IsReady);
     }
 
     public void HandleClientDisconnect(ServerGameLoop.ClientInfo client)
     {
-        _playerModule.CleanupPlayer(client.player);
-        _characterModule.CleanupPlayer(client.player);
+        _playerModule.CleanupPlayer(client.Player);
+        _characterModule.CleanupPlayer(client.Player);
     }
 
     public void GenerateEntitySnapshot(int entityId, ref NetworkWriter writer)
@@ -307,54 +317,125 @@ public class ServerGameWorld : ISnapshotGenerator, IClientCommandProcessor
 
 public class ServerGameLoop : IGameLoop, INetworkCallbacks
 {
+    [ConfigVar(Name = "show.gameloopinfo", DefaultValue = "0", Description = "Show gameloop info")]
+    public static ConfigVar ShowGameLoopInfo;
+
+    [ConfigVar(Name = "server.quitwhenempty", DefaultValue = "0",
+        Description = "If enabled, quit when last client disconnects.")]
+    public static ConfigVar ServerQuitWhenEmpty;
+
+    [ConfigVar(Name = "server.recycleinterval", DefaultValue = "0",
+        Description = "Exit when N seconds old AND when 0 players. 0 means never.")]
+    public static ConfigVar ServerRecycleInterval;
+
+    [ConfigVar(Name = "debug.servertickstats", DefaultValue = "0",
+        Description = "Show stats about how many ticks we run per Unity update (headless only)")]
+    public static ConfigVar DebugServerTickStats;
+
+    [ConfigVar(Name = "server.maxclients", DefaultValue = "8", Description = "Maximum allowed clients")]
+    public static ConfigVar ServerMaxClients;
+
+    [ConfigVar(Name = "server.disconnecttimeout", DefaultValue = "30000",
+        Description = "Timeout in ms. Server will kick clients after this interval if nothing has been heard.")]
+    public static ConfigVar ServerDisconnectTimeout;
+
+    [ConfigVar(Name = "server.servername", DefaultValue = "", Description = "Servername")]
+    public static ConfigVar ServerServerName;
+
+    private enum ServerState
+    {
+        Idle,
+        Loading,
+        Active,
+    }
+
+    public class ClientInfo
+    {
+        public int ID;
+        public readonly PlayerSettings PlayerSettings = new PlayerSettings();
+        public bool IsReady;
+        public PlayerState Player;
+        public UserCommand LatestCommand = UserCommand.defaultCommand;
+    }
+
+    private NetworkServer _networkServer;
+    private GameWorld _gameWorld;
+    private NetworkStatisticsServer _networkStatistics;
+    private NetworkCompressionModel _model = NetworkCompressionModel.DefaultModel;
+
+    private SocketTransport _networkTransport;
+
+    private BundledResourceManager _resourceSystem;
+    private ChatSystemServer _chatSystem;
+
+    private StateMachine<ServerState> _stateMachine;
+    private ServerGameWorld _serverGameWorld;
+    private SQPServer _serverQueryProtocolServer;
+
+    private int _maxClients;
+    private int _simStartTimeTick;
+    private float _lastSimTime;
+    private float _serverStartTime;
+    private bool _performLateUpdate;
+    private double _nextTickTime;
+    private long _simStartTime;
+    private string _requestedGameMode;
+
+    private readonly Dictionary<int, ClientInfo> _clients = new Dictionary<int, ClientInfo>();
+
     public bool Init(string[] args)
     {
-        // Set up statemachine for ServerGame
-        m_StateMachine = new StateMachine<ServerState>();
-        m_StateMachine.Add(ServerState.Idle, null, UpdateIdleState, null);
-        m_StateMachine.Add(ServerState.Loading, null, UpdateLoadingState, null);
-        m_StateMachine.Add(ServerState.Active, EnterActiveState, UpdateActiveState, LeaveActiveState);
+        // Set up state machine for ServerGame
+        _stateMachine = new StateMachine<ServerState>();
+        _stateMachine.Add(ServerState.Idle, null, UpdateIdleState, null);
+        _stateMachine.Add(ServerState.Loading, null, UpdateLoadingState, null);
+        _stateMachine.Add(ServerState.Active, EnterActiveState, UpdateActiveState, LeaveActiveState);
 
-        m_StateMachine.SwitchTo(ServerState.Idle);
+        _stateMachine.SwitchTo(ServerState.Idle);
 
-        m_NetworkTransport = new SocketTransport(NetworkConfig.ServerPort.IntValue, serverMaxClients.IntValue);
+        _networkTransport = new SocketTransport(NetworkConfig.ServerPort.IntValue, ServerMaxClients.IntValue);
         var listenAddresses = NetworkUtils.GetLocalInterfaceAddresses();
         if (listenAddresses.Count > 0)
-            Console.SetPrompt(listenAddresses[0] + ":" + NetworkConfig.ServerPort.Value + "> ");
+        {
+            Console.SetPrompt($"{listenAddresses[0]}:{NetworkConfig.ServerPort.Value}> ");
+        }
+
         GameDebug.Log("Listening on " + string.Join(", ", NetworkUtils.GetLocalInterfaceAddresses()) + " on port " +
                       NetworkConfig.ServerPort.IntValue);
-        m_NetworkServer = new NetworkServer(m_NetworkTransport);
+
+        _networkServer = new NetworkServer(_networkTransport);
 
         if (Game.game.clientFrontend != null)
         {
             var serverPanel = Game.game.clientFrontend.serverPanel;
             serverPanel.SetPanelActive(true);
             serverPanel.serverInfo.text += "Listening on:\n";
-            foreach (var a in NetworkUtils.GetLocalInterfaceAddresses())
+            foreach (var address in NetworkUtils.GetLocalInterfaceAddresses())
             {
-                serverPanel.serverInfo.text += a + ":" + NetworkConfig.ServerPort.IntValue + "\n";
+                serverPanel.serverInfo.text += address + ":" + NetworkConfig.ServerPort.IntValue + "\n";
             }
         }
 
-        m_NetworkServer.UpdateClientInfo();
-        m_NetworkServer.ServerInformation.CompressionModel = m_Model;
+        _networkServer.UpdateClientInfo();
+        _networkServer.ServerInformation.CompressionModel = _model;
 
-        if (serverServerName.Value == "")
-            serverServerName.Value = MakeServername();
+        if (ServerServerName.Value == "")
+        {
+            ServerServerName.Value = MakeServerName();
+        }
 
-        m_ServerQueryProtocolServer = new SQPServer(NetworkConfig.ServerSqpPort.IntValue > 0
+        _serverQueryProtocolServer = new SQPServer(NetworkConfig.ServerSqpPort.IntValue > 0
             ? NetworkConfig.ServerSqpPort.IntValue
             : NetworkConfig.ServerPort.IntValue + NetworkConfig.SqpPortOffset);
-
 
 #if UNITY_EDITOR
         Game.game.LevelManager.UnloadLevel();
 #endif
-        m_GameWorld = new GameWorld("ServerWorld");
+        _gameWorld = new GameWorld("ServerWorld");
 
-        m_NetworkStatistics = new NetworkStatisticsServer(m_NetworkServer);
+        _networkStatistics = new NetworkStatisticsServer(_networkServer);
 
-        m_ChatSystem = new ChatSystemServer(m_Clients, m_NetworkServer);
+        _chatSystem = new ChatSystemServer(_clients, _networkServer);
 
         GameDebug.Log("Network server initialized");
 
@@ -374,109 +455,121 @@ public class ServerGameLoop : IGameLoop, INetworkCallbacks
         CmdLoad(args);
         Game.SetMousePointerLock(false);
 
-        m_ServerStartTime = Time.time;
+        _serverStartTime = Time.time;
 
         GameDebug.Log("Server initialized");
         Console.SetOpen(false);
+
         return true;
     }
 
     public void Shutdown()
     {
         GameDebug.Log("ServerGameState shutdown");
-        Console.RemoveCommandsWithTag(this.GetHashCode());
+        Console.RemoveCommandsWithTag(GetHashCode());
 
-        m_StateMachine.Shutdown();
-        m_NetworkServer.Shutdown();
+        _stateMachine.Shutdown();
+        _networkServer.Shutdown();
 
-        m_NetworkTransport.Shutdown();
+        _networkTransport.Shutdown();
         Game.game.LevelManager.UnloadLevel();
 
-        m_GameWorld.Shutdown();
-        m_GameWorld = null;
+        _gameWorld.Shutdown();
+        _gameWorld = null;
     }
 
     public void Update()
     {
-        if (serverRecycleInterval.FloatValue > 0.0f)
+        if (ServerRecycleInterval.FloatValue > 0.0f)
         {
             // Recycle server if time is up and no clients connected
-            if (m_Clients.Count == 0 && Time.time > m_ServerStartTime + serverRecycleInterval.FloatValue)
+            if (_clients.Count == 0 && Time.time > _serverStartTime + ServerRecycleInterval.FloatValue)
             {
                 GameDebug.Log("Server exiting because recycle timeout was hit.");
                 Console.EnqueueCommandNoHistory("quit");
             }
         }
 
-        if (m_Clients.Count > m_MaxClients)
-            m_MaxClients = m_Clients.Count;
+        if (_clients.Count > _maxClients)
+        {
+            _maxClients = _clients.Count;
+        }
 
-        if (serverQuitWhenEmpty.IntValue > 0 && m_MaxClients > 0 && m_Clients.Count == 0)
+        if (ServerQuitWhenEmpty.IntValue > 0 && _maxClients > 0 && _clients.Count == 0)
         {
             GameDebug.Log("Server exiting because last client disconnected");
             Console.EnqueueCommandNoHistory("quit");
         }
 
-        m_SimStartTime = Game.clock.ElapsedTicks;
-        m_SimStartTimeTick = m_serverGameWorld != null ? m_serverGameWorld.worldTick : 0;
+        _simStartTime = Game.clock.ElapsedTicks;
+        _simStartTimeTick = _serverGameWorld != null ? _serverGameWorld.worldTick : 0;
 
         UpdateNetwork();
-        m_StateMachine.Update();
 
-        m_NetworkServer.SendData();
+        _stateMachine.Update();
 
-        m_NetworkStatistics.Update();
+        _networkServer.SendData();
 
-        if (showGameLoopInfo.IntValue > 0)
-            OnDebugDrawGameloopInfo();
+        _networkStatistics.Update();
+
+        if (ShowGameLoopInfo.IntValue > 0)
+        {
+            OnDebugDrawGameLoopInfo();
+        }
     }
 
     public NetworkServer GetNetworkServer()
     {
-        return m_NetworkServer;
+        return _networkServer;
     }
 
     public void OnConnect(int id)
     {
         var client = new ClientInfo();
-        client.id = id;
-        m_Clients.Add(id, client);
+        client.ID = id;
+        _clients.Add(id, client);
 
-        if (m_serverGameWorld != null)
-            m_serverGameWorld.HandleClientConnect(client);
+        if (_serverGameWorld != null)
+        {
+            _serverGameWorld.HandleClientConnect(client);
+        }
     }
 
     public void OnDisconnect(int id)
     {
         ClientInfo client;
-        if (m_Clients.TryGetValue(id, out client))
+        if (_clients.TryGetValue(id, out client))
         {
-            if (m_serverGameWorld != null)
-                m_serverGameWorld.HandleClientDisconnect(client);
+            if (_serverGameWorld != null)
+            {
+                _serverGameWorld.HandleClientDisconnect(client);
+            }
 
-            m_Clients.Remove(id);
+            _clients.Remove(id);
         }
     }
 
-    unsafe public void OnEvent(int clientId, NetworkEvent info)
+    public unsafe void OnEvent(int clientId, NetworkEvent info)
     {
-        var client = m_Clients[clientId];
-        var type = info.Type.TypeId;
+        var client = _clients[clientId];
         fixed (uint* data = info.Data)
         {
             var reader = new NetworkReader(data, info.Type.Schema);
 
-            switch ((GameNetworkEvents.EventType) type)
+            switch ((GameNetworkEvents.EventType) info.Type.TypeId)
             {
                 case GameNetworkEvents.EventType.PlayerReady:
-                    m_NetworkServer.MapReady(clientId); // TODO (petera) hacky
-                    client.isReady = true;
+                    _networkServer.MapReady(clientId); // TODO (petera) hacky
+                    client.IsReady = true;
                     break;
 
                 case GameNetworkEvents.EventType.PlayerSetup:
-                    client.playerSettings.Deserialize(ref reader);
-                    if (client.player != null)
-                        m_serverGameWorld.HandlePlayerSetupEvent(client.player, client.playerSettings);
+                    client.PlayerSettings.Deserialize(ref reader);
+                    if (client.Player != null)
+                    {
+                        _serverGameWorld.HandlePlayerSetupEvent(client.Player, client.PlayerSettings);
+                    }
+
                     break;
 
                 case GameNetworkEvents.EventType.RemoteConsoleCmd:
@@ -484,23 +577,25 @@ public class ServerGameLoop : IGameLoop, INetworkCallbacks
                     break;
 
                 case GameNetworkEvents.EventType.Chat:
-                    m_ChatSystem.ReceiveMessage(client, reader.ReadString(256));
+                    _chatSystem.ReceiveMessage(client, reader.ReadString(256));
                     break;
             }
         }
     }
 
-    private void HandleClientCommand(ClientInfo client, string v)
+    private void HandleClientCommand(ClientInfo client, string command)
     {
-        if (m_serverGameWorld != null && m_serverGameWorld.HandleClientCommand(client, v))
+        if (_serverGameWorld != null && _serverGameWorld.HandleClientCommand(client, command))
+        {
             return;
+        }
 
         // Fall back is just to become a server console command
         // TODO (petera) Add some sort of security system here
-        Console.EnqueueCommandNoHistory(v);
+        Console.EnqueueCommandNoHistory(command);
     }
 
-    void UpdateNetwork()
+    private void UpdateNetwork()
     {
         Profiler.BeginSample("ServerGameLoop.UpdateNetwork");
 
@@ -508,26 +603,28 @@ public class ServerGameLoop : IGameLoop, INetworkCallbacks
         if ((ConfigVar.DirtyFlags & ConfigVar.Flags.ServerInfo) == ConfigVar.Flags.ServerInfo)
         {
             GameDebug.Log("WARNING: UpdateClientInfo deprecated");
-            m_NetworkServer.UpdateClientInfo();
+            _networkServer.UpdateClientInfo();
             ConfigVar.DirtyFlags &= ~ConfigVar.Flags.ServerInfo;
         }
 
-        if (m_serverGameWorld != null && m_serverGameWorld.tickRate != Game.ServerTickRate.IntValue)
-            m_serverGameWorld.tickRate = Game.ServerTickRate.IntValue;
+        if (_serverGameWorld != null && _serverGameWorld.tickRate != Game.ServerTickRate.IntValue)
+        {
+            _serverGameWorld.tickRate = Game.ServerTickRate.IntValue;
+        }
 
         // Update SQP data with current values
-        var sid = m_ServerQueryProtocolServer.ServerInfoData;
+        var sid = _serverQueryProtocolServer.ServerInfoData;
         sid.BuildId = Game.game.buildId;
         sid.Port = (ushort) NetworkConfig.ServerPort.IntValue;
-        sid.CurrentPlayers = (ushort) m_Clients.Count;
+        sid.CurrentPlayers = (ushort) _clients.Count;
         sid.GameType = GameModeSystemServer.modeName.Value;
         sid.Map = Game.game.LevelManager.currentLevel.Name;
-        sid.MaxPlayers = (ushort) serverMaxClients.IntValue;
-        sid.ServerName = serverServerName.Value;
+        sid.MaxPlayers = (ushort) ServerMaxClients.IntValue;
+        sid.ServerName = ServerServerName.Value;
 
-        m_ServerQueryProtocolServer.Update();
+        _serverQueryProtocolServer.Update();
 
-        m_NetworkServer.Update(this);
+        _networkServer.Update(this);
 
         Profiler.EndSample();
     }
@@ -535,65 +632,66 @@ public class ServerGameLoop : IGameLoop, INetworkCallbacks
     /// <summary>
     /// Idle state, no level is loaded
     /// </summary>
-    void UpdateIdleState()
+    private void UpdateIdleState()
     {
     }
 
     /// <summary>
     /// Loading state, load in progress
     /// </summary>
-    void UpdateLoadingState()
+    private void UpdateLoadingState()
     {
         if (Game.game.LevelManager.IsCurrentLevelLoaded())
-            m_StateMachine.SwitchTo(ServerState.Active);
+        {
+            _stateMachine.SwitchTo(ServerState.Active);
+        }
     }
 
     /// <summary>
     /// Active state, level loaded
     /// </summary>
-    void EnterActiveState()
+    private void EnterActiveState()
     {
-        GameDebug.Assert(m_serverGameWorld == null);
+        GameDebug.Assert(_serverGameWorld == null);
 
-        m_GameWorld.RegisterSceneEntities();
+        _gameWorld.RegisterSceneEntities();
 
-        m_resourceSystem = new BundledResourceManager(m_GameWorld, "BundledResources/Server");
+        _resourceSystem = new BundledResourceManager(_gameWorld, "BundledResources/Server");
 
-        m_NetworkServer.InitializeMap((ref NetworkWriter data) =>
+        _networkServer.InitializeMap((ref NetworkWriter data) =>
         {
             data.WriteString("name", Game.game.LevelManager.currentLevel.Name);
         });
 
-        m_serverGameWorld =
-            new ServerGameWorld(m_GameWorld, m_NetworkServer, m_Clients, m_ChatSystem, m_resourceSystem);
-        foreach (var pair in m_Clients)
+        _serverGameWorld =
+            new ServerGameWorld(_gameWorld, _networkServer, _clients, _chatSystem, _resourceSystem);
+        foreach (var pair in _clients)
         {
-            m_serverGameWorld.HandleClientConnect(pair.Value);
+            _serverGameWorld.HandleClientConnect(pair.Value);
         }
     }
 
-    Dictionary<int, int> m_TickStats = new Dictionary<int, int>();
+    private readonly Dictionary<int, int> _tickStats = new Dictionary<int, int>();
 
-    void UpdateActiveState()
+    private void UpdateActiveState()
     {
-        GameDebug.Assert(m_serverGameWorld != null);
+        GameDebug.Assert(_serverGameWorld != null);
 
         int tickCount = 0;
-        while (Game.FrameTime > m_nextTickTime)
+        while (Game.FrameTime > _nextTickTime)
         {
             tickCount++;
-            m_serverGameWorld.ServerTickUpdate();
+            _serverGameWorld.ServerTickUpdate();
 
             Profiler.BeginSample("GenerateSnapshots");
-            m_NetworkServer.GenerateSnapshot(m_serverGameWorld, m_LastSimTime);
+            _networkServer.GenerateSnapshot(_serverGameWorld, _lastSimTime);
             Profiler.EndSample();
 
-            m_nextTickTime += m_serverGameWorld.tickInterval;
+            _nextTickTime += _serverGameWorld.tickInterval;
 
-            m_performLateUpdate = true;
+            _performLateUpdate = true;
         }
 
-        //
         // If running as headless we nudge the Application.targetFramerate back and forth
         // around the actual framerate -- always trying to have a remaining time of half a frame
         // The goal is to have the while loop above tick exactly 1 time
@@ -603,30 +701,37 @@ public class ServerGameLoop : IGameLoop, INetworkCallbacks
         //
         if (Game.IsHeadless())
         {
-            float remainTime = (float) (m_nextTickTime - Game.FrameTime);
+            float remainTime = (float) (_nextTickTime - Game.FrameTime);
 
-            int rate = m_serverGameWorld.tickRate;
-            if (remainTime > 0.75f * m_serverGameWorld.tickInterval)
+            int rate = _serverGameWorld.tickRate;
+            if (remainTime > 0.75f * _serverGameWorld.tickInterval)
+            {
                 rate -= 2;
-            else if (remainTime < 0.25f * m_serverGameWorld.tickInterval)
+            }
+            else if (remainTime < 0.25f * _serverGameWorld.tickInterval)
+            {
                 rate += 2;
+            }
 
             Application.targetFrameRate = rate;
 
-            //
             // Show some stats about how many world ticks per unity update we have been running
-            //
-            if (debugServerTickStats.IntValue > 0)
+            if (DebugServerTickStats.IntValue > 0)
             {
                 if (Time.frameCount % 10 == 0)
+                {
                     GameDebug.Log(remainTime + ":" + rate);
+                }
 
-                if (!m_TickStats.ContainsKey(tickCount))
-                    m_TickStats[tickCount] = 0;
-                m_TickStats[tickCount] = m_TickStats[tickCount] + 1;
+                if (!_tickStats.ContainsKey(tickCount))
+                {
+                    _tickStats[tickCount] = 0;
+                }
+
+                _tickStats[tickCount] = _tickStats[tickCount] + 1;
                 if (Time.frameCount % 100 == 0)
                 {
-                    foreach (var p in m_TickStats)
+                    foreach (var p in _tickStats)
                     {
                         GameDebug.Log(p.Key + ":" + p.Value);
                     }
@@ -635,12 +740,12 @@ public class ServerGameLoop : IGameLoop, INetworkCallbacks
         }
     }
 
-    void LeaveActiveState()
+    private void LeaveActiveState()
     {
-        m_serverGameWorld.Shutdown();
-        m_serverGameWorld = null;
+        _serverGameWorld.Shutdown();
+        _serverGameWorld = null;
 
-        m_resourceSystem.Shutdown();
+        _resourceSystem.Shutdown();
     }
 
     public void FixedUpdate()
@@ -649,63 +754,73 @@ public class ServerGameLoop : IGameLoop, INetworkCallbacks
 
     public void LateUpdate()
     {
-        if (m_serverGameWorld != null && m_SimStartTimeTick != m_serverGameWorld.worldTick)
+        if (_serverGameWorld != null && _simStartTimeTick != _serverGameWorld.worldTick)
         {
             // Only update sim time if we actually simulatated
             // TODO : remove this when targetFrameRate works the way we want it.
-            m_LastSimTime = Game.clock.GetTicksDeltaAsMilliseconds(m_SimStartTime);
+            _lastSimTime = Game.clock.GetTicksDeltaAsMilliseconds(_simStartTime);
         }
 
-        if (m_performLateUpdate)
+        if (_performLateUpdate)
         {
-            m_serverGameWorld.LateUpdate();
-            m_performLateUpdate = false;
+            if (_serverGameWorld != null)
+            {
+                _serverGameWorld.LateUpdate();
+            }
+
+            _performLateUpdate = false;
         }
     }
 
-    void LoadLevel(string levelname, string gamemode = "deathmatch")
+    private void LoadLevel(string levelName, string gameMode = "deathmatch")
     {
-        if (!Game.game.LevelManager.CanLoadLevel(levelname))
+        if (!Game.game.LevelManager.CanLoadLevel(levelName))
         {
-            GameDebug.Log("ERROR : Cannot load level : " + levelname);
+            GameDebug.Log("ERROR : Cannot load level : " + levelName);
             return;
         }
 
-        m_RequestedGameMode = gamemode;
-        Game.game.LevelManager.LoadLevel(levelname);
+        _requestedGameMode = gameMode;
+        Game.game.LevelManager.LoadLevel(levelName);
 
-        m_StateMachine.SwitchTo(ServerState.Loading);
+        _stateMachine.SwitchTo(ServerState.Loading);
     }
 
-    void UnloadLevel()
+    private void UnloadLevel()
     {
         // TODO
     }
 
-    void CmdSetServerName(string[] args)
+    private void CmdSetServerName(string[] args)
     {
         if (args.Length > 0)
         {
             // TODO (petera) fix or remove this?
         }
         else
+        {
             Console.Write("Invalid argument to servername (usage : servername name)");
+        }
     }
 
-    void CmdLoad(string[] args)
+    private void CmdLoad(string[] args)
     {
         if (args.Length == 1)
+        {
             LoadLevel(args[0]);
+        }
         else if (args.Length == 2)
+        {
             LoadLevel(args[0], args[1]);
+        }
     }
 
-    void CmdUnload(string[] args)
+    private void CmdUnload(string[] args)
     {
         UnloadLevel();
     }
 
-    void CmdRespawn(string[] args)
+    private void CmdRespawn(string[] args)
     {
         if (args.Length != 1)
         {
@@ -713,23 +828,29 @@ public class ServerGameLoop : IGameLoop, INetworkCallbacks
             return;
         }
 
-        var playerId = -1;
+        int playerId;
         var playerName = args[0];
         var usePlayerId = int.TryParse(args[0], out playerId);
 
-        foreach (var pair in m_Clients)
+        foreach (var pair in _clients)
         {
             var client = pair.Value;
-            if (client.player == null)
+            if (client.Player == null)
+            {
                 continue;
+            }
 
-            if (usePlayerId && client.id != playerId)
+            if (usePlayerId && client.ID != playerId)
+            {
                 continue;
+            }
 
-            if (!usePlayerId && client.player.playerName != playerName)
+            if (!usePlayerId && client.Player.playerName != playerName)
+            {
                 continue;
+            }
 
-            m_serverGameWorld.RespawnPlayer(client.player);
+            _serverGameWorld.RespawnPlayer(client.Player);
         }
 
         Console.Write(
@@ -737,7 +858,7 @@ public class ServerGameLoop : IGameLoop, INetworkCallbacks
             args[0]);
     }
 
-    void CmdBeginNetworkProfile(string[] args)
+    private void CmdBeginNetworkProfile(string[] args)
     {
         var networkServer = GetNetworkServer();
         if (networkServer != null)
@@ -751,16 +872,20 @@ public class ServerGameLoop : IGameLoop, INetworkCallbacks
         }
     }
 
-    void CmdEndNetworkProfile(string[] args)
+    private void CmdEndNetworkProfile(string[] args)
     {
         var networkServer = GetNetworkServer();
         if (networkServer != null)
+        {
             networkServer.EndNetworkProfile(args.Length >= 1 ? args[0] : null);
+        }
         else
+        {
             Console.Write("No server running");
+        }
     }
 
-    void CmdLoadNetworkCompressionModel(string[] args)
+    private void CmdLoadNetworkCompressionModel(string[] args)
     {
         var networkServer = GetNetworkServer();
         if (networkServer != null && networkServer.GetConnections().Count > 0)
@@ -775,143 +900,60 @@ public class ServerGameLoop : IGameLoop, INetworkCallbacks
             return;
         }
 
-        byte[] modelData = null;
+        byte[] modelData;
         try
         {
             modelData = System.IO.File.ReadAllBytes(args[0]);
         }
         catch (System.Exception e)
         {
-            Console.Write("Failed to read file: " + args[0] + " (" + e.ToString() + ")");
+            Console.Write("Failed to read file: " + args[0] + " (" + e + ")");
             return;
         }
 
-        m_Model = new NetworkCompressionModel(modelData);
+        _model = new NetworkCompressionModel(modelData);
 
         if (networkServer != null)
-            networkServer.ServerInformation.CompressionModel = m_Model;
+        {
+            networkServer.ServerInformation.CompressionModel = _model;
+        }
+
         Console.Write("Model Loaded");
     }
 
-    void CmdList(string[] args)
+    private void CmdList(string[] args)
     {
         Console.Write("Players on server:");
         Console.Write("-------------------");
-        Console.Write(string.Format("   {0,2} {1,-15}", "ID", "PlayerName"));
+        Console.Write($"   ID PlayerName");
         Console.Write("-------------------");
-        foreach (var c in m_Clients)
+
+        foreach (var c in _clients)
         {
             var client = c.Value;
-            Console.Write(string.Format("   {0:00} {1,-15}", client.id, client.playerSettings.PlayerName));
+            Console.Write($"   {client.ID:00} {client.PlayerSettings.PlayerName,-15}");
         }
 
         Console.Write("-------------------");
-        Console.Write(string.Format("Total: {0}/{0} players connected", m_Clients.Count, serverMaxClients.IntValue));
+        Console.Write($"Total: {_clients.Count}/{ServerMaxClients.IntValue} players connected");
     }
 
-    string MakeServername()
+    private string MakeServerName()
     {
-        var f = new string[]
+        var front = new[]
         {
             "Ultimate", "Furry", "Quick", "Laggy", "Hot", "Curious", "Flappy", "Sneaky", "Nested", "Deep", "Blue",
             "Hipster", "Artificial"
         };
-        var l = new string[]
+        var rear = new[]
         {
             "Speedrun", "Fragfest", "Win", "Exception", "Prefab", "Scene", "Garbage", "System", "Souls", "Whitespace",
             "Dolphin"
         };
-        return f[Random.Range(0, f.Length)] + " " + l[Random.Range(0, l.Length)];
+        return front[Random.Range(0, front.Length)] + " " + rear[Random.Range(0, rear.Length)];
     }
 
-    void OnDebugDrawGameloopInfo()
+    private void OnDebugDrawGameLoopInfo()
     {
-        //DebugOverlay.Write(2,2,"Server Gameloop Info:");
-
-        //var y = 3;
-        //DebugOverlay.Write(2, y++, "  Simulation time average : {0}", m_NetworkServer.simStats.simTime);
-        //DebugOverlay.Write(2, y++, "  Simulation time stdev : {0}", m_NetworkServer.simStats.simTimeStdDev);
-        //DebugOverlay.Write(2, y++, "  Simulation time peek : {0}", m_NetworkServer.simStats.simTimeMax);
-
-        //y++;
-        //DebugOverlay.Write(2, y++, "  Delta time average : {0}", m_NetworkServer.simStats.deltaTime);
-        //DebugOverlay.Write(2, y++, "  Delta time stdev : {0}", m_NetworkServer.simStats.deltaTimeStdDev);
-        //DebugOverlay.Write(2, y++, "  Delta time peek : {0}", m_NetworkServer.simStats.deltaTimeMax);
-
-        //y += 2;
-        //foreach (var clientId in m_NetworkServer.clients)
-        //{
-        //    var info = m_NetworkServer.GetClientConnectionInfo(clientId);
-        //    DebugOverlay.Write(2, y++, "  addr: {0}  port: {1}  rtt: {2} ms", info.address, info.port, info.rtt);
-        //}
     }
-
-    // Statemachine
-    enum ServerState
-    {
-        Idle,
-        Loading,
-        Active,
-    }
-
-    StateMachine<ServerState> m_StateMachine;
-
-    public class ClientInfo
-    {
-        public int id;
-        public PlayerSettings playerSettings = new PlayerSettings();
-        public bool isReady;
-        public PlayerState player;
-        public UserCommand latestCommand = UserCommand.defaultCommand;
-    }
-
-    NetworkServer m_NetworkServer;
-    GameWorld m_GameWorld;
-    NetworkStatisticsServer m_NetworkStatistics;
-    NetworkCompressionModel m_Model = NetworkCompressionModel.DefaultModel;
-
-    SocketTransport m_NetworkTransport;
-
-    BundledResourceManager m_resourceSystem;
-    ChatSystemServer m_ChatSystem;
-    Dictionary<int, ClientInfo> m_Clients = new Dictionary<int, ClientInfo>();
-
-    ServerGameWorld m_serverGameWorld;
-    public double m_nextTickTime = 0;
-    string m_RequestedGameMode = "deathmatch";
-
-    long m_SimStartTime;
-    int m_SimStartTimeTick;
-    float m_LastSimTime;
-    bool m_performLateUpdate;
-
-    SQPServer m_ServerQueryProtocolServer;
-
-    [ConfigVar(Name = "show.gameloopinfo", DefaultValue = "0", Description = "Show gameloop info")]
-    static ConfigVar showGameLoopInfo;
-
-    [ConfigVar(Name = "server.quitwhenempty", DefaultValue = "0",
-        Description = "If enabled, quit when last client disconnects.")]
-    static ConfigVar serverQuitWhenEmpty;
-
-    [ConfigVar(Name = "server.recycleinterval", DefaultValue = "0",
-        Description = "Exit when N seconds old AND when 0 players. 0 means never.")]
-    static ConfigVar serverRecycleInterval;
-
-    [ConfigVar(Name = "debug.servertickstats", DefaultValue = "0",
-        Description = "Show stats about how many ticks we run per Unity update (headless only)")]
-    static ConfigVar debugServerTickStats;
-
-    [ConfigVar(Name = "server.maxclients", DefaultValue = "8", Description = "Maximum allowed clients")]
-    public static ConfigVar serverMaxClients;
-
-    [ConfigVar(Name = "server.disconnecttimeout", DefaultValue = "30000",
-        Description = "Timeout in ms. Server will kick clients after this interval if nothing has been heard.")]
-    public static ConfigVar serverDisconnectTimeout;
-
-    [ConfigVar(Name = "server.servername", DefaultValue = "", Description = "Servername")]
-    static ConfigVar serverServerName;
-
-    float m_ServerStartTime;
-    int m_MaxClients;
 }

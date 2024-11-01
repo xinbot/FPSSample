@@ -16,7 +16,7 @@ namespace Networking.Socket
         {
             var networkDataStreamParameter = new NetworkDataStreamParameter {size = 10 * NetworkConfig.MAXPackageSize};
             var networkConfigParameter = new NetworkConfigParameter
-                {disconnectTimeout = ServerGameLoop.serverDisconnectTimeout.IntValue};
+                {disconnectTimeout = ServerGameLoop.ServerDisconnectTimeout.IntValue};
             _socket = new UdpNetworkDriver(networkDataStreamParameter, networkConfigParameter);
             _socket.Bind(new IPEndPoint(IPAddress.Any, port));
 

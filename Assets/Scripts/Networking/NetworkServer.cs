@@ -664,7 +664,7 @@ namespace Networking
         {
             GameDebug.Assert(!_connections.ContainsKey(connectionId));
 
-            if (_connections.Count >= ServerGameLoop.serverMaxClients.IntValue)
+            if (_connections.Count >= ServerGameLoop.ServerMaxClients.IntValue)
             {
                 GameDebug.Log($"Refusing incoming connection {connectionId} due to server.maxclients");
                 _transport.Disconnect(connectionId);
@@ -690,7 +690,7 @@ namespace Networking
                 var outSequence = connection.OutSequence;
                 var inSequence = connection.InSequence;
                 var time = NetworkUtils.Stopwatch.ElapsedMilliseconds - connection.InSequenceTime;
-                GameDebug.Log($"Last package sent : {outSequence} . Last package received {inSequence} {time} ms ago");
+                GameDebug.Log($"Last package sent : {outSequence}. Last package received {inSequence} {time} ms ago");
 
                 connection.Shutdown();
                 _connections.Remove(connectionId);

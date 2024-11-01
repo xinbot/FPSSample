@@ -1,56 +1,18 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using System.Collections.Generic;
 
 /// <summary>
 /// Light weight state machine
 /// </summary>
 /// <typeparam name="T"></typeparam>
-
 class StateMachine<T>
 {
-    public delegate void StateFunc();
-
-    public void Add(T id, StateFunc enter, StateFunc update, StateFunc leave)
+    private class State
     {
-        m_States.Add(id, new State(id, enter, update, leave));
-    }
+        public T Id;
+        public readonly StateFunc Enter;
+        public readonly StateFunc Update;
+        public readonly StateFunc Leave;
 
-    public T CurrentState()
-    {
-        return m_CurrentState.Id;
-    }
-
-    public void Update()
-    {
-        m_CurrentState.Update();
-    }
-
-    public void Shutdown()
-    {
-        if (m_CurrentState != null && m_CurrentState.Leave != null)
-            m_CurrentState.Leave();
-        m_CurrentState = null;
-    }
-
-    public void SwitchTo(T state)
-    {
-        GameDebug.Assert(m_States.ContainsKey(state), "Trying to switch to unknown state " + state.ToString());
-        GameDebug.Assert(m_CurrentState == null || !m_CurrentState.Id.Equals(state), "Trying to switch to " + state.ToString() + " but that is already current state");
-
-        var newState = m_States[state];
-        GameDebug.Log("Switching state: " + (m_CurrentState != null ? m_CurrentState.Id.ToString() : "null") + " -> " + state.ToString());
-
-        if (m_CurrentState != null && m_CurrentState.Leave != null)
-            m_CurrentState.Leave();
-        if (newState.Enter != null)
-            newState.Enter();
-        m_CurrentState = newState;
-
-    }
-
-    class State
-    {
         public State(T id, StateFunc enter, StateFunc update, StateFunc leave)
         {
             Id = id;
@@ -58,12 +20,58 @@ class StateMachine<T>
             Update = update;
             Leave = leave;
         }
-        public T Id;
-        public StateFunc Enter;
-        public StateFunc Update;
-        public StateFunc Leave;
     }
 
-    State m_CurrentState = null;
-    Dictionary<T, State> m_States = new Dictionary<T, State>();
+    private State _currentState;
+    private readonly Dictionary<T, State> _states = new Dictionary<T, State>();
+
+    public delegate void StateFunc();
+
+    public void Add(T id, StateFunc enter, StateFunc update, StateFunc leave)
+    {
+        _states.Add(id, new State(id, enter, update, leave));
+    }
+
+    public T CurrentState()
+    {
+        return _currentState.Id;
+    }
+
+    public void Update()
+    {
+        _currentState.Update();
+    }
+
+    public void Shutdown()
+    {
+        if (_currentState != null && _currentState.Leave != null)
+        {
+            _currentState.Leave();
+        }
+
+        _currentState = null;
+    }
+
+    public void SwitchTo(T state)
+    {
+        GameDebug.Assert(_states.ContainsKey(state), $"Trying to switch to unknown state {state}");
+        GameDebug.Assert(_currentState == null || !_currentState.Id.Equals(state),
+            $"Trying to switch to {state} but that is already current state");
+
+        var newState = _states[state];
+        GameDebug.Log("Switching state: " + (_currentState != null ? _currentState.Id.ToString() : "null") + " -> " +
+                      state);
+
+        if (_currentState != null && _currentState.Leave != null)
+        {
+            _currentState.Leave();
+        }
+
+        if (newState.Enter != null)
+        {
+            newState.Enter();
+        }
+
+        _currentState = newState;
+    }
 }
