@@ -422,7 +422,7 @@ public class ClientGameWorld
         {
             GameDebug.Log(string.Format("CATCHUP ({0} -> {1})", _predictedTime.Tick, preferredTick));
 
-            _networkStatisticsClient.notifyHardCatchup = true;
+            _networkStatisticsClient.NotifyHardCatchup = true;
             _gameWorld.NextTickTime = Game.FrameTime;
             _predictedTime.Tick = preferredTick;
             _predictedTime.SetTime(preferredTick, 0);

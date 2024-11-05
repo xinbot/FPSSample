@@ -161,7 +161,7 @@ public class ThinClientGameWorld
         {
             GameDebug.Log($"CATCHUP ({_predictedTime.Tick} -> {preferredTick})");
 
-            _networkStatistics.notifyHardCatchup = true;
+            _networkStatistics.NotifyHardCatchup = true;
             _gameWorld.NextTickTime = Game.FrameTime;
             _predictedTime.Tick = preferredTick;
             _predictedTime.SetTime(preferredTick, 0);
