@@ -667,8 +667,7 @@ public class Game : MonoBehaviour
                 }
                 catch (Exception e)
                 {
-                    GameDebug.Log(string.Format("Game loop initialization threw exception : ({0})\n{1}", e.Message,
-                        e.StackTrace));
+                    GameDebug.Log($"Game loop initialization threw exception : ({e.Message})\n{e.StackTrace}");
                 }
             }
 
@@ -761,7 +760,7 @@ public class Game : MonoBehaviour
         }
     }
 
-    void OnApplicationQuit()
+    private void OnApplicationQuit()
     {
 #if !UNITY_EDITOR && UNITY_STANDALONE_WIN
         GameDebug.Log("Farewell, cruel world...");

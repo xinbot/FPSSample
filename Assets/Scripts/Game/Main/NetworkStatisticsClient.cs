@@ -22,73 +22,114 @@ public class NetworkStatisticsClient
     // Set to true to record hard catchup for this update
     public bool NotifyHardCatchup;
 
-    public FloatRollingAverage rtt => m_RTT;
+    public FloatRollingAverage rtt => _rtt;
 
     private float _bitHeight = 0.01f;
 
+    private int _packageCountPrevIn;
+    private int _packageLossPrevIn;
+    private int _packageCountPrevOut;
+    private int _packageLossPrevOut;
+
+    private float _frameTimeScale;
+    private float _nextLossCalc;
+    private float _packagesLostPctIn;
+    private float _packagesLostPctOut;
+
+    private readonly NetworkClient _networkClient;
+
+    private readonly FloatRollingAverage _statsDeltaTime = new FloatRollingAverage(WindowSize);
+    private readonly FloatRollingAverage _serverSimTime = new FloatRollingAverage(WindowSize);
+    private readonly FloatRollingAverage _latency = new FloatRollingAverage(WindowSize);
+    private readonly FloatRollingAverage _rtt = new FloatRollingAverage(WindowSize);
+    private readonly FloatRollingAverage _cmdq = new FloatRollingAverage(WindowSize);
+    private readonly FloatRollingAverage _interp = new FloatRollingAverage(WindowSize);
+    private readonly FloatRollingAverage _packageLossPctIn = new FloatRollingAverage(WindowSize);
+    private readonly FloatRollingAverage _packageLossPctOut = new FloatRollingAverage(WindowSize);
+
+    private readonly Aggregator _bytesIn = new Aggregator();
+    private readonly Aggregator _packagesIn = new Aggregator();
+
+    private readonly Aggregator _headerBitsIn = new Aggregator();
+
+    private readonly Aggregator _snapshotsIn = new Aggregator();
+    private readonly Aggregator _eventsIn = new Aggregator();
+
+    private readonly Aggregator _bytesOut = new Aggregator();
+    private readonly Aggregator _packagesOut = new Aggregator();
+
+    private readonly Aggregator _commandsOut = new Aggregator();
+    private readonly Aggregator _eventsOut = new Aggregator();
+
+    private readonly float[][] _2GraphData = new float[2][];
+
+    private readonly Color[] _bytesGraphColors = {Color.blue, Color.red};
+
+    private readonly CircularList<float> _hardCatchup = new CircularList<float>(WindowSize);
+
     public NetworkStatisticsClient(NetworkClient networkClient)
     {
-        m_NetworkClient = networkClient;
+        _networkClient = networkClient;
     }
 
-    public void Update(float frameTimeScale, float interpTime)
+    public void Update(float frameTimeScale, float durationTime)
     {
         Profiler.BeginSample("NetworkStatisticsClient.Update");
 
-        var clientCounters = m_NetworkClient.counters;
+        var clientCounters = _networkClient.counters;
 
-        m_FrameTimeScale = frameTimeScale;
-        m_StatsDeltaTime.Update(Time.deltaTime);
+        _frameTimeScale = frameTimeScale;
+        _statsDeltaTime.Update(Time.deltaTime);
 
-        m_HardCatchup.Add(NotifyHardCatchup ? 100 : 0);
+        _hardCatchup.Add(NotifyHardCatchup ? 100 : 0);
         NotifyHardCatchup = false;
 
-        m_ServerSimTime.Update(m_NetworkClient.serverSimTime);
+        _serverSimTime.Update(_networkClient.serverSimTime);
 
-        m_BytesIn.Update(clientCounters != null ? clientCounters.BytesIn : 0);
-        m_PackagesIn.Update(clientCounters != null ? clientCounters.PackagesIn : 0);
+        _bytesIn.Update(clientCounters != null ? clientCounters.BytesIn : 0);
+        _packagesIn.Update(clientCounters != null ? clientCounters.PackagesIn : 0);
 
-        m_HeaderBitsIn.Update(clientCounters != null ? clientCounters.HeaderBitsIn : 0);
+        _headerBitsIn.Update(clientCounters != null ? clientCounters.HeaderBitsIn : 0);
 
-        m_BytesOut.Update(clientCounters != null ? clientCounters.BytesOut : 0);
-        m_PackagesOut.Update(clientCounters != null ? clientCounters.PackagesOut : 0);
+        _bytesOut.Update(clientCounters != null ? clientCounters.BytesOut : 0);
+        _packagesOut.Update(clientCounters != null ? clientCounters.PackagesOut : 0);
 
-        m_Latency.Update(m_NetworkClient.timeSinceSnapshot);
-        m_RTT.Update(m_NetworkClient.rtt);
-        m_CMDQ.Update(m_NetworkClient.lastAcknowledgedCommandTime - m_NetworkClient.serverTime);
-        m_Interp.Update(interpTime * 1000);
+        _latency.Update(_networkClient.timeSinceSnapshot);
+        _rtt.Update(_networkClient.rtt);
+        _cmdq.Update(_networkClient.lastAcknowledgedCommandTime - _networkClient.serverTime);
+        _interp.Update(durationTime * 1000);
 
-        m_SnapshotsIn.Update(clientCounters != null ? clientCounters.SnapshotsIn : 0);
-        m_CommandsOut.Update(clientCounters != null ? clientCounters.CommandsOut : 0);
-        m_EventsIn.Update(clientCounters != null ? clientCounters.EventsIn : 0);
-        m_EventsOut.Update(clientCounters != null ? clientCounters.EventsOut : 0);
+        _snapshotsIn.Update(clientCounters != null ? clientCounters.SnapshotsIn : 0);
+        _commandsOut.Update(clientCounters != null ? clientCounters.CommandsOut : 0);
+        _eventsIn.Update(clientCounters != null ? clientCounters.EventsIn : 0);
+        _eventsOut.Update(clientCounters != null ? clientCounters.EventsOut : 0);
 
         // Calculate package loss pct
-        if (clientCounters != null && Time.time > m_NextLossCalc)
+        if (clientCounters != null && Time.time > _nextLossCalc)
         {
-            m_NextLossCalc = Time.time + 0.2f;
+            _nextLossCalc = Time.time + 0.2f;
 
-            var packagesIn = clientCounters.PackagesIn - m_PackageCountPrevIn;
-            m_PackageCountPrevIn = clientCounters.PackagesIn;
+            var packagesIn = clientCounters.PackagesIn - _packageCountPrevIn;
+            _packageCountPrevIn = clientCounters.PackagesIn;
 
-            var loss = clientCounters.PackagesLostIn - m_PackageLossPrevIn;
-            m_PackageLossPrevIn = clientCounters.PackagesLostIn;
+            var loss = clientCounters.PackagesLostIn - _packageLossPrevIn;
+            _packageLossPrevIn = clientCounters.PackagesLostIn;
 
             var totalIn = packagesIn + loss;
-            m_PackagesLostPctIn = totalIn != 0 ? loss * 100 / totalIn : 0;
+            _packagesLostPctIn = totalIn != 0 ? loss * 100 / totalIn : 0;
 
-            var packagesOut = clientCounters.PackagesOut - m_PackageCountPrevOut;
-            m_PackageCountPrevOut = clientCounters.PackagesOut;
+            var packagesOut = clientCounters.PackagesOut - _packageCountPrevOut;
+            _packageCountPrevOut = clientCounters.PackagesOut;
 
-            loss = clientCounters.PackagesLostOut - m_PackageLossPrevOut;
-            m_PackageLossPrevOut = clientCounters.PackagesLostOut;
+            loss = clientCounters.PackagesLostOut - _packageLossPrevOut;
+            _packageLossPrevOut = clientCounters.PackagesLostOut;
 
             var totalOut = packagesOut + loss;
-            m_PackagesLostPctOut = totalOut != 0 ? loss * 100 / totalOut : 0;
+            _packagesLostPctOut = totalOut != 0 ? loss * 100 / totalOut : 0;
         }
 
-        m_PackageLossPctIn.Update(m_PackagesLostPctIn);
-        m_PackageLossPctOut.Update(m_PackagesLostPctOut);
+        _packageLossPctIn.Update(_packagesLostPctIn);
+        _packageLossPctOut.Update(_packagesLostPctOut);
 
         switch (NetworkConfig.NetStats.IntValue)
         {
@@ -117,7 +158,7 @@ public class NetworkStatisticsClient
         // Pass on a few key stats to game statistics
         if (Game.game.gameStatistics != null)
         {
-            Game.game.gameStatistics.rtt = Mathf.RoundToInt(m_RTT.average);
+            Game.game.gameStatistics.rtt = Mathf.RoundToInt(_rtt.average);
         }
 
         Profiler.EndSample();
@@ -128,10 +169,10 @@ public class NetworkStatisticsClient
         GameDebug.Log("Network stats");
         GameDebug.Log("=============");
         GameDebug.Log("Tick rate : " + Game.ServerTickRate.IntValue);
-        GameDebug.Log("clientID  : " + m_NetworkClient.clientId);
-        GameDebug.Log("rtt       : " + m_NetworkClient.rtt);
-        GameDebug.Log("LastPkgSeq: " + m_NetworkClient.counters.PackageContentStatsPackageSequence);
-        GameDebug.Log("ServerTime: " + m_NetworkClient.serverTime);
+        GameDebug.Log("clientID  : " + _networkClient.clientId);
+        GameDebug.Log("rtt       : " + _networkClient.rtt);
+        GameDebug.Log("LastPkgSeq: " + _networkClient.counters.PackageContentStatsPackageSequence);
+        GameDebug.Log("ServerTime: " + _networkClient.serverTime);
         Console.Write("-------------------");
     }
 
@@ -142,8 +183,8 @@ public class NetworkStatisticsClient
         float dx = 1.0f; // bar spacing
         float w = 1.0f; // width of bars
         int maxbits = 0;
-        var stats = m_NetworkClient.counters.PackageContentStats;
-        var last = m_NetworkClient.counters.PackagesIn;
+        var stats = _networkClient.counters.PackageContentStats;
+        var last = _networkClient.counters.PackagesIn;
         for (var i = last; i > 0 && i > last - stats.Length; --i)
         {
             var s = stats[i % stats.Length];
@@ -180,86 +221,86 @@ public class NetworkStatisticsClient
 
     private void DrawCompactStats()
     {
-        var samplesPerSecond = 1.0f / m_StatsDeltaTime.average;
-        DebugOverlay.Write(-50, -4, "pps (in/out): {0} / {1}", m_PackagesIn.graph.average * samplesPerSecond,
-            m_PackagesOut.graph.average * samplesPerSecond);
-        DebugOverlay.Write(-50, -3, "bps (in/out): {0:00.0} / {1:00.0}", m_BytesIn.graph.average * samplesPerSecond,
-            m_BytesOut.graph.average * samplesPerSecond);
+        var samplesPerSecond = 1.0f / _statsDeltaTime.average;
+        DebugOverlay.Write(-50, -4, "pps (in/out): {0} / {1}", _packagesIn.graph.average * samplesPerSecond,
+            _packagesOut.graph.average * samplesPerSecond);
+        DebugOverlay.Write(-50, -3, "bps (in/out): {0:00.0} / {1:00.0}", _bytesIn.graph.average * samplesPerSecond,
+            _bytesOut.graph.average * samplesPerSecond);
 
-        var startIndex = m_BytesIn.graph.GetData().HeadIndex;
-        DebugOverlay.DrawHist(-50, -2, 20, 2, m_BytesIn.graph.GetData().GetArray(), startIndex, Color.blue, 5.0f);
+        var startIndex = _bytesIn.graph.GetData().HeadIndex;
+        DebugOverlay.DrawHist(-50, -2, 20, 2, _bytesIn.graph.GetData().GetArray(), startIndex, Color.blue, 5.0f);
     }
 
     private void DrawStats()
     {
-        var samplesPerSecond = 1.0f / m_StatsDeltaTime.average;
+        var samplesPerSecond = 1.0f / _statsDeltaTime.average;
         int y = 2;
-        DebugOverlay.Write(2, y++, "  tick rate: {0}", m_NetworkClient.serverTickRate);
-        DebugOverlay.Write(2, y++, "  frame timescale: {0}", m_FrameTimeScale);
+        DebugOverlay.Write(2, y++, "  tick rate: {0}", _networkClient.serverTickRate);
+        DebugOverlay.Write(2, y++, "  frame timescale: {0}", _frameTimeScale);
 
         DebugOverlay.Write(2, y++, "  sim  : {0:0.0} / {1:0.0} / {2:0.0} ({3:0.0})",
-            m_ServerSimTime.min,
-            m_ServerSimTime.min,
-            m_ServerSimTime.max,
-            m_ServerSimTime.stdDeviation);
+            _serverSimTime.min,
+            _serverSimTime.min,
+            _serverSimTime.max,
+            _serverSimTime.stdDeviation);
 
-        DebugOverlay.Write(2, y++, "^FF0  lat  : {0:0.0} / {1:0.0} / {2:0.0}", m_Latency.min, m_Latency.average,
-            m_Latency.max);
-        DebugOverlay.Write(2, y++, "^0FF  rtt  : {0:0.0} / {1:0.0} / {2:0.0}", m_RTT.min, m_RTT.average, m_RTT.max);
-        DebugOverlay.Write(2, y++, "^0F0  cmdq : {0:0.0} / {1:0.0} / {2:0.0}", m_CMDQ.min, m_CMDQ.average, m_CMDQ.max);
-        DebugOverlay.Write(2, y++, "^F0F  intp : {0:0.0} / {1:0.0} / {2:0.0}", m_Interp.min, m_Interp.average,
-            m_Interp.max);
+        DebugOverlay.Write(2, y++, "^FF0  lat  : {0:0.0} / {1:0.0} / {2:0.0}", _latency.min, _latency.average,
+            _latency.max);
+        DebugOverlay.Write(2, y++, "^0FF  rtt  : {0:0.0} / {1:0.0} / {2:0.0}", _rtt.min, _rtt.average, _rtt.max);
+        DebugOverlay.Write(2, y++, "^0F0  cmdq : {0:0.0} / {1:0.0} / {2:0.0}", _cmdq.min, _cmdq.average, _cmdq.max);
+        DebugOverlay.Write(2, y++, "^F0F  intp : {0:0.0} / {1:0.0} / {2:0.0}", _interp.min, _interp.average,
+            _interp.max);
 
         y++;
         DebugOverlay.Write(2, y++, "^22F  header/payload/total bps (in):");
         DebugOverlay.Write(2, y++, "^22F   {0:00.0} / {1:00.0} / {2:00.0} ({3})",
-            m_HeaderBitsIn.graph.average / 8.0f * samplesPerSecond,
-            (m_BytesIn.graph.average - m_HeaderBitsIn.graph.average / 8.0f) * samplesPerSecond,
-            m_BytesIn.graph.average * samplesPerSecond,
-            m_NetworkClient.ClientConfig.ServerUpdateRate);
-        DebugOverlay.Write(2, y++, "^F00  bps (out): {0:00.0}", m_BytesOut.graph.average * samplesPerSecond);
-        DebugOverlay.Write(2, y++, "  pps (in):  {0:00.0}", m_PackagesIn.graph.average * samplesPerSecond);
-        DebugOverlay.Write(2, y++, "  pps (out): {0:00.0}", m_PackagesOut.graph.average * samplesPerSecond);
-        DebugOverlay.Write(2, y++, "  pl% (in):  {0:00.0}", m_PackageLossPctIn.average);
-        DebugOverlay.Write(2, y++, "  pl% (out): {0:00.0}", m_PackageLossPctOut.average);
+            _headerBitsIn.graph.average / 8.0f * samplesPerSecond,
+            (_bytesIn.graph.average - _headerBitsIn.graph.average / 8.0f) * samplesPerSecond,
+            _bytesIn.graph.average * samplesPerSecond,
+            _networkClient.ClientConfig.ServerUpdateRate);
+        DebugOverlay.Write(2, y++, "^F00  bps (out): {0:00.0}", _bytesOut.graph.average * samplesPerSecond);
+        DebugOverlay.Write(2, y++, "  pps (in):  {0:00.0}", _packagesIn.graph.average * samplesPerSecond);
+        DebugOverlay.Write(2, y++, "  pps (out): {0:00.0}", _packagesOut.graph.average * samplesPerSecond);
+        DebugOverlay.Write(2, y++, "  pl% (in):  {0:00.0}", _packageLossPctIn.average);
+        DebugOverlay.Write(2, y++, "  pl% (out): {0:00.0}", _packageLossPctOut.average);
 
         y++;
-        DebugOverlay.Write(2, y++, "  upd_srate: {0:00.0} ({1})", m_SnapshotsIn.graph.average * samplesPerSecond,
-            m_NetworkClient.ClientConfig.ServerUpdateInterval);
-        DebugOverlay.Write(2, y++, "  cmd_srate: {0:00.0} ({1})", m_CommandsOut.graph.average * samplesPerSecond,
-            m_NetworkClient.serverTickRate);
-        DebugOverlay.Write(2, y++, "  ev (in):   {0:00.0}", m_EventsIn.graph.average * samplesPerSecond);
-        DebugOverlay.Write(2, y++, "  ev (out):  {0:00.0}", m_EventsOut.graph.average * samplesPerSecond);
+        DebugOverlay.Write(2, y++, "  upd_srate: {0:00.0} ({1})", _snapshotsIn.graph.average * samplesPerSecond,
+            _networkClient.ClientConfig.ServerUpdateInterval);
+        DebugOverlay.Write(2, y++, "  cmd_srate: {0:00.0} ({1})", _commandsOut.graph.average * samplesPerSecond,
+            _networkClient.serverTickRate);
+        DebugOverlay.Write(2, y++, "  ev (in):   {0:00.0}", _eventsIn.graph.average * samplesPerSecond);
+        DebugOverlay.Write(2, y, "  ev (out):  {0:00.0}", _eventsOut.graph.average * samplesPerSecond);
 
-        var startIndex = m_BytesIn.graph.GetData().HeadIndex;
+        var startIndex = _bytesIn.graph.GetData().HeadIndex;
         var graphY = 5;
 
-        DebugOverlay.DrawGraph(38, graphY, 60, 5, m_Latency.GetData().GetArray(), startIndex, Color.yellow, 100);
-        DebugOverlay.DrawGraph(38, graphY, 60, 5, m_RTT.GetData().GetArray(), startIndex, Color.cyan, 100);
-        DebugOverlay.DrawGraph(38, graphY, 60, 5, m_CMDQ.GetData().GetArray(), startIndex, Color.green, 10);
-        DebugOverlay.DrawGraph(38, graphY, 60, 5, m_Interp.GetData().GetArray(), startIndex, Color.magenta, 100);
-        DebugOverlay.DrawHist(38, graphY, 60, 5, m_HardCatchup.GetArray(), startIndex, Color.red, 100);
+        DebugOverlay.DrawGraph(38, graphY, 60, 5, _latency.GetData().GetArray(), startIndex, Color.yellow, 100);
+        DebugOverlay.DrawGraph(38, graphY, 60, 5, _rtt.GetData().GetArray(), startIndex, Color.cyan, 100);
+        DebugOverlay.DrawGraph(38, graphY, 60, 5, _cmdq.GetData().GetArray(), startIndex, Color.green, 10);
+        DebugOverlay.DrawGraph(38, graphY, 60, 5, _interp.GetData().GetArray(), startIndex, Color.magenta, 100);
+        DebugOverlay.DrawHist(38, graphY, 60, 5, _hardCatchup.GetArray(), startIndex, Color.red, 100);
 
-        m_2GraphData[0] = m_BytesIn.graph.GetData().GetArray();
-        m_2GraphData[1] = m_BytesOut.graph.GetData().GetArray();
+        _2GraphData[0] = _bytesIn.graph.GetData().GetArray();
+        _2GraphData[1] = _bytesOut.graph.GetData().GetArray();
 
         graphY += 7;
-        DebugOverlay.DrawGraph(38, graphY, 60, 5, m_2GraphData, startIndex, m_BytesGraphColors);
+        DebugOverlay.DrawGraph(38, graphY, 60, 5, _2GraphData, startIndex, _bytesGraphColors);
 
         graphY += 6;
-        DebugOverlay.DrawHist(38, graphY++, 60, 1, m_SnapshotsIn.graph.GetData().GetArray(), startIndex, Color.blue,
+        DebugOverlay.DrawHist(38, graphY++, 60, 1, _snapshotsIn.graph.GetData().GetArray(), startIndex, Color.blue,
             5.0f);
-        DebugOverlay.DrawHist(38, graphY++, 60, 1, m_CommandsOut.graph.GetData().GetArray(), startIndex, Color.red,
+        DebugOverlay.DrawHist(38, graphY++, 60, 1, _commandsOut.graph.GetData().GetArray(), startIndex, Color.red,
             5.0f);
-        DebugOverlay.DrawHist(38, graphY++, 60, 1, m_EventsIn.graph.GetData().GetArray(), startIndex, Color.yellow,
+        DebugOverlay.DrawHist(38, graphY++, 60, 1, _eventsIn.graph.GetData().GetArray(), startIndex, Color.yellow,
             5.0f);
-        DebugOverlay.DrawHist(38, graphY, 60, 1, m_EventsOut.graph.GetData().GetArray(), startIndex, Color.green,
+        DebugOverlay.DrawHist(38, graphY, 60, 1, _eventsOut.graph.GetData().GetArray(), startIndex, Color.green,
             5.0f);
     }
 
     private void DrawCounters()
     {
-        var counters = m_NetworkClient.counters;
+        var counters = _networkClient.counters;
         if (counters == null)
         {
             return;
@@ -290,45 +331,4 @@ public class NetworkStatisticsClient
         y++;
         DebugOverlay.Write(2, y, "  Choked packages lost : {0}", counters.ChokedPackagesOut);
     }
-
-    private int m_PackageCountPrevIn;
-    private int m_PackageLossPrevIn;
-    private int m_PackageCountPrevOut;
-    private int m_PackageLossPrevOut;
-
-    private float m_FrameTimeScale;
-    private float m_NextLossCalc;
-    private float m_PackagesLostPctIn;
-    private float m_PackagesLostPctOut;
-
-    private NetworkClient m_NetworkClient;
-
-    private FloatRollingAverage m_StatsDeltaTime = new FloatRollingAverage(WindowSize);
-    private FloatRollingAverage m_ServerSimTime = new FloatRollingAverage(WindowSize);
-    private FloatRollingAverage m_Latency = new FloatRollingAverage(WindowSize);
-    private FloatRollingAverage m_RTT = new FloatRollingAverage(WindowSize);
-    private FloatRollingAverage m_CMDQ = new FloatRollingAverage(WindowSize);
-    private FloatRollingAverage m_Interp = new FloatRollingAverage(WindowSize);
-    private FloatRollingAverage m_PackageLossPctIn = new FloatRollingAverage(WindowSize);
-    private FloatRollingAverage m_PackageLossPctOut = new FloatRollingAverage(WindowSize);
-
-    private Aggregator m_BytesIn = new Aggregator();
-    private Aggregator m_PackagesIn = new Aggregator();
-
-    private Aggregator m_HeaderBitsIn = new Aggregator();
-
-    private Aggregator m_SnapshotsIn = new Aggregator();
-    private Aggregator m_EventsIn = new Aggregator();
-
-    private Aggregator m_BytesOut = new Aggregator();
-    private Aggregator m_PackagesOut = new Aggregator();
-
-    private Aggregator m_CommandsOut = new Aggregator();
-    private Aggregator m_EventsOut = new Aggregator();
-
-    private float[][] m_2GraphData = new float[2][];
-
-    private Color[] m_BytesGraphColors = {Color.blue, Color.red};
-
-    private CircularList<float> m_HardCatchup = new CircularList<float>(WindowSize);
 }

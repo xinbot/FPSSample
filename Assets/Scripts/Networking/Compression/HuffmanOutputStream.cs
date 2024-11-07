@@ -111,6 +111,7 @@ namespace Networking.Compression
         {
             while (_currentBitIndex > 0)
             {
+                // (TODO) (Yum) forcing _bitBuffer to be byte type is hacky
                 _buffer[_currentByteIndex++] = (byte) _bitBuffer;
                 _currentBitIndex -= 8;
                 _bitBuffer >>= 8;
@@ -135,6 +136,7 @@ namespace Networking.Compression
         {
             while (_currentBitIndex >= 8)
             {
+                // (TODO) (Yum) forcing _bitBuffer to be byte type is hacky
                 _buffer[_currentByteIndex++] = (byte) _bitBuffer;
                 _currentBitIndex -= 8;
                 _bitBuffer >>= 8;
