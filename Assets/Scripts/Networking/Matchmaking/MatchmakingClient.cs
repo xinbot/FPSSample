@@ -1,23 +1,22 @@
-using System;
 using System.Text;
 using UnityEngine;
 using UnityEngine.Networking;
 
-namespace UnityEngine.Ucg.Matchmaking
+namespace Networking.Matchmaking
 {
-    class MatchmakingClient
+    internal class MatchmakingClient
     {
         internal string Url { get; }
 
-        const string k_CreateRequestEndpoint = "/request";
+        private const string CreateRequestEndpoint = "/request";
 
-        const string k_GetAssignmentEndpoint = "/assignment";
+        private const string GetAssignmentEndpoint = "/assignment";
 
-        const string k_ApiVersion = "1";
+        private const string ApiVersion = "1";
 
         internal MatchmakingClient(string endpoint)
         {
-            Url = "https://" + endpoint + "/api/v" + k_ApiVersion + "/matchmaking";
+            Url = "https://" + endpoint + "/api/v" + ApiVersion + "/matchmaking";
         }
 
         /// <summary>
@@ -30,7 +29,7 @@ namespace UnityEngine.Ucg.Matchmaking
         /// TODO: Strongly type expect contract return from successful call
         internal UnityWebRequestAsyncOperation RequestMatchAsync(MatchmakingRequest request)
         {
-            string url = Url + k_CreateRequestEndpoint;
+            string url = Url + CreateRequestEndpoint;
             UnityWebRequest webRequest = new UnityWebRequest(url, "POST");
             webRequest.SetRequestHeader("Content-Type", "application/json");
             string txtRec = JsonUtility.ToJson(request);
@@ -51,7 +50,7 @@ namespace UnityEngine.Ucg.Matchmaking
         /// TODO: Strongly type expect contract return from successful call
         internal UnityWebRequestAsyncOperation GetAssignmentAsync(string id)
         {
-            string url = Url + k_GetAssignmentEndpoint + "?id=" + id;
+            string url = Url + GetAssignmentEndpoint + "?id=" + id;
             UnityWebRequest webRequest = new UnityWebRequest(url, "GET");
             webRequest.SetRequestHeader("Content-Type", "application/json");
             webRequest.downloadHandler = new DownloadHandlerBuffer();

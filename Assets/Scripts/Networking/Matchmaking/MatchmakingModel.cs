@@ -2,18 +2,17 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace UnityEngine.Ucg.Matchmaking
+namespace Networking.Matchmaking
 {
     [Serializable]
     public class MatchmakingPlayer
     {
 #pragma warning disable 649
-        [SerializeField]
-        string id;
+        [SerializeField] private string id;
 
-        [SerializeField]
-        string properties;
+        [SerializeField] private string properties;
 #pragma warning restore 649
+
         public string Id => id;
 
         public string Properties
@@ -32,12 +31,11 @@ namespace UnityEngine.Ucg.Matchmaking
     public class MatchmakingRequest
     {
 #pragma warning disable 649
-        [SerializeField]
-        List<MatchmakingPlayer> players;
+        [SerializeField] private List<MatchmakingPlayer> players;
 
-        [SerializeField]
-        string properties;
+        [SerializeField] private string properties;
 #pragma warning restore 649
+
         public List<MatchmakingPlayer> Players
         {
             get { return players; }
@@ -52,27 +50,25 @@ namespace UnityEngine.Ucg.Matchmaking
 
         public MatchmakingRequest()
         {
-            this.players = new List<MatchmakingPlayer>();
+            players = new List<MatchmakingPlayer>();
         }
     }
 
-#pragma warning disable 649
-    class MatchmakingResult
+    [Serializable]
+    public class MatchMakingResult
     {
-        [SerializeField]
-        internal bool success;
+#pragma warning disable 649
+        [SerializeField] internal bool success;
 
-        [SerializeField]
-        internal string error;
-    }
+        [SerializeField] internal string error;
 #pragma warning restore 649
+    }
 
     [Serializable]
-    class AssignmentRequest
+    public class AssignmentRequest
     {
 #pragma warning disable 649
-        [SerializeField]
-        string id;
+        [SerializeField] private string id;
 #pragma warning restore 649
 
         public string Id => id;
@@ -87,23 +83,20 @@ namespace UnityEngine.Ucg.Matchmaking
     public class Assignment
     {
 #pragma warning disable 649
-        [SerializeField]
-        string connection_string;
+        [SerializeField] private string connection_string;
 
-        [SerializeField]
-        string assignment_error;
+        [SerializeField] private string assignment_error;
 
-        [SerializeField]
-        List<string> roster;
+        [SerializeField] private List<string> roster;
 #pragma warning restore 649
 
         public string ConnectionString => connection_string;
         public string AssignmentError => assignment_error;
+
         public List<string> Roster
         {
             get { return roster; }
             set { roster = value; }
         }
     }
-
 }

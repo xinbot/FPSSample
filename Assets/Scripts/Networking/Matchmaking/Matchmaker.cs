@@ -1,20 +1,20 @@
 using System;
 using UnityEngine;
-using UnityEngine.Ucg.Matchmaking;
 
 namespace Networking.Matchmaking
 {
-    public class Matchmaker 
+    public class Matchmaker
     {
         /// <summary>
         /// The hostname[:port]/{projectid} of your matchmaking server
         /// </summary>
         public string Endpoint;
 
-        MatchmakingController matchmakingController;
-        private MatchmakingRequest request;
+        private MatchmakingController _matchmakingController;
+        private MatchmakingRequest _request;
 
         public delegate void SuccessCallback(Assignment assignment);
+
         public delegate void ErrorCallback(string error);
 
         public SuccessCallback successCallback;
@@ -40,11 +40,12 @@ namespace Networking.Matchmaking
         /// <param name="endpoint"></param>
         /// <param name="onSuccessCallback">If a match is found, this callback will provide the connection information</param>
         /// <param name="onErrorCallback">If matchmaking fails, this callback will provided some failure information</param>
-        public Matchmaker(string endpoint, SuccessCallback onSuccessCallback = null, ErrorCallback onErrorCallback = null)
+        public Matchmaker(string endpoint, SuccessCallback onSuccessCallback = null,
+            ErrorCallback onErrorCallback = null)
         {
             Endpoint = endpoint;
-            this.successCallback = onSuccessCallback;
-            this.errorCallback = onErrorCallback;
+            successCallback = onSuccessCallback;
+            errorCallback = onErrorCallback;
         }
 
         /// <summary>
@@ -53,13 +54,14 @@ namespace Networking.Matchmaking
         /// <param name="playerId">The id of the player</param>
         /// <param name="playerProps">Custom player properties relevant to the matchmaking function</param>
         /// <param name="groupProps">Custom group properties relevant to the matchmaking function</param>
-        public void RequestMatch(string playerId, MatchmakingPlayerProperties playerProps, MatchmakingGroupProperties groupProps)
+        public void RequestMatch(string playerId, MatchmakingPlayerProperties playerProps,
+            MatchmakingGroupProperties groupProps)
         {
-            request = CreateMatchmakingRequest(playerId, playerProps, groupProps);
+            _request = CreateMatchmakingRequest(playerId, playerProps, groupProps);
 
-            matchmakingController = new MatchmakingController(Endpoint);
+            _matchmakingController = new MatchmakingController(Endpoint);
 
-            matchmakingController.StartRequestMatch(request, GetAssignment, OnError);
+            _matchmakingController.StartRequestMatch(_request, GetAssignment, OnError);
             State = MatchmakingState.Requesting;
             Debug.Log(State);
         }
@@ -73,10 +75,10 @@ namespace Networking.Matchmaking
             switch (State)
             {
                 case MatchmakingState.Requesting:
-                    matchmakingController.UpdateRequestMatch();
+                    _matchmakingController.UpdateRequestMatch();
                     break;
                 case MatchmakingState.Searching:
-                    matchmakingController.UpdateGetAssignment();
+                    _matchmakingController.UpdateGetAssignment();
                     break;
                 case MatchmakingState.Found:
                 case MatchmakingState.Error:
@@ -93,10 +95,11 @@ namespace Networking.Matchmaking
         /// <param name="playerProps">Custom player properties relevant to the matchmaking function</param>
         /// <param name="groupProps">Custom group properties relevant to the matchmaking function</param>
         /// <returns></returns>
-        private static MatchmakingRequest CreateMatchmakingRequest(string playerId, MatchmakingPlayerProperties playerProps, MatchmakingGroupProperties groupProps)
+        private static MatchmakingRequest CreateMatchmakingRequest(string playerId,
+            MatchmakingPlayerProperties playerProps, MatchmakingGroupProperties groupProps)
         {
             // TODO: WORKAROUND: Currently matchmaker handles IDs as UUIDs, not player names, and will only ever generate 1 match assignment for each UUID
-            //   Therefore, we'll append the current time in Ticks as an attempt at creating a UUID
+            // Therefore, we'll append the current time in Ticks as an attempt at creating a UUID
             playerId = playerId + DateTime.UtcNow.Ticks.ToString();
 
             MatchmakingPlayer thisPlayer = new MatchmakingPlayer(playerId)
@@ -109,27 +112,26 @@ namespace Networking.Matchmaking
                 Properties = JsonUtility.ToJson(groupProps)
             };
 
-
             request.Players.Add(thisPlayer);
 
             return request;
         }
-        
-        void GetAssignment()
+
+        private void GetAssignment()
         {
-            matchmakingController.StartGetAssignment(request.Players[0].Id, OnSuccess, OnError);
+            _matchmakingController.StartGetAssignment(_request.Players[0].Id, OnSuccess, OnError);
             State = MatchmakingState.Searching;
             Debug.Log(State);
         }
 
-        void OnSuccess(Assignment assignment)
+        private void OnSuccess(Assignment assignment)
         {
             State = MatchmakingState.Found;
             Debug.Log(State);
             successCallback?.Invoke(assignment);
         }
 
-        void OnError(string error)
+        private void OnError(string error)
         {
             State = MatchmakingState.Error;
             Debug.Log(State);

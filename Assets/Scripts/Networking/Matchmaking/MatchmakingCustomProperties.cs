@@ -1,6 +1,7 @@
 using System;
+using UnityEngine;
 
-namespace UnityEngine.Ucg.Matchmaking
+namespace Networking.Matchmaking
 {
     /// <summary>
     /// This is an example of custom player properties
