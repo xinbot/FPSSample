@@ -1134,7 +1134,7 @@ public class ClientGameLoop : IGameLoop, INetworkClientCallbacks
             valid = _localPlayer.commandBuffer.TryGetValue(_clientWorld.predictedTime.Tick, ref command);
             if (valid)
             {
-                DebugOverlay.Write(x, y++, "Tick cmd: PrimaryFire:{0}",
+                DebugOverlay.Write(x, y, "Tick cmd: PrimaryFire:{0}",
                     command.buttons.IsSet(UserCommand.Button.PrimaryFire));
             }
         }

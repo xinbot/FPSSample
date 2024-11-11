@@ -158,6 +158,23 @@
                 symbolList[length][lengthCounts[length]++] = (byte) symbol;
             }
 
+            /*
+             * symbolLengths [16] : {2, 3, 3, 3, 4, 4, 4, 5, 5, 5, 6, 6, 6, 6, 6, 6}
+             * 
+             * lengthCounts [7] : {0, 0, 1, 3, 3, 3, 6}
+             * 
+             * symbolList [7][16] :
+             * {
+	         *      [0] : {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
+	         *      [1] : {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
+	         *      [2] : {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
+	         *      [3] : {1, 2, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
+	         *      [4] : {4, 5, 6, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
+	         *      [5] : {7, 8, 9, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
+	         *      [6] : {10, 11, 12, 13, 14, 15, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
+             * }
+             */
+
             uint nextCodeWord = 0;
             for (var length = 1; length <= maxCodeLength; length++)
             {
@@ -171,6 +188,8 @@
 
                 nextCodeWord <<= 1;
             }
+
+            // symbolCodes [16] : {0, 2, 6, 1, 5, 13, 3, 11, 27, 7, 23, 55, 15, 47, 31, 63}
         }
 
         // decode table entries: (symbol << 8) | length
@@ -180,6 +199,7 @@
             GameDebug.Assert(alphabetSize <= 256);
             GameDebug.Assert(maxCodeLength <= 8);
 
+            // symbolLengths [16] : {2, 3, 3, 3, 4, 4, 4, 5, 5, 5, 6, 6, 6, 6, 6, 6}
             uint maxCode = 1u << maxCodeLength;
             for (int symbol = 0; symbol < alphabetSize; symbol++)
             {
@@ -200,10 +220,22 @@
 
         private static uint ReverseBits(uint value, int numBits)
         {
+            // 0x55555555u = 0101 0101 0101 0101 0101 0101 0101 0101
+            // 0xAAAAAAAAu = 1010 1010 1010 1010 1010 1010 1010 1010
             value = ((value & 0x55555555u) << 1) | ((value & 0xAAAAAAAAu) >> 1);
+
+            // 0x33333333u = 0011 0011 0011 0011 0011 0011 0011 0011
+            // 0xCCCCCCCCu = 1100 1100 1100 1100 1100 1100 1100 1100
             value = ((value & 0x33333333u) << 2) | ((value & 0xCCCCCCCCu) >> 2);
+
+            // 0x0F0F0F0Fu = 0000 1111 0000 1111 0000 1111 0000 1111
+            // 0xF0F0F0F0u = 1111 0000 1111 0000 1111 0000 1111 0000
             value = ((value & 0x0F0F0F0Fu) << 4) | ((value & 0xF0F0F0F0u) >> 4);
+
+            // 0x00FF00FFu = 0000 0000 1111 1111 0000 0000 1111 1111
+            // 0xFF00FF00u = 1111 1111 0000 0000 1111 1111 0000 0000
             value = ((value & 0x00FF00FFu) << 8) | ((value & 0xFF00FF00u) >> 8);
+
             value = (value << 16) | (value >> 16);
             return value >> (32 - numBits);
         }
