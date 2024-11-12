@@ -1,5 +1,4 @@
 ﻿using System.Collections.Generic;
-using System.Runtime.CompilerServices;
 using Unity.Entities;
 using UnityEngine;
 using UnityEngine.Profiling;
@@ -12,579 +11,644 @@ public abstract class BaseComponentSystem : ComponentSystem
         m_world = world;
     }
 
-    readonly protected GameWorld m_world;
+    protected readonly GameWorld m_world;
 }
 
 [DisableAutoCreation]
- public abstract class BaseComponentSystem<T1> : BaseComponentSystem
- 	where T1 : MonoBehaviour
- {
- 	ComponentGroup Group;
- 	protected ComponentType[] ExtraComponentRequirements;
-	string name;
+public abstract class BaseComponentSystem<T> : BaseComponentSystem
+    where T : MonoBehaviour
+{
+    protected ComponentType[] ExtraComponentRequirements;
 
- 	public BaseComponentSystem(GameWorld world) : base(world) {}
+    private ComponentGroup _group;
+    private string _name;
+
+    public BaseComponentSystem(GameWorld world) : base(world)
+    {
+    }
 
     protected override void OnCreateManager()
- 	{
- 		base.OnCreateManager();
-		name = GetType().Name;
- 		var list = new List<ComponentType>(6);
-		if(ExtraComponentRequirements != null)		
-			list.AddRange(ExtraComponentRequirements);
- 		list.AddRange(new ComponentType[] { typeof(T1) } );
-		list.Add(ComponentType.Subtractive<DespawningEntity>());
- 		Group = GetComponentGroup(list.ToArray());
- 	}
- 
- 	protected override void OnUpdate()
- 	{
-		Profiler.BeginSample(name);
+    {
+        base.OnCreateManager();
+        _name = GetType().Name;
 
- 		var entityArray = Group.GetEntityArray();
- 		var dataArray = Group.GetComponentArray<T1>();
- 
- 		for (var i = 0; i < entityArray.Length; i++)
- 		{
- 			Update(entityArray[i], dataArray[i]);
- 		}
-		 
-		Profiler.EndSample();
- 	}
- 	
- 	protected abstract void Update(Entity entity,T1 data);
- }
+        var list = new List<ComponentType>(6);
+        if (ExtraComponentRequirements != null)
+        {
+            list.AddRange(ExtraComponentRequirements);
+        }
 
+        list.AddRange(new ComponentType[] {typeof(T)});
+        list.Add(ComponentType.Subtractive<DespawningEntity>());
+        _group = GetComponentGroup(list.ToArray());
+    }
 
-[DisableAutoCreation]
-public abstract class BaseComponentSystem<T1,T2> : BaseComponentSystem
-	where T1 : MonoBehaviour
-	where T2 : MonoBehaviour
-{
-	ComponentGroup Group;
-	protected ComponentType[] ExtraComponentRequirements;
-	string name; 
-	
-	public BaseComponentSystem(GameWorld world) : base(world) {}
-	
-	protected override void OnCreateManager()
-	{
-		base.OnCreateManager();
-		name = GetType().Name;
-		var list = new List<ComponentType>(6);
-		if(ExtraComponentRequirements != null)		
-			list.AddRange(ExtraComponentRequirements);
-		list.AddRange(new ComponentType[] {typeof(T1), typeof(T2)});
-		list.Add(ComponentType.Subtractive<DespawningEntity>());
-		Group = GetComponentGroup(list.ToArray());
-	}
+    protected override void OnUpdate()
+    {
+        Profiler.BeginSample(_name);
 
-	protected override void OnUpdate()
-	{
-		Profiler.BeginSample(name);
+        var entityArray = _group.GetEntityArray();
+        var dataArray = _group.GetComponentArray<T>();
 
-		var entityArray = Group.GetEntityArray();
-		var dataArray1 = Group.GetComponentArray<T1>();
-		var dataArray2 = Group.GetComponentArray<T2>();
+        for (var i = 0; i < entityArray.Length; i++)
+        {
+            Update(entityArray[i], dataArray[i]);
+        }
 
-		for (var i = 0; i < entityArray.Length; i++)
-		{
-			Update(entityArray[i], dataArray1[i], dataArray2[i]);
-		}
-		
-		Profiler.EndSample();
-	}
-	
-	protected abstract void Update(Entity entity,T1 data1,T2 data2);
-}
+        Profiler.EndSample();
+    }
 
-
-[DisableAutoCreation]
-public abstract class BaseComponentSystem<T1,T2,T3> : BaseComponentSystem
-	where T1 : MonoBehaviour
-	where T2 : MonoBehaviour
-	where T3 : MonoBehaviour
-{
-	ComponentGroup Group;
-	protected ComponentType[] ExtraComponentRequirements;
-	string name;
-	
-	public BaseComponentSystem(GameWorld world) : base(world) {}
-	
-	protected override void OnCreateManager()
-	{
-		base.OnCreateManager();
-		name = GetType().Name;
-		var list = new List<ComponentType>(6);
-		if(ExtraComponentRequirements != null)		
-			list.AddRange(ExtraComponentRequirements);
-		list.AddRange(new ComponentType[] { typeof(T1), typeof(T2), typeof(T3) } );
-		list.Add(ComponentType.Subtractive<DespawningEntity>());
-		Group = GetComponentGroup(list.ToArray());
-	}
-
-	protected override void OnUpdate()
-	{
-		Profiler.BeginSample(name);
-
-		var entityArray = Group.GetEntityArray();
-		var dataArray1 = Group.GetComponentArray<T1>();
-		var dataArray2 = Group.GetComponentArray<T2>();
-		var dataArray3 = Group.GetComponentArray<T3>();
-
-		for (var i = 0; i < entityArray.Length; i++)
-		{
-			Update(entityArray[i], dataArray1[i], dataArray2[i], dataArray3[i]);
-		}
-		
-		Profiler.EndSample();
-	}
-	
-	protected abstract void Update(Entity entity,T1 data1,T2 data2,T3 data3);
+    protected abstract void Update(Entity entity, T data);
 }
 
 [DisableAutoCreation]
-public abstract class BaseComponentDataSystem<T1> : BaseComponentSystem
-	where T1 : struct,IComponentData
+public abstract class BaseComponentSystem<T1, T2> : BaseComponentSystem
+    where T1 : MonoBehaviour
+    where T2 : MonoBehaviour
 {
-	ComponentGroup Group;
-	protected ComponentType[] ExtraComponentRequirements;
-	string name;
-	
-	public BaseComponentDataSystem(GameWorld world) : base(world) {}
-	
-	protected override void OnCreateManager()
-	{
-		base.OnCreateManager();
-		name = GetType().Name;
-		var list = new List<ComponentType>(6);
-		if(ExtraComponentRequirements != null)		
-			list.AddRange(ExtraComponentRequirements);
-		list.AddRange(new ComponentType[] { typeof(T1) } );
-		list.Add(ComponentType.Subtractive<DespawningEntity>());
-		Group = GetComponentGroup(list.ToArray());
-	}
+    protected ComponentType[] ExtraComponentRequirements;
 
-	protected override void OnUpdate()
-	{
-		Profiler.BeginSample(name);
+    private ComponentGroup _group;
+    private string _name;
 
-		var entityArray = Group.GetEntityArray();
-		var dataArray = Group.GetComponentDataArray<T1>();
+    public BaseComponentSystem(GameWorld world) : base(world)
+    {
+    }
 
-		for (var i = 0; i < entityArray.Length; i++)
-		{
-			Update(entityArray[i], dataArray[i]);
-		}
-		
-		Profiler.EndSample();
-	}
-	
-	protected abstract void Update(Entity entity,T1 data);
+    protected override void OnCreateManager()
+    {
+        base.OnCreateManager();
+        _name = GetType().Name;
+
+        var list = new List<ComponentType>(6);
+        if (ExtraComponentRequirements != null)
+        {
+            list.AddRange(ExtraComponentRequirements);
+        }
+
+        list.AddRange(new ComponentType[] {typeof(T1), typeof(T2)});
+        list.Add(ComponentType.Subtractive<DespawningEntity>());
+        _group = GetComponentGroup(list.ToArray());
+    }
+
+    protected override void OnUpdate()
+    {
+        Profiler.BeginSample(_name);
+
+        var entityArray = _group.GetEntityArray();
+        var dataArray1 = _group.GetComponentArray<T1>();
+        var dataArray2 = _group.GetComponentArray<T2>();
+
+        for (var i = 0; i < entityArray.Length; i++)
+        {
+            Update(entityArray[i], dataArray1[i], dataArray2[i]);
+        }
+
+        Profiler.EndSample();
+    }
+
+    protected abstract void Update(Entity entity, T1 data1, T2 data2);
 }
 
 [DisableAutoCreation]
-public abstract class BaseComponentDataSystem<T1,T2> : BaseComponentSystem
-	where T1 : struct,IComponentData
-	where T2 : struct,IComponentData
+public abstract class BaseComponentSystem<T1, T2, T3> : BaseComponentSystem
+    where T1 : MonoBehaviour
+    where T2 : MonoBehaviour
+    where T3 : MonoBehaviour
 {
-	ComponentGroup Group;
-	protected ComponentType[] ExtraComponentRequirements;
-	private string name;
-	
-	public BaseComponentDataSystem(GameWorld world) : base(world) {}
-	
-	protected override void OnCreateManager()
-	{
-		name = GetType().Name;
-		base.OnCreateManager();
-		var list = new List<ComponentType>(6);
-		if(ExtraComponentRequirements != null)		
-			list.AddRange(ExtraComponentRequirements);
-		list.AddRange(new ComponentType[] { typeof(T1), typeof(T2) } );
-		list.Add(ComponentType.Subtractive<DespawningEntity>());
-		Group = GetComponentGroup(list.ToArray());
-	}
+    protected ComponentType[] ExtraComponentRequirements;
 
-	protected override void OnUpdate()
-	{
-		Profiler.BeginSample(name);
+    private ComponentGroup _group;
+    private string _name;
 
-		var entityArray = Group.GetEntityArray();
-		var dataArray1 = Group.GetComponentDataArray<T1>();
-		var dataArray2 = Group.GetComponentDataArray<T2>();
+    public BaseComponentSystem(GameWorld world) : base(world)
+    {
+    }
 
-		for (var i = 0; i < entityArray.Length; i++)
-		{
-			Update(entityArray[i], dataArray1[i], dataArray2[i]);
-		}
-		
-		Profiler.EndSample();
-	}
-	
-	protected abstract void Update(Entity entity,T1 data1,T2 data2);
+    protected override void OnCreateManager()
+    {
+        base.OnCreateManager();
+        _name = GetType().Name;
+
+        var list = new List<ComponentType>(6);
+        if (ExtraComponentRequirements != null)
+        {
+            list.AddRange(ExtraComponentRequirements);
+        }
+
+        list.AddRange(new ComponentType[] {typeof(T1), typeof(T2), typeof(T3)});
+        list.Add(ComponentType.Subtractive<DespawningEntity>());
+        _group = GetComponentGroup(list.ToArray());
+    }
+
+    protected override void OnUpdate()
+    {
+        Profiler.BeginSample(_name);
+
+        var entityArray = _group.GetEntityArray();
+        var dataArray1 = _group.GetComponentArray<T1>();
+        var dataArray2 = _group.GetComponentArray<T2>();
+        var dataArray3 = _group.GetComponentArray<T3>();
+
+        for (var i = 0; i < entityArray.Length; i++)
+        {
+            Update(entityArray[i], dataArray1[i], dataArray2[i], dataArray3[i]);
+        }
+
+        Profiler.EndSample();
+    }
+
+    protected abstract void Update(Entity entity, T1 data1, T2 data2, T3 data3);
 }
 
 [DisableAutoCreation]
-public abstract class BaseComponentDataSystem<T1,T2,T3> : BaseComponentSystem
-	where T1 : struct,IComponentData
-	where T2 : struct,IComponentData
-	where T3 : struct,IComponentData
+public abstract class BaseComponentDataSystem<T> : BaseComponentSystem
+    where T : struct, IComponentData
 {
-	ComponentGroup Group;
-	protected ComponentType[] ExtraComponentRequirements;
-	string name;
-	
-	public BaseComponentDataSystem(GameWorld world) : base(world) {}
-	
-	protected override void OnCreateManager()
-	{
-		base.OnCreateManager();
-		name = GetType().Name;
-		var list = new List<ComponentType>(6);
-		if(ExtraComponentRequirements != null)		
-			list.AddRange(ExtraComponentRequirements);
-		list.AddRange(new ComponentType[] { typeof(T1), typeof(T2), typeof(T3) } );
-		list.Add(ComponentType.Subtractive<DespawningEntity>());
-		Group = GetComponentGroup(list.ToArray());
-	}
+    protected ComponentType[] ExtraComponentRequirements;
 
-	protected override void OnUpdate()
-	{
-		Profiler.BeginSample(name);
+    private ComponentGroup _group;
+    private string _name;
 
-		var entityArray = Group.GetEntityArray();
-		var dataArray1 = Group.GetComponentDataArray<T1>();
-		var dataArray2 = Group.GetComponentDataArray<T2>();
-		var dataArray3 = Group.GetComponentDataArray<T3>();
+    public BaseComponentDataSystem(GameWorld world) : base(world)
+    {
+    }
 
-		for (var i = 0; i < entityArray.Length; i++)
-		{
-			Update(entityArray[i], dataArray1[i], dataArray2[i], dataArray3[i]);
-		}
-		
-		Profiler.EndSample();
-	}
-	
-	protected abstract void Update(Entity entity,T1 data1,T2 data2,T3 data3);
-}
+    protected override void OnCreateManager()
+    {
+        base.OnCreateManager();
+        _name = GetType().Name;
 
+        var list = new List<ComponentType>(6);
+        if (ExtraComponentRequirements != null)
+        {
+            list.AddRange(ExtraComponentRequirements);
+        }
 
-[DisableAutoCreation]
-public abstract class BaseComponentDataSystem<T1,T2,T3,T4> : BaseComponentSystem
-	where T1 : struct,IComponentData
-	where T2 : struct,IComponentData
-	where T3 : struct,IComponentData
-	where T4 : struct,IComponentData
-{
-	ComponentGroup Group;
-	protected ComponentType[] ExtraComponentRequirements;
-	string name;
-	
-	public BaseComponentDataSystem(GameWorld world) : base(world) {}
-	
-	protected override void OnCreateManager()
-	{
-		base.OnCreateManager();
-		name = GetType().Name;
-		var list = new List<ComponentType>(6);
-		if(ExtraComponentRequirements != null)		
-			list.AddRange(ExtraComponentRequirements);
-		list.AddRange(new ComponentType[] { typeof(T1), typeof(T2), typeof(T3), typeof(T4) } );
-		list.Add(ComponentType.Subtractive<DespawningEntity>());
-		Group = GetComponentGroup(list.ToArray());
-	}
+        list.AddRange(new ComponentType[] {typeof(T)});
+        list.Add(ComponentType.Subtractive<DespawningEntity>());
+        _group = GetComponentGroup(list.ToArray());
+    }
 
-	protected override void OnUpdate()
-	{
-		Profiler.BeginSample(name);
+    protected override void OnUpdate()
+    {
+        Profiler.BeginSample(_name);
 
-		var entityArray = Group.GetEntityArray();
-		var dataArray1 = Group.GetComponentDataArray<T1>();
-		var dataArray2 = Group.GetComponentDataArray<T2>();
-		var dataArray3 = Group.GetComponentDataArray<T3>();
-		var dataArray4 = Group.GetComponentDataArray<T4>();
+        var entityArray = _group.GetEntityArray();
+        var dataArray = _group.GetComponentDataArray<T>();
 
-		for (var i = 0; i < entityArray.Length; i++)
-		{
-			Update(entityArray[i], dataArray1[i], dataArray2[i], dataArray3[i], dataArray4[i]);
-		}
-		
-		Profiler.EndSample();
-	}
-	
-	protected abstract void Update(Entity entity,T1 data1,T2 data2,T3 data3,T4 data4);
+        for (var i = 0; i < entityArray.Length; i++)
+        {
+            Update(entityArray[i], dataArray[i]);
+        }
+
+        Profiler.EndSample();
+    }
+
+    protected abstract void Update(Entity entity, T data);
 }
 
 [DisableAutoCreation]
-public abstract class BaseComponentDataSystem<T1,T2,T3,T4, T5> : BaseComponentSystem
-	where T1 : struct,IComponentData
-	where T2 : struct,IComponentData
-	where T3 : struct,IComponentData
-	where T4 : struct,IComponentData
-	where T5 : struct,IComponentData
+public abstract class BaseComponentDataSystem<T1, T2> : BaseComponentSystem
+    where T1 : struct, IComponentData
+    where T2 : struct, IComponentData
 {
-	ComponentGroup Group;
-	protected ComponentType[] ExtraComponentRequirements;
-	string name;
-	
-	public BaseComponentDataSystem(GameWorld world) : base(world) {}
-	
-	protected override void OnCreateManager()
-	{
-		base.OnCreateManager();
-		name = GetType().Name;
-		var list = new List<ComponentType>(6);
-		if(ExtraComponentRequirements != null)		
-			list.AddRange(ExtraComponentRequirements);
-		list.AddRange(new ComponentType[] { typeof(T1), typeof(T2), typeof(T3), typeof(T4), typeof(T5) } );
-		list.Add(ComponentType.Subtractive<DespawningEntity>());
-		Group = GetComponentGroup(list.ToArray());
-	}
+    protected ComponentType[] ExtraComponentRequirements;
 
-	protected override void OnUpdate()
-	{
-		Profiler.BeginSample(name);
+    private ComponentGroup _group;
+    private string _name;
 
-		var entityArray = Group.GetEntityArray();
-		var dataArray1 = Group.GetComponentDataArray<T1>();
-		var dataArray2 = Group.GetComponentDataArray<T2>();
-		var dataArray3 = Group.GetComponentDataArray<T3>();
-		var dataArray4 = Group.GetComponentDataArray<T4>();
-		var dataArray5 = Group.GetComponentDataArray<T5>();
+    public BaseComponentDataSystem(GameWorld world) : base(world)
+    {
+    }
 
-		for (var i = 0; i < entityArray.Length; i++)
-		{
-			Update(entityArray[i], dataArray1[i], dataArray2[i], dataArray3[i], dataArray4[i], dataArray5[i]);
-		}
-		
-		Profiler.EndSample();
-	}
-	
-	protected abstract void Update(Entity entity,T1 data1,T2 data2,T3 data3,T4 data4, T5 data5);
+    protected override void OnCreateManager()
+    {
+        base.OnCreateManager();
+        _name = GetType().Name;
+
+        var list = new List<ComponentType>(6);
+        if (ExtraComponentRequirements != null)
+        {
+            list.AddRange(ExtraComponentRequirements);
+        }
+
+        list.AddRange(new ComponentType[] {typeof(T1), typeof(T2)});
+        list.Add(ComponentType.Subtractive<DespawningEntity>());
+        _group = GetComponentGroup(list.ToArray());
+    }
+
+    protected override void OnUpdate()
+    {
+        Profiler.BeginSample(_name);
+
+        var entityArray = _group.GetEntityArray();
+        var dataArray1 = _group.GetComponentDataArray<T1>();
+        var dataArray2 = _group.GetComponentDataArray<T2>();
+
+        for (var i = 0; i < entityArray.Length; i++)
+        {
+            Update(entityArray[i], dataArray1[i], dataArray2[i]);
+        }
+
+        Profiler.EndSample();
+    }
+
+    protected abstract void Update(Entity entity, T1 data1, T2 data2);
+}
+
+[DisableAutoCreation]
+public abstract class BaseComponentDataSystem<T1, T2, T3> : BaseComponentSystem
+    where T1 : struct, IComponentData
+    where T2 : struct, IComponentData
+    where T3 : struct, IComponentData
+{
+    protected ComponentType[] ExtraComponentRequirements;
+
+    private ComponentGroup _group;
+    private string _name;
+
+    public BaseComponentDataSystem(GameWorld world) : base(world)
+    {
+    }
+
+    protected override void OnCreateManager()
+    {
+        base.OnCreateManager();
+        _name = GetType().Name;
+
+        var list = new List<ComponentType>(6);
+        if (ExtraComponentRequirements != null)
+        {
+            list.AddRange(ExtraComponentRequirements);
+        }
+
+        list.AddRange(new ComponentType[] {typeof(T1), typeof(T2), typeof(T3)});
+        list.Add(ComponentType.Subtractive<DespawningEntity>());
+        _group = GetComponentGroup(list.ToArray());
+    }
+
+    protected override void OnUpdate()
+    {
+        Profiler.BeginSample(_name);
+
+        var entityArray = _group.GetEntityArray();
+        var dataArray1 = _group.GetComponentDataArray<T1>();
+        var dataArray2 = _group.GetComponentDataArray<T2>();
+        var dataArray3 = _group.GetComponentDataArray<T3>();
+
+        for (var i = 0; i < entityArray.Length; i++)
+        {
+            Update(entityArray[i], dataArray1[i], dataArray2[i], dataArray3[i]);
+        }
+
+        Profiler.EndSample();
+    }
+
+    protected abstract void Update(Entity entity, T1 data1, T2 data2, T3 data3);
+}
+
+[DisableAutoCreation]
+public abstract class BaseComponentDataSystem<T1, T2, T3, T4> : BaseComponentSystem
+    where T1 : struct, IComponentData
+    where T2 : struct, IComponentData
+    where T3 : struct, IComponentData
+    where T4 : struct, IComponentData
+{
+    protected ComponentType[] ExtraComponentRequirements;
+
+    private ComponentGroup _group;
+    private string _name;
+
+    public BaseComponentDataSystem(GameWorld world) : base(world)
+    {
+    }
+
+    protected override void OnCreateManager()
+    {
+        base.OnCreateManager();
+        _name = GetType().Name;
+
+        var list = new List<ComponentType>(6);
+        if (ExtraComponentRequirements != null)
+        {
+            list.AddRange(ExtraComponentRequirements);
+        }
+
+        list.AddRange(new ComponentType[] {typeof(T1), typeof(T2), typeof(T3), typeof(T4)});
+        list.Add(ComponentType.Subtractive<DespawningEntity>());
+        _group = GetComponentGroup(list.ToArray());
+    }
+
+    protected override void OnUpdate()
+    {
+        Profiler.BeginSample(_name);
+
+        var entityArray = _group.GetEntityArray();
+        var dataArray1 = _group.GetComponentDataArray<T1>();
+        var dataArray2 = _group.GetComponentDataArray<T2>();
+        var dataArray3 = _group.GetComponentDataArray<T3>();
+        var dataArray4 = _group.GetComponentDataArray<T4>();
+
+        for (var i = 0; i < entityArray.Length; i++)
+        {
+            Update(entityArray[i], dataArray1[i], dataArray2[i], dataArray3[i], dataArray4[i]);
+        }
+
+        Profiler.EndSample();
+    }
+
+    protected abstract void Update(Entity entity, T1 data1, T2 data2, T3 data3, T4 data4);
+}
+
+[DisableAutoCreation]
+public abstract class BaseComponentDataSystem<T1, T2, T3, T4, T5> : BaseComponentSystem
+    where T1 : struct, IComponentData
+    where T2 : struct, IComponentData
+    where T3 : struct, IComponentData
+    where T4 : struct, IComponentData
+    where T5 : struct, IComponentData
+{
+    protected ComponentType[] ExtraComponentRequirements;
+
+    private ComponentGroup _group;
+    private string _name;
+
+    public BaseComponentDataSystem(GameWorld world) : base(world)
+    {
+    }
+
+    protected override void OnCreateManager()
+    {
+        base.OnCreateManager();
+        _name = GetType().Name;
+
+        var list = new List<ComponentType>(6);
+        if (ExtraComponentRequirements != null)
+        {
+            list.AddRange(ExtraComponentRequirements);
+        }
+
+        list.AddRange(new ComponentType[] {typeof(T1), typeof(T2), typeof(T3), typeof(T4), typeof(T5)});
+        list.Add(ComponentType.Subtractive<DespawningEntity>());
+        _group = GetComponentGroup(list.ToArray());
+    }
+
+    protected override void OnUpdate()
+    {
+        Profiler.BeginSample(_name);
+
+        var entityArray = _group.GetEntityArray();
+        var dataArray1 = _group.GetComponentDataArray<T1>();
+        var dataArray2 = _group.GetComponentDataArray<T2>();
+        var dataArray3 = _group.GetComponentDataArray<T3>();
+        var dataArray4 = _group.GetComponentDataArray<T4>();
+        var dataArray5 = _group.GetComponentDataArray<T5>();
+
+        for (var i = 0; i < entityArray.Length; i++)
+        {
+            Update(entityArray[i], dataArray1[i], dataArray2[i], dataArray3[i], dataArray4[i], dataArray5[i]);
+        }
+
+        Profiler.EndSample();
+    }
+
+    protected abstract void Update(Entity entity, T1 data1, T2 data2, T3 data3, T4 data4, T5 data5);
 }
 
 [DisableAutoCreation]
 [AlwaysUpdateSystem]
 public abstract class InitializeComponentSystem<T> : BaseComponentSystem
-	where T : MonoBehaviour
+    where T : MonoBehaviour
 {
-	struct SystemState : IComponentData {}
-	ComponentGroup IncomingGroup;
-	string name;
-	
-	public InitializeComponentSystem(GameWorld world) : base(world) {}
+    struct SystemState : IComponentData
+    {
+    }
 
-	protected override void OnCreateManager()
-	{
-		base.OnCreateManager();
-		name = GetType().Name;
-		IncomingGroup = GetComponentGroup(typeof(T),ComponentType.Subtractive<SystemState>());
-	}
-    
-	protected override void OnUpdate()
-	{
-		Profiler.BeginSample(name);
+    private ComponentGroup _incomingGroup;
+    private string _name;
 
-		var incomingEntityArray = IncomingGroup.GetEntityArray();
-		if (incomingEntityArray.Length > 0)
-		{
-			var incomingComponentArray = IncomingGroup.GetComponentArray<T>();
-			for (var i = 0; i < incomingComponentArray.Length; i++)
-			{
-				var entity = incomingEntityArray[i];
-				PostUpdateCommands.AddComponent(entity,new SystemState());
+    public InitializeComponentSystem(GameWorld world) : base(world)
+    {
+    }
 
-				Initialize(entity, incomingComponentArray[i]);
-			}
-		}
-		
-		Profiler.EndSample();
-	}
+    protected override void OnCreateManager()
+    {
+        base.OnCreateManager();
+        _name = GetType().Name;
+        _incomingGroup = GetComponentGroup(typeof(T), ComponentType.Subtractive<SystemState>());
+    }
 
-	protected abstract void Initialize(Entity entity, T component);
+    protected override void OnUpdate()
+    {
+        Profiler.BeginSample(_name);
+
+        var incomingEntityArray = _incomingGroup.GetEntityArray();
+        if (incomingEntityArray.Length > 0)
+        {
+            var incomingComponentArray = _incomingGroup.GetComponentArray<T>();
+            for (var i = 0; i < incomingComponentArray.Length; i++)
+            {
+                var entity = incomingEntityArray[i];
+                PostUpdateCommands.AddComponent(entity, new SystemState());
+
+                Initialize(entity, incomingComponentArray[i]);
+            }
+        }
+
+        Profiler.EndSample();
+    }
+
+    protected abstract void Initialize(Entity entity, T component);
 }
-
 
 [DisableAutoCreation]
 [AlwaysUpdateSystem]
-public abstract class InitializeComponentDataSystem<T,K> : BaseComponentSystem
-	where T : struct, IComponentData
-	where K : struct, IComponentData
+public abstract class InitializeComponentDataSystem<T, K> : BaseComponentSystem
+    where T : struct, IComponentData
+    where K : struct, IComponentData
 {
-	
-	ComponentGroup IncomingGroup;
-	string name;
-	
-	public InitializeComponentDataSystem(GameWorld world) : base(world) {}
+    private ComponentGroup _incomingGroup;
+    private string _name;
 
-	protected override void OnCreateManager()
-	{
-		base.OnCreateManager();
-		name = GetType().Name;
-		IncomingGroup = GetComponentGroup(typeof(T),ComponentType.Subtractive<K>());
-	}
-    
-	protected override void OnUpdate()
-	{
-		Profiler.BeginSample(name);
+    public InitializeComponentDataSystem(GameWorld world) : base(world)
+    {
+    }
 
-		var incomingEntityArray = IncomingGroup.GetEntityArray();
-		if (incomingEntityArray.Length > 0)
-		{
-			var incomingComponentDataArray = IncomingGroup.GetComponentDataArray<T>();
-			for (var i = 0; i < incomingComponentDataArray.Length; i++)
-			{
-				var entity = incomingEntityArray[i];
-				PostUpdateCommands.AddComponent(entity,new K());
+    protected override void OnCreateManager()
+    {
+        base.OnCreateManager();
+        _name = GetType().Name;
+        _incomingGroup = GetComponentGroup(typeof(T), ComponentType.Subtractive<K>());
+    }
 
-				Initialize(entity, incomingComponentDataArray[i]);
-			}
-		}
-		
-		Profiler.EndSample();
-	}
+    protected override void OnUpdate()
+    {
+        Profiler.BeginSample(_name);
 
-	protected abstract void Initialize(Entity entity, T component);
+        var incomingEntityArray = _incomingGroup.GetEntityArray();
+        if (incomingEntityArray.Length > 0)
+        {
+            var incomingComponentDataArray = _incomingGroup.GetComponentDataArray<T>();
+            for (var i = 0; i < incomingComponentDataArray.Length; i++)
+            {
+                var entity = incomingEntityArray[i];
+                PostUpdateCommands.AddComponent(entity, new K());
+
+                Initialize(entity, incomingComponentDataArray[i]);
+            }
+        }
+
+        Profiler.EndSample();
+    }
+
+    protected abstract void Initialize(Entity entity, T component);
 }
-
-
 
 [DisableAutoCreation]
 [AlwaysUpdateSystem]
 public abstract class DeinitializeComponentSystem<T> : BaseComponentSystem
-	where T : MonoBehaviour
+    where T : MonoBehaviour
 {
-	ComponentGroup OutgoingGroup;
-	string name;
+    private ComponentGroup _outgoingGroup;
+    private string _name;
 
-	public DeinitializeComponentSystem(GameWorld world) : base(world) {}
+    public DeinitializeComponentSystem(GameWorld world) : base(world)
+    {
+    }
 
-	protected override void OnCreateManager()
-	{
-		base.OnCreateManager();
-		name = GetType().Name;
-		OutgoingGroup = GetComponentGroup(typeof(T), typeof(DespawningEntity));
-	}
-    
-	protected override void OnUpdate()
-	{
-		Profiler.BeginSample(name);
+    protected override void OnCreateManager()
+    {
+        base.OnCreateManager();
+        _name = GetType().Name;
+        _outgoingGroup = GetComponentGroup(typeof(T), typeof(DespawningEntity));
+    }
 
-		var outgoingComponentArray = OutgoingGroup.GetComponentArray<T>();
-		var outgoingEntityArray = OutgoingGroup.GetEntityArray();
-		for (var i = 0; i < outgoingComponentArray.Length; i++)
-		{
-			Deinitialize(outgoingEntityArray[i], outgoingComponentArray[i]);
-		}
-		
-		Profiler.EndSample();
-	}
+    protected override void OnUpdate()
+    {
+        Profiler.BeginSample(_name);
 
-	protected abstract void Deinitialize(Entity entity, T component);
+        var outgoingComponentArray = _outgoingGroup.GetComponentArray<T>();
+        var outgoingEntityArray = _outgoingGroup.GetEntityArray();
+        for (var i = 0; i < outgoingComponentArray.Length; i++)
+        {
+            Deinitialize(outgoingEntityArray[i], outgoingComponentArray[i]);
+        }
+
+        Profiler.EndSample();
+    }
+
+    protected abstract void Deinitialize(Entity entity, T component);
 }
-
 
 [DisableAutoCreation]
 [AlwaysUpdateSystem]
 public abstract class DeinitializeComponentDataSystem<T> : BaseComponentSystem
-	where T : struct, IComponentData
+    where T : struct, IComponentData
 {
-	ComponentGroup OutgoingGroup;
-	string name;
+    private ComponentGroup _outgoingGroup;
+    private string _name;
 
-	public DeinitializeComponentDataSystem(GameWorld world) : base(world) {}
+    public DeinitializeComponentDataSystem(GameWorld world) : base(world)
+    {
+    }
 
-	protected override void OnCreateManager()
-	{
-		base.OnCreateManager();
-		name = GetType().Name;
-		OutgoingGroup = GetComponentGroup(typeof(T), typeof(DespawningEntity));
-	}
-    
-	protected override void OnUpdate()
-	{
-		Profiler.BeginSample(name);
+    protected override void OnCreateManager()
+    {
+        base.OnCreateManager();
+        _name = GetType().Name;
+        _outgoingGroup = GetComponentGroup(typeof(T), typeof(DespawningEntity));
+    }
 
-		var outgoingComponentArray = OutgoingGroup.GetComponentDataArray<T>();
-		var outgoingEntityArray = OutgoingGroup.GetEntityArray();
-		for (var i = 0; i < outgoingComponentArray.Length; i++)
-		{
-			Deinitialize(outgoingEntityArray[i], outgoingComponentArray[i]);
-		}
-		
-		Profiler.EndSample();
-	}
+    protected override void OnUpdate()
+    {
+        Profiler.BeginSample(_name);
 
-	protected abstract void Deinitialize(Entity entity, T component);
+        var outgoingComponentArray = _outgoingGroup.GetComponentDataArray<T>();
+        var outgoingEntityArray = _outgoingGroup.GetEntityArray();
+        for (var i = 0; i < outgoingComponentArray.Length; i++)
+        {
+            Deinitialize(outgoingEntityArray[i], outgoingComponentArray[i]);
+        }
+
+        Profiler.EndSample();
+    }
+
+    protected abstract void Deinitialize(Entity entity, T component);
 }
 
 [DisableAutoCreation]
 [AlwaysUpdateSystem]
-public abstract class InitializeComponentGroupSystem<T,S> : BaseComponentSystem
-	where T : MonoBehaviour
-	where S : struct, IComponentData
+public abstract class InitializeComponentGroupSystem<T, S> : BaseComponentSystem
+    where T : MonoBehaviour
+    where S : struct, IComponentData
 {
-	ComponentGroup IncomingGroup;
-	string name;
+    private ComponentGroup _incomingGroup;
+    private string _name;
 
-	public InitializeComponentGroupSystem(GameWorld world) : base(world) {}
+    public InitializeComponentGroupSystem(GameWorld world) : base(world)
+    {
+    }
 
-	protected override void OnCreateManager()
-	{
-		base.OnCreateManager();
-		name = GetType().Name;
-		IncomingGroup = GetComponentGroup(typeof(T),ComponentType.Subtractive<S>());
-	}
-    
-	protected override void OnUpdate()
-	{
-		Profiler.BeginSample(name);
+    protected override void OnCreateManager()
+    {
+        base.OnCreateManager();
+        _name = GetType().Name;
+        _incomingGroup = GetComponentGroup(typeof(T), ComponentType.Subtractive<S>());
+    }
 
-		var incomingEntityArray = IncomingGroup.GetEntityArray();
-		if (incomingEntityArray.Length > 0)
-		{
-			for (var i = 0; i < incomingEntityArray.Length; i++)
-			{
-				var entity = incomingEntityArray[i];
-				PostUpdateCommands.AddComponent(entity,new S());
-			}
-			Initialize(ref IncomingGroup);
-		}
-		Profiler.EndSample();
-	}
+    protected override void OnUpdate()
+    {
+        Profiler.BeginSample(_name);
 
-	protected abstract void Initialize(ref ComponentGroup group);
+        var incomingEntityArray = _incomingGroup.GetEntityArray();
+        if (incomingEntityArray.Length > 0)
+        {
+            for (var i = 0; i < incomingEntityArray.Length; i++)
+            {
+                var entity = incomingEntityArray[i];
+                PostUpdateCommands.AddComponent(entity, new S());
+            }
+
+            Initialize(ref _incomingGroup);
+        }
+
+        Profiler.EndSample();
+    }
+
+    protected abstract void Initialize(ref ComponentGroup group);
 }
-
-
 
 [DisableAutoCreation]
 [AlwaysUpdateSystem]
 public abstract class DeinitializeComponentGroupSystem<T> : BaseComponentSystem
-	where T : MonoBehaviour
+    where T : MonoBehaviour
 {
-	ComponentGroup OutgoingGroup;
-	string name;
+    private ComponentGroup _outgoingGroup;
+    private string _name;
 
-	public DeinitializeComponentGroupSystem(GameWorld world) : base(world) {}
+    public DeinitializeComponentGroupSystem(GameWorld world) : base(world)
+    {
+    }
 
-	protected override void OnCreateManager()
-	{
-		base.OnCreateManager();
-		name = GetType().Name;
-		OutgoingGroup = GetComponentGroup(typeof(T), typeof(DespawningEntity));
-	}
-    
-	protected override void OnUpdate()
-	{
-		Profiler.BeginSample(name);
+    protected override void OnCreateManager()
+    {
+        base.OnCreateManager();
+        _name = GetType().Name;
+        _outgoingGroup = GetComponentGroup(typeof(T), typeof(DespawningEntity));
+    }
 
-		if (OutgoingGroup.CalculateLength() > 0)
-			Deinitialize(ref OutgoingGroup);
-		
-		Profiler.EndSample();
-	}
+    protected override void OnUpdate()
+    {
+        Profiler.BeginSample(_name);
 
-	protected abstract void Deinitialize(ref ComponentGroup group);
+        if (_outgoingGroup.CalculateLength() > 0)
+        {
+            Deinitialize(ref _outgoingGroup);
+        }
+
+        Profiler.EndSample();
+    }
+
+    protected abstract void Deinitialize(ref ComponentGroup group);
 }
