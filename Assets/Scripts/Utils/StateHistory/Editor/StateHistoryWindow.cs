@@ -180,9 +180,9 @@ public class StateHistoryWindow : EditorWindow
             
             GUILayout.Label("Net id:" + netId, GUILayout.Width(stateWidth));            
             
-            var entityName = "Entity i:" + repData.entity.Index + " v:" + repData.entity.Version;
+            var entityName = "Entity i:" + repData.Entity.Index + " v:" + repData.Entity.Version;
             GUILayout.Label(entityName, GUILayout.Width(stateWidth));
-            var gameObjectName = repData.gameObject != null ? repData.gameObject.name : "";
+            var gameObjectName = repData.GameObject != null ? repData.GameObject.name : "";
             GUILayout.Label(gameObjectName, GUILayout.Width(stateWidth));
             GUILayout.EndVertical();
         }

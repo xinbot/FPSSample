@@ -58,8 +58,8 @@ public class StateHistoryInspectorWindow : EditorWindow
 
         GUILayout.BeginHorizontal();
 
-        var entityName = "NetId:" + netId + " E(" + repData.entity.Index + ":" + repData.entity.Version + ")";
-        var goName = repData.gameObject != null ? "(" + repData.gameObject.name + ")" : "";
+        var entityName = "NetId:" + netId + " E(" + repData.Entity.Index + ":" + repData.Entity.Version + ")";
+        var goName = repData.GameObject != null ? "(" + repData.GameObject.name + ")" : "";
         GUILayout.Label("Entity:" + entityName + goName);
         GUILayout.Label("Predict:" + predictStartTick + " to: " + selectedTick + "(" + predictCount + ")");
         columnWidth = EditorGUILayout.IntField("Column width", columnWidth);
@@ -85,12 +85,12 @@ public class StateHistoryInspectorWindow : EditorWindow
         {
             GUILayout.BeginVertical(GUILayout.Width(200));
             GUILayout.Label("Properties:");
-            int predictedHandlerCount = repData.predictedArray.Length;
+            int predictedHandlerCount = repData.PredictedArray.Length;
             for (int i = 0; i < predictedHandlerCount; i++)
             {
                 var sampleIndex = repEntityModule.FindSampleIndexForTick(selectedTick);
-                var predictedState = repData.predictedArray[i].GetPredictedState(sampleIndex, 0);
-                DrawObjectFieldNames(repData.predictedArray[i].GetEntity(), predictedState);
+                var predictedState = repData.PredictedArray[i].GetPredictedState(sampleIndex, 0);
+                DrawObjectFieldNames(repData.PredictedArray[i].GetEntity(), predictedState);
                 
             }
             GUILayout.EndVertical();
@@ -105,11 +105,11 @@ public class StateHistoryInspectorWindow : EditorWindow
             int predictTick = selectedTick - i;
             GUILayout.BeginVertical();
             GUILayout.Label("Tick:" + predictTick, GUILayout.Width(columnWidth));
-            int predictedHandlerCount = repData.predictedArray.Length;
+            int predictedHandlerCount = repData.PredictedArray.Length;
             for (int j = 0; j < predictedHandlerCount; j++)
             {
                 var sampleIndex = repEntityModule.FindSampleIndexForTick(selectedTick);
-                var predictedState = repData.predictedArray[j].GetPredictedState(sampleIndex, i);
+                var predictedState = repData.PredictedArray[j].GetPredictedState(sampleIndex, i);
 
                 var bg = GUI.color;
                 GUI.color = i == 0 ? Color.cyan : new Color(0.0f, 0.7f, 0.7f, 1f);
@@ -122,16 +122,16 @@ public class StateHistoryInspectorWindow : EditorWindow
         {
             GUILayout.BeginVertical();
             GUILayout.Label("ServerState:");
-            int predictedHandlerCount = repData.predictedArray.Length;
+            int predictedHandlerCount = repData.PredictedArray.Length;
             for (int i = 0; i < predictedHandlerCount; i++)
             {
-                var serverState = repData.predictedArray[i].GetServerState(selectedTick);
+                var serverState = repData.PredictedArray[i].GetServerState(selectedTick);
                 
                 if(serverState == null)
                     continue;
 
                 var sampleIndex = repEntityModule.FindSampleIndexForTick(selectedTick);
-                var verified = repData.predictedArray[i].VerifyPrediction(sampleIndex, selectedTick);
+                var verified = repData.PredictedArray[i].VerifyPrediction(sampleIndex, selectedTick);
 
                 var bg = GUI.color;
                 GUI.color = verified ? Color.green : Color.red;
