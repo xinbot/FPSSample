@@ -95,7 +95,7 @@ public class ReplicatedEntityRegistry : RegistryBase
 //            var stage =  PrefabStageUtility.GetPrefabStage(go);
 //            stage.prefabAssetPath          
             
-            replicated.SetAssetGUID(guid);
+            replicated.SetAssetGuid(guid);
             
             Debug.Log("   Adding guid:" + guid + " prefab:" + path);
             

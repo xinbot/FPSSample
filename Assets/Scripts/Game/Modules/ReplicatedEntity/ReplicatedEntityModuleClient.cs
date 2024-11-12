@@ -80,7 +80,7 @@ public class ReplicatedEntityModuleClient : ISnapshotConsumer
         Profiler.BeginSample("ReplicatedEntitySystemClient.ProcessEntitySpawns()");
 
         var replicatedDataEntity = _world.GetEntityManager().GetComponentData<ReplicatedEntityData>(entity);
-        replicatedDataEntity.id = id;
+        replicatedDataEntity.ID = id;
         _world.GetEntityManager().SetComponentData(entity, replicatedDataEntity);
 
         _entityCollection.Register(_world.GetEntityManager(), id, entity);

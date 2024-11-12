@@ -32,7 +32,7 @@ public class PlayerModuleServer
         // Mark the playerstate as 'owned' by ourselves so we can reduce amount of
         // data replicated out from server
         var re = entityManager.GetComponentData<ReplicatedEntityData>(entity);
-        re.predictingPlayerId = playerId;
+        re.PredictingPlayerId = playerId;
         entityManager.SetComponentData(entity,re);
             
         return playerState;

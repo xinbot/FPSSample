@@ -126,12 +126,12 @@ public class HandleCharacterSpawnRequests : BaseComponentSystem
         
         // Set as predicted by owner
         var replicatedEntity = EntityManager.GetComponentData<ReplicatedEntityData>(charEntity);
-        replicatedEntity.predictingPlayerId = owner.playerId;
+        replicatedEntity.PredictingPlayerId = owner.playerId;
         EntityManager.SetComponentData(charEntity,replicatedEntity);
         
         
         var behaviorCtrlRepEntity = EntityManager.GetComponentData<ReplicatedEntityData>(charRepAll.abilityCollection);
-        behaviorCtrlRepEntity.predictingPlayerId = owner.playerId;
+        behaviorCtrlRepEntity.PredictingPlayerId = owner.playerId;
         EntityManager.SetComponentData(charRepAll.abilityCollection, behaviorCtrlRepEntity);
         
         return character;

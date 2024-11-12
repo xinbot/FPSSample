@@ -123,7 +123,7 @@ public class GameWorld
 
             var replicatedEntityData =
                 gameObjectEntity.EntityManager.GetComponentData<ReplicatedEntityData>(gameObjectEntity.Entity);
-            replicatedEntityData.id = i;
+            replicatedEntityData.ID = i;
             gameObjectEntity.EntityManager.SetComponentData(gameObjectEntity.Entity, replicatedEntityData);
         }
 

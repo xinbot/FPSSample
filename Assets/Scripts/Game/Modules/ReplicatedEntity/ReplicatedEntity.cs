@@ -13,15 +13,16 @@ using UnityEditor.Experimental.SceneManagement;
 [Serializable]
 public struct ReplicatedEntityData : IComponentData, IReplicatedComponent
 {
-    public WeakAssetReference assetGuid; // Guid of asset this entity is created from
-    [NonSerialized] public int id;
-    [NonSerialized] public int predictingPlayerId;
+    // Guid of asset this entity is created from
+    public WeakAssetReference assetGuid;
+    [NonSerialized] public int ID;
+    [NonSerialized] public int PredictingPlayerId;
 
     public ReplicatedEntityData(WeakAssetReference guid)
     {
         assetGuid = guid;
-        id = -1;
-        predictingPlayerId = -1;
+        ID = -1;
+        PredictingPlayerId = -1;
     }
 
     public static IReplicatedComponentSerializerFactory CreateSerializerFactory()
@@ -31,12 +32,12 @@ public struct ReplicatedEntityData : IComponentData, IReplicatedComponent
 
     public void Serialize(ref SerializeContext context, ref NetworkWriter writer)
     {
-        writer.WriteInt32("predictingPlayerId", predictingPlayerId);
+        writer.WriteInt32("predictingPlayerId", PredictingPlayerId);
     }
 
     public void Deserialize(ref SerializeContext context, ref NetworkReader reader)
     {
-        predictingPlayerId = reader.ReadInt32();
+        PredictingPlayerId = reader.ReadInt32();
     }
 }
 
@@ -44,43 +45,50 @@ public struct ReplicatedEntityData : IComponentData, IReplicatedComponent
 [RequireComponent(typeof(GameObjectEntity))]
 public class ReplicatedEntity : ComponentDataProxy<ReplicatedEntityData>
 {
-    public byte[] netID; // guid of instance. Used for identifying replicated entities from the scene
+    // guid of instance. Used for identifying replicated entities from the scene
+    public byte[] netID;
 
     private void Awake()
     {
         // Ensure replicatedEntityData is set to default
         var val = Value;
-        val.id = -1;
-        val.predictingPlayerId = -1;
+        val.ID = -1;
+        val.PredictingPlayerId = -1;
         Value = val;
 #if UNITY_EDITOR
         if (!EditorApplication.isPlaying)
+        {
             SetUniqueNetID();
+        }
 #endif
     }
 
 #if UNITY_EDITOR
 
-    public static Dictionary<byte[], ReplicatedEntity> netGuidMap =
+    public static readonly Dictionary<byte[], ReplicatedEntity> NetGuidMap =
         new Dictionary<byte[], ReplicatedEntity>(new ByteArrayComp());
 
     private void OnValidate()
     {
         if (EditorApplication.isPlaying)
+        {
             return;
+        }
 
-        PrefabType prefabType = PrefabUtility.GetPrefabType(this);
-        if (prefabType == PrefabType.Prefab || prefabType == PrefabType.ModelPrefab)
+        PrefabAssetType prefabAssetType = PrefabUtility.GetPrefabAssetType(this);
+        if (prefabAssetType == PrefabAssetType.Regular || prefabAssetType == PrefabAssetType.Model)
         {
             netID = null;
         }
         else
+        {
             SetUniqueNetID();
+        }
 
         UpdateAssetGuid();
     }
 
-    public bool SetAssetGUID(string guidStr)
+    public bool SetAssetGuid(string guidStr)
     {
         var guid = new WeakAssetReference(guidStr);
         var val = Value;
@@ -103,8 +111,10 @@ public class ReplicatedEntity : ComponentDataProxy<ReplicatedEntityData>
         if (stage != null)
         {
             var guidStr = AssetDatabase.AssetPathToGUID(stage.prefabAssetPath);
-            if (SetAssetGUID(guidStr))
+            if (SetAssetGuid(guidStr))
+            {
                 EditorSceneManager.MarkSceneDirty(stage.scene);
+            }
         }
     }
 
@@ -113,43 +123,41 @@ public class ReplicatedEntity : ComponentDataProxy<ReplicatedEntityData>
         // Generate new if fresh object
         if (netID == null || netID.Length == 0)
         {
-            var guid = System.Guid.NewGuid();
+            var guid = Guid.NewGuid();
             netID = guid.ToByteArray();
             EditorSceneManager.MarkSceneDirty(gameObject.scene);
         }
 
         // If we are the first add us
-        if (!netGuidMap.ContainsKey(netID))
+        if (!NetGuidMap.ContainsKey(netID))
         {
-            netGuidMap[netID] = this;
+            NetGuidMap[netID] = this;
             return;
         }
 
-
         // Our guid is known and in use by another object??
-        var oldReg = netGuidMap[netID];
-        if (oldReg != null && oldReg.GetInstanceID() != this.GetInstanceID() &&
+        var oldReg = NetGuidMap[netID];
+        if (oldReg != null && oldReg.GetInstanceID() != GetInstanceID() &&
             ByteArrayComp.Instance.Equals(oldReg.netID, netID))
         {
             // If actually *is* another ReplEnt that has our netID, *then* we give it up (usually happens because of copy / paste)
-            netID = System.Guid.NewGuid().ToByteArray();
+            netID = Guid.NewGuid().ToByteArray();
             EditorSceneManager.MarkSceneDirty(gameObject.scene);
         }
 
-        netGuidMap[netID] = this;
+        NetGuidMap[netID] = this;
     }
 
 #endif
 }
 
-
 [DisableAutoCreation]
 public class UpdateReplicatedOwnerFlag : BaseComponentSystem
 {
-    ComponentGroup RepEntityDataGroup;
+    private ComponentGroup _repEntityDataGroup;
 
-    int m_localPlayerId;
-    bool m_initialized;
+    private int _localPlayerId;
+    private bool _initialized;
 
     public UpdateReplicatedOwnerFlag(GameWorld world) : base(world)
     {
@@ -158,51 +166,55 @@ public class UpdateReplicatedOwnerFlag : BaseComponentSystem
     protected override void OnCreateManager()
     {
         base.OnCreateManager();
-        RepEntityDataGroup = GetComponentGroup(typeof(ReplicatedEntityData));
+        _repEntityDataGroup = GetComponentGroup(typeof(ReplicatedEntityData));
     }
 
     public void SetLocalPlayerId(int playerId)
     {
-        m_localPlayerId = playerId;
-        m_initialized = true;
+        _localPlayerId = playerId;
+        _initialized = true;
     }
 
     protected override void OnUpdate()
     {
-        var entityArray = RepEntityDataGroup.GetEntityArray();
-        var repEntityDataArray = RepEntityDataGroup.GetComponentDataArray<ReplicatedEntityData>();
-        for (int i = 0; i < entityArray.Length; i++)
+        var entityArray = _repEntityDataGroup.GetEntityArray();
+        var repEntityDataArray = _repEntityDataGroup.GetComponentDataArray<ReplicatedEntityData>();
+        for (var i = 0; i < entityArray.Length; i++)
         {
             var repDataEntity = repEntityDataArray[i];
-            var locallyControlled = m_localPlayerId == -1 || repDataEntity.predictingPlayerId == m_localPlayerId;
+            var locallyControlled = _localPlayerId == -1 || repDataEntity.PredictingPlayerId == _localPlayerId;
 
             SetFlagAndChildFlags(entityArray[i], locallyControlled);
         }
     }
 
-    void SetFlagAndChildFlags(Entity entity, bool set)
+    private void SetFlagAndChildFlags(Entity entity, bool set)
     {
         SetFlag(entity, set);
 
         if (EntityManager.HasComponent<EntityGroupChildren>(entity))
         {
             var buffer = EntityManager.GetBuffer<EntityGroupChildren>(entity);
-            for (int i = 0; i < buffer.Length; i++)
+            for (var i = 0; i < buffer.Length; i++)
             {
                 SetFlag(buffer[i].Entity, set);
             }
         }
     }
 
-    void SetFlag(Entity entity, bool set)
+    private void SetFlag(Entity entity, bool set)
     {
         var flagSet = EntityManager.HasComponent<ServerEntity>(entity);
         if (flagSet != set)
         {
             if (set)
+            {
                 PostUpdateCommands.AddComponent(entity, new ServerEntity());
+            }
             else
+            {
                 PostUpdateCommands.RemoveComponent<ServerEntity>(entity);
+            }
         }
     }
 }

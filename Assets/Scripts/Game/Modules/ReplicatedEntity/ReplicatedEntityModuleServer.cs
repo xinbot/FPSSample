@@ -25,16 +25,16 @@ public class HandleReplicatedEntityDataSpawn : InitializeComponentDataSystem<Rep
     protected override void Initialize(Entity entity, ReplicatedEntityData component)
     {
         var typeId = _assetRegistry.GetEntryIndex(component.assetGuid);
-        component.id = _network.RegisterEntity(component.id, (ushort) typeId, component.predictingPlayerId);
+        component.ID = _network.RegisterEntity(component.ID, (ushort) typeId, component.PredictingPlayerId);
 
-        _entityCollection.Register(EntityManager, component.id, entity);
+        _entityCollection.Register(EntityManager, component.ID, entity);
 
         PostUpdateCommands.SetComponent(entity, component);
 
         if (ReplicatedEntityModuleServer.ShowInfo.IntValue > 0)
         {
             GameDebug.Log("HandleReplicatedEntityDataSpawn.Initialize entity:" + entity + " type:" + typeId + " id:" +
-                          component.id);
+                          component.ID);
         }
     }
 }
@@ -56,11 +56,11 @@ public class HandleReplicatedEntityDataDespawn : DeinitializeComponentDataSystem
     {
         if (ReplicatedEntityModuleServer.ShowInfo.IntValue > 0)
         {
-            GameDebug.Log("HandleReplicatedEntityDataDespawn.Deinitialize entity:" + entity + " id:" + component.id);
+            GameDebug.Log("HandleReplicatedEntityDataDespawn.Deinitialize entity:" + entity + " id:" + component.ID);
         }
 
-        _entityCollection.Unregister(EntityManager, component.id);
-        _network.UnregisterEntity(component.id);
+        _entityCollection.Unregister(EntityManager, component.ID);
+        _network.UnregisterEntity(component.ID);
     }
 }
 
@@ -127,7 +127,7 @@ public class ReplicatedEntityModuleServer
             var gameObjectEntity = _world.SceneEntities[i].GetComponent<GameObjectEntity>();
             var repEntityData = _world.GetEntityManager()
                 .GetComponentData<ReplicatedEntityData>(gameObjectEntity.Entity);
-            GameDebug.Assert(repEntityData.id == i, "Scene entities must be have the first network ids!");
+            GameDebug.Assert(repEntityData.ID == i, "Scene entities must be have the first network ids!");
         }
 
         networkServer.ReserveSceneEntities(_world.SceneEntities.Count);

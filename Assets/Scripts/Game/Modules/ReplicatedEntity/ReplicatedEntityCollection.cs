@@ -335,7 +335,7 @@ public class ReplicatedEntityCollection : IEntityReferenceSerializer
         if (m_world.GetEntityManager().HasComponent<ReplicatedEntityData>(entity))
         {
             var replicatedDataEntity = m_world.GetEntityManager().GetComponentData<ReplicatedEntityData>(entity);
-            writer.WriteInt32(name, replicatedDataEntity.id);
+            writer.WriteInt32(name, replicatedDataEntity.ID);
             return;
         }
 
