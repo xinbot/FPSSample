@@ -1,38 +1,37 @@
-﻿using System.Collections.Generic;
-using UnityEngine;
-using Unity.Entities;
-
-public class EffectModuleClient      
+﻿public class EffectModuleClient
 {
+    private readonly GameWorld _gameWorld;
+    private readonly BundledResourceManager _resourceSystem;
+
+    private HandleSpatialEffectRequests _handleSpatialEffectRequests;
+    private HandleHitScanEffectRequests _handleHitScanEffectRequests;
+    private VFXSystem _VFXSystem;
+
     public EffectModuleClient(GameWorld world, BundledResourceManager resourceSystem)
     {
-        m_GameWorld = world;
-        m_resourceSystem = resourceSystem;
+        _gameWorld = world;
+        _resourceSystem = resourceSystem;
 
-        m_HandleSpatialEffectRequests = m_GameWorld.GetECSWorld().CreateManager<HandleSpatialEffectRequests>(m_GameWorld);
-        m_HandleHitscanEffectRequests = m_GameWorld.GetECSWorld().CreateManager<HandleHitscanEffectRequests>(m_GameWorld);
-        m_VFXSystem = m_GameWorld.GetECSWorld().CreateManager<VFXSystem>();
+        _handleSpatialEffectRequests =
+            _gameWorld.GetECSWorld().CreateManager<HandleSpatialEffectRequests>(_gameWorld);
+
+        _handleHitScanEffectRequests =
+            _gameWorld.GetECSWorld().CreateManager<HandleHitScanEffectRequests>(_gameWorld);
+
+        _VFXSystem = _gameWorld.GetECSWorld().CreateManager<VFXSystem>();
     }
 
     public void Shutdown()
     {
-        m_GameWorld.GetECSWorld().DestroyManager(m_HandleSpatialEffectRequests);
-        m_GameWorld.GetECSWorld().DestroyManager(m_HandleHitscanEffectRequests);
-        m_GameWorld.GetECSWorld().DestroyManager(m_VFXSystem);
+        _gameWorld.GetECSWorld().DestroyManager(_handleSpatialEffectRequests);
+        _gameWorld.GetECSWorld().DestroyManager(_handleHitScanEffectRequests);
+        _gameWorld.GetECSWorld().DestroyManager(_VFXSystem);
     }
 
     public void ClientUpdate()
     {
-        m_HandleSpatialEffectRequests.Update();
-        m_HandleHitscanEffectRequests.Update();
-        m_VFXSystem.Update();
+        _handleSpatialEffectRequests.Update();
+        _handleHitScanEffectRequests.Update();
+        _VFXSystem.Update();
     }
-
-    
-    readonly GameWorld m_GameWorld;
-    readonly BundledResourceManager m_resourceSystem;
-
-    HandleSpatialEffectRequests m_HandleSpatialEffectRequests;
-    HandleHitscanEffectRequests m_HandleHitscanEffectRequests;
-    VFXSystem m_VFXSystem;
 }

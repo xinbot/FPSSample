@@ -4,43 +4,45 @@ using UnityEngine;
 
 [AlwaysUpdateSystem]
 [DisableAutoCreation]
-public class HandleHitscanEffectRequests : BaseComponentSystem 
+public class HandleHitScanEffectRequests : BaseComponentSystem
 {
-	struct HitscanEffectReques 
-	{
-		public HitscanEffectTypeDefinition effectDef;
-		public Vector3 startPos;
-		public Vector3 endPos;
-	}
-	
-	List<HitscanEffectReques> m_requests = new List<HitscanEffectReques>(32);
-	
-	public void Request(HitscanEffectTypeDefinition effectDef, Vector3 startPos, Vector3 endPos)
-	{
-		m_requests.Add(new HitscanEffectReques
-		{
-			effectDef = effectDef,
-			startPos = startPos,
-			endPos = endPos,
-		});
-	}
-	
-	public HandleHitscanEffectRequests(GameWorld world) : base(world)
-	{}
+    private struct HitScanEffectRequest
+    {
+        public HitscanEffectTypeDefinition EffectDef;
+        public Vector3 StartPos;
+        public Vector3 EndPos;
+    }
 
-	protected override void OnUpdate()
-	{
-		for (int nRequest = 0; nRequest < m_requests.Count; nRequest++)
-		{
-			var request = m_requests[nRequest];
-			
-			if(request.effectDef.effect != null)
-			{
-				var vfxSystem = World.GetExistingManager<VFXSystem>();
-				
-				vfxSystem.SpawnLineEffect(request.effectDef.effect, request.startPos, request.endPos);
-			}
-		}
-		m_requests.Clear();
-	}
+    private readonly List<HitScanEffectRequest> _requests = new List<HitScanEffectRequest>(32);
+
+    public void Request(HitscanEffectTypeDefinition effectDef, Vector3 startPos, Vector3 endPos)
+    {
+        _requests.Add(new HitScanEffectRequest
+        {
+            EffectDef = effectDef,
+            StartPos = startPos,
+            EndPos = endPos,
+        });
+    }
+
+    public HandleHitScanEffectRequests(GameWorld world) : base(world)
+    {
+    }
+
+    protected override void OnUpdate()
+    {
+        for (var i = 0; i < _requests.Count; i++)
+        {
+            var request = _requests[i];
+            if (request.EffectDef.effect == null)
+            {
+                continue;
+            }
+
+            var vfxSystem = World.GetExistingManager<VFXSystem>();
+            vfxSystem.SpawnLineEffect(request.EffectDef.effect, request.StartPos, request.EndPos);
+        }
+
+        _requests.Clear();
+    }
 }

@@ -1,5 +1,4 @@
-﻿using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using Unity.Entities;
 using Unity.Mathematics;
 using UnityEngine;
@@ -8,174 +7,147 @@ using UnityEngine.Experimental.VFX;
 [DisableAutoCreation]
 public class VFXSystem : ComponentSystem
 {
-    static readonly int positionID = Shader.PropertyToID("position");
-    static readonly int targetPositionID = Shader.PropertyToID("targetPosition");
-    static readonly int directionID = Shader.PropertyToID("direction");
+    private static readonly int PositionID = Shader.PropertyToID("position");
+    private static readonly int TargetPositionID = Shader.PropertyToID("targetPosition");
+    private static readonly int DirectionID = Shader.PropertyToID("direction");
 
-    class EffectTypeData
+    private class EffectTypeData
     {
-        public VisualEffect visualEffect;
-        
         // TODO (mogensh) For performance reasons we want to stop effects that are "done". For now all effect use same timeout duration.  
-        public float maxDuration = 4.0f;
-        public bool active;
-        public float lastTriggerTime;
-        
-        public VFXEventAttribute eventAttribute;
-    }
-    
-//    struct EffectInstance
-//    {
-//        public VFXEventAttribute eventAttribute;
-//    }
+        public const float MaxDuration = 4.0f;
+        public bool Active;
+        public float LastTriggerTime;
 
-    struct PointEffectRequest
+        public VisualEffect VisualEffect;
+        public VFXEventAttribute EventAttribute;
+    }
+
+    private struct PointEffectRequest
     {
-        public float3 position;
-        public float3 normal;
-        public VisualEffectAsset asset;
+        public float3 Position;
+        public float3 Normal;
+        public VisualEffectAsset Asset;
     }
 
-    struct LineEffectRequest
+    private struct LineEffectRequest
     {
-        public float3 start;
-        public float3 end;
-        public VisualEffectAsset asset;
+        public float3 Start;
+        public float3 End;
+        public VisualEffectAsset Asset;
     }
 
-    
-    GameObject m_rootGameObject;
-    List<PointEffectRequest> m_pointEffectRequests = new List<PointEffectRequest>(32);
-    List<LineEffectRequest> m_lineEffectRequests = new List<LineEffectRequest>(32);
-    Dictionary<VisualEffectAsset, EffectTypeData> m_EffectTypeData = new Dictionary<VisualEffectAsset, EffectTypeData>(32);
-//    private static List<EffectInstance> s_effectInstances = new List<EffectInstance>(128);
-    
+    private GameObject _rootGameObject;
+    private readonly List<PointEffectRequest> _pointEffectRequests = new List<PointEffectRequest>(32);
+    private readonly List<LineEffectRequest> _lineEffectRequests = new List<LineEffectRequest>(32);
+
+    private readonly Dictionary<VisualEffectAsset, EffectTypeData> _effectTypeData =
+        new Dictionary<VisualEffectAsset, EffectTypeData>(32);
 
     protected override void OnCreateManager()
     {
         base.OnCreateManager();
-        
-        m_rootGameObject= new GameObject("VFXSystem");
-        m_rootGameObject.transform.position = Vector3.zero;
-        m_rootGameObject.transform.rotation = Quaternion.identity;
-        GameObject.DontDestroyOnLoad(m_rootGameObject);
+
+        _rootGameObject = new GameObject("VFXSystem");
+        _rootGameObject.transform.position = Vector3.zero;
+        _rootGameObject.transform.rotation = Quaternion.identity;
+        Object.DontDestroyOnLoad(_rootGameObject);
     }
 
     protected override void OnDestroyManager()
     {
         base.OnDestroyManager();
 
-        foreach (var effectType in m_EffectTypeData.Values)
+        foreach (var effectType in _effectTypeData.Values)
         {
-            effectType.visualEffect.Reinit();
+            effectType.VisualEffect.Reinit();
         }
     }
 
-    
     public void SpawnPointEffect(VisualEffectAsset asset, float3 position, float3 normal)
     {
-        m_pointEffectRequests.Add(new PointEffectRequest
+        _pointEffectRequests.Add(new PointEffectRequest
         {
-            asset = asset,
-            position = position,
-            normal = normal,
-        });
-    }
-    
-    public void SpawnLineEffect(VisualEffectAsset asset, float3 start, float3 end)
-    {
-        m_lineEffectRequests.Add(new LineEffectRequest
-        {
-            asset = asset,
-            start = start,
-            end = end,
+            Asset = asset,
+            Position = position,
+            Normal = normal,
         });
     }
 
-//    public static void StopImpact(VisualEffectAsset template)
-//    {
-//        if (!s_Impacts.ContainsKey(template))
-//            RegisterImpactType(template);
-//
-//        s_Impacts[template].Stop();
-//    }
+    public void SpawnLineEffect(VisualEffectAsset asset, float3 start, float3 end)
+    {
+        _lineEffectRequests.Add(new LineEffectRequest
+        {
+            Asset = asset,
+            Start = start,
+            End = end,
+        });
+    }
 
     protected override void OnUpdate()
     {
         // Handle request
-        foreach (var request in m_pointEffectRequests)
+        foreach (var request in _pointEffectRequests)
         {
             EffectTypeData effectType;
-            if(!m_EffectTypeData.TryGetValue(request.asset, out effectType))
-                effectType = RegisterImpactType(request.asset);
-            
-//            GameDebug.Log("Spawn effect:" + effectType.visualEffect.name + " pos:" + request.position);
-
-            effectType.eventAttribute.SetVector3(positionID, request.position);
-            effectType.eventAttribute.SetVector3(directionID, request.normal);
-            effectType.visualEffect.Play(effectType.eventAttribute);
-            effectType.visualEffect.pause = false;
-            effectType.lastTriggerTime = (float)Game.FrameTime;
-            effectType.active = true; 
-        }
-        m_pointEffectRequests.Clear();
-
-        foreach (var request in m_lineEffectRequests)
-        {
-            EffectTypeData effectType;
-            if(!m_EffectTypeData.TryGetValue(request.asset, out effectType))
-                effectType = RegisterImpactType(request.asset);
-
-//            GameDebug.Log("Spawn effect:" + effectType.visualEffect.name + " start:" + request.start);
-
-            effectType.eventAttribute.SetVector3(positionID, request.start);
-            effectType.eventAttribute.SetVector3(targetPositionID, request.end);
-            effectType.visualEffect.Play(effectType.eventAttribute);
-            effectType.visualEffect.pause = false;
-            effectType.lastTriggerTime = (float)Game.FrameTime;
-            effectType.active = true;
-        }
-        m_lineEffectRequests.Clear();
-        
-        
-        
-        
-        
-//        int i = 0;       
-//        while (i < s_effectInstances.Count)
-//        {
-//            if (s_effectInstances[i].endTime >= Game.frameTime)
-//            {
-//                s_effectInstances.EraseSwap(i);  
-//            }
-//            else
-//            {
-//                i++;
-//            }            
-//        }
-
-        foreach (var effectTypeData in m_EffectTypeData.Values)
-        {
-            if (effectTypeData.active &&
-                (float) Game.FrameTime > effectTypeData.lastTriggerTime + effectTypeData.maxDuration)
+            if (!_effectTypeData.TryGetValue(request.Asset, out effectType))
             {
-//                GameDebug.Log("Reinint effect:" + effectTypeData.visualEffect.name);
-                effectTypeData.visualEffect.pause = true;
-                effectTypeData.active = false;
+                effectType = RegisterImpactType(request.Asset);
+            }
+
+            // GameDebug.Log("Spawn effect:" + effectType.visualEffect.name + " pos:" + request.position);
+
+            effectType.EventAttribute.SetVector3(PositionID, request.Position);
+            effectType.EventAttribute.SetVector3(DirectionID, request.Normal);
+            effectType.VisualEffect.Play(effectType.EventAttribute);
+            effectType.VisualEffect.pause = false;
+            effectType.LastTriggerTime = (float) Game.FrameTime;
+            effectType.Active = true;
+        }
+
+        _pointEffectRequests.Clear();
+
+        foreach (var request in _lineEffectRequests)
+        {
+            EffectTypeData effectType;
+            if (!_effectTypeData.TryGetValue(request.Asset, out effectType))
+            {
+                effectType = RegisterImpactType(request.Asset);
+            }
+
+            // GameDebug.Log("Spawn effect:" + effectType.visualEffect.name + " start:" + request.start);
+
+            effectType.EventAttribute.SetVector3(PositionID, request.Start);
+            effectType.EventAttribute.SetVector3(TargetPositionID, request.End);
+            effectType.VisualEffect.Play(effectType.EventAttribute);
+            effectType.VisualEffect.pause = false;
+            effectType.LastTriggerTime = (float) Game.FrameTime;
+            effectType.Active = true;
+        }
+
+        _lineEffectRequests.Clear();
+
+        foreach (var effectTypeData in _effectTypeData.Values)
+        {
+            var isAlive = (float) Game.FrameTime > effectTypeData.LastTriggerTime + EffectTypeData.MaxDuration;
+            if (effectTypeData.Active && isAlive)
+            {
+                effectTypeData.VisualEffect.pause = true;
+                effectTypeData.Active = false;
             }
         }
     }
-    
-    EffectTypeData RegisterImpactType(VisualEffectAsset template)
+
+    private EffectTypeData RegisterImpactType(VisualEffectAsset template)
     {
-        GameDebug.Assert(!m_EffectTypeData.ContainsKey(template));
-        GameDebug.Assert(!template != null);
-        
-        GameObject go = new GameObject(template.name);
-        go.transform.parent = m_rootGameObject.transform;
+        GameDebug.Assert(!_effectTypeData.ContainsKey(template));
+        GameDebug.Assert(template != null);
+
+        var go = new GameObject(template.name);
+        go.transform.parent = _rootGameObject.transform;
         go.transform.position = Vector3.zero;
         go.transform.rotation = Quaternion.identity;
         go.transform.localScale = Vector3.one;
+
         var vfx = go.AddComponent<VisualEffect>();
         vfx.visualEffectAsset = template;
         vfx.Reinit();
@@ -183,11 +155,11 @@ public class VFXSystem : ComponentSystem
 
         var data = new EffectTypeData
         {
-            visualEffect = vfx,
-            eventAttribute = vfx.CreateVFXEventAttribute(),
+            VisualEffect = vfx,
+            EventAttribute = vfx.CreateVFXEventAttribute(),
         };
-        
-        m_EffectTypeData.Add(template, data);
+
+        _effectTypeData.Add(template, data);
 
         return data;
     }

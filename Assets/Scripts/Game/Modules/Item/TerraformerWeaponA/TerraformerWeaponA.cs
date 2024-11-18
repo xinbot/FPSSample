@@ -88,7 +88,7 @@ public class UpdateTerraformerWeaponA : BaseComponentSystem<CharacterPresentatio
 
             if (weapon.hitscanEffect != null)
             {
-                World.GetExistingManager<HandleHitscanEffectRequests>().Request(weapon.hitscanEffect, 
+                World.GetExistingManager<HandleHitScanEffectRequests>().Request(weapon.hitscanEffect, 
                     weapon.muzzle.position, autoRifleInterpolatedState.fireEndPos);
             }
 
