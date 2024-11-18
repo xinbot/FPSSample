@@ -26,13 +26,13 @@ public class ApplyGrenadePresentation : BaseComponentSystem
         {
             var grenadeClient = grenadeClientArray[i];
             var presentation = presentationArray[i];
-            if (!EntityManager.Exists(presentation.ownerEntity))
+            if (!EntityManager.Exists(presentation.OwnerEntity))
             {
-                GameDebug.LogError("ApplyGrenadePresentation. Entity does not exist;" + presentation.ownerEntity);
+                GameDebug.LogError("ApplyGrenadePresentation. Entity does not exist;" + presentation.OwnerEntity);
                 continue;
             }
 
-            var interpolatedState = EntityManager.GetComponentData<Grenade.InterpolatedState>(presentation.ownerEntity);
+            var interpolatedState = EntityManager.GetComponentData<Grenade.InterpolatedState>(presentation.OwnerEntity);
 
             grenadeClient.transform.position = interpolatedState.position;
 
