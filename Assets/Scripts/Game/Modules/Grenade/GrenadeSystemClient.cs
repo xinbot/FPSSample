@@ -1,26 +1,27 @@
 ﻿using UnityEngine;
 using Unity.Entities;
 
-
-
 [DisableAutoCreation]
 public class ApplyGrenadePresentation : BaseComponentSystem
 {
-    ComponentGroup Group;   
-    
-    public ApplyGrenadePresentation(GameWorld world) : base(world) { }
+    private ComponentGroup _group;
+
+    public ApplyGrenadePresentation(GameWorld world) : base(world)
+    {
+    }
 
     protected override void OnCreateManager()
     {
         base.OnCreateManager();
-        Group = GetComponentGroup(typeof(GrenadeClient),typeof(PresentationEntity),ComponentType.Subtractive<DespawningEntity>());
+        _group = GetComponentGroup(typeof(GrenadeClient), typeof(PresentationEntity),
+            ComponentType.Subtractive<DespawningEntity>());
     }
 
     protected override void OnUpdate()
     {
-        var grenadeClientArray = Group.GetComponentArray<GrenadeClient>();
-        var presentationArray = Group.GetComponentArray<PresentationEntity>();
-        
+        var grenadeClientArray = _group.GetComponentArray<GrenadeClient>();
+        var presentationArray = _group.GetComponentArray<PresentationEntity>();
+
         for (var i = 0; i < grenadeClientArray.Length; i++)
         {
             var grenadeClient = grenadeClientArray[i];
@@ -30,30 +31,29 @@ public class ApplyGrenadePresentation : BaseComponentSystem
                 GameDebug.LogError("ApplyGrenadePresentation. Entity does not exist;" + presentation.ownerEntity);
                 continue;
             }
-            
+
             var interpolatedState = EntityManager.GetComponentData<Grenade.InterpolatedState>(presentation.ownerEntity);
-            
+
             grenadeClient.transform.position = interpolatedState.position;
-            
-            if(interpolatedState.bouncetick > grenadeClient.bounceTick)
+
+            if (interpolatedState.bouncetick > grenadeClient.BounceTick)
             {
-                grenadeClient.bounceTick = interpolatedState.bouncetick;
+                grenadeClient.BounceTick = interpolatedState.bouncetick;
                 Game.soundSystem.Play(grenadeClient.bounceSound, interpolatedState.position);
             }
-            
-            if (interpolatedState.exploded == 1 && !grenadeClient.exploded)
+
+            if (interpolatedState.exploded == 1 && !grenadeClient.Exploded)
             {
-                grenadeClient.exploded = true;
-                
+                grenadeClient.Exploded = true;
+
                 grenadeClient.geometry.SetActive(false);
-                
+
                 if (grenadeClient.explodeEffect != null)
                 {
-                    World.GetExistingManager<HandleSpatialEffectRequests>().Request(grenadeClient.explodeEffect, 
-                        interpolatedState.position,Quaternion.identity);
+                    World.GetExistingManager<HandleSpatialEffectRequests>().Request(grenadeClient.explodeEffect,
+                        interpolatedState.position, Quaternion.identity);
                 }
             }
         }
     }
 }
-

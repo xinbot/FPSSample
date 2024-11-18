@@ -1,114 +1,117 @@
-﻿using System;
-using Unity.Mathematics;
+﻿using Unity.Mathematics;
 using UnityEngine;
 using Unity.Entities;
 using UnityEngine.Profiling;
 
 public struct GrenadeSpawnRequest : IComponentData
 {
-    public WeakAssetReference assetGuid;
-    public Vector3 position;
-    public Vector3 velocity;
-    public Entity owner;
-    public int teamId;
-    
-    public static void Create(EntityCommandBuffer commandBuffer, WeakAssetReference assetGuid, Vector3 position, Vector3 velocity, Entity owner, int teamId)
+    public WeakAssetReference AssetGuid;
+    public Vector3 Position;
+    public Vector3 Velocity;
+    public Entity Owner;
+    public int TeamId;
+
+    public static void Create(EntityCommandBuffer commandBuffer, WeakAssetReference assetGuid, Vector3 position,
+        Vector3 velocity, Entity owner, int teamId)
     {
         var data = new GrenadeSpawnRequest();
-        data.assetGuid = assetGuid;
-        data.position = position;
-        data.velocity = velocity;
-        data.owner = owner;
-        data.teamId = teamId;
-            
-        commandBuffer.CreateEntity();
-        commandBuffer.AddComponent(data);
+        data.AssetGuid = assetGuid;
+        data.Position = position;
+        data.Velocity = velocity;
+        data.Owner = owner;
+        data.TeamId = teamId;
+
+        var entity = commandBuffer.CreateEntity();
+        commandBuffer.AddComponent(entity, data);
     }
 }
 
 public class HandleGrenadeRequest : BaseComponentDataSystem<GrenadeSpawnRequest>
 {
-    private readonly BundledResourceManager m_resourceManager;
+    private readonly BundledResourceManager _resourceManager;
 
     public HandleGrenadeRequest(GameWorld world, BundledResourceManager resourceManager) : base(world)
     {
-        m_resourceManager = resourceManager;
+        _resourceManager = resourceManager;
     }
 
     protected override void Update(Entity entity, GrenadeSpawnRequest request)
     {
-        var grenadeEntity = m_resourceManager.CreateEntity(request.assetGuid);
-        
-        var internalState = EntityManager.GetComponentData<Grenade.InternalState>(grenadeEntity);       
-        internalState.startTick = m_world.WorldTime.Tick;
-        internalState.owner = request.owner;
-        internalState.teamId = request.teamId;
-        internalState.velocity = request.velocity;
-        internalState.position = request.position;
-        EntityManager.SetComponentData(grenadeEntity,internalState);
-        
+        var grenadeEntity = _resourceManager.CreateEntity(request.AssetGuid);
+
+        var internalState = EntityManager.GetComponentData<Grenade.InternalState>(grenadeEntity);
+        internalState.StartTick = m_world.WorldTime.Tick;
+        internalState.Owner = request.Owner;
+        internalState.TeamId = request.TeamId;
+        internalState.Velocity = request.Velocity;
+        internalState.Position = request.Position;
+        EntityManager.SetComponentData(grenadeEntity, internalState);
+
         PostUpdateCommands.DestroyEntity(entity);
     }
 }
 
-
 [DisableAutoCreation]
 public class StartGrenadeMovement : BaseComponentSystem
 {
-    ComponentGroup Group;   
-    
+    private ComponentGroup _group;
+
     public StartGrenadeMovement(GameWorld world) : base(world)
-    {}
+    {
+    }
 
     protected override void OnCreateManager()
     {
         base.OnCreateManager();
-        Group = GetComponentGroup(typeof(Grenade.Settings),typeof(Grenade.InternalState));
+        _group = GetComponentGroup(typeof(Grenade.Settings), typeof(Grenade.InternalState));
     }
 
-    protected override void OnUpdate()  
+    protected override void OnUpdate()
     {
         var time = m_world.WorldTime;
 
         // Update movements  
-        var entityArray = Group.GetEntityArray();      
-        var settingsArray = Group.GetComponentDataArray<Grenade.Settings>();
-        var internalStateArray = Group.GetComponentDataArray<Grenade.InternalState>();
+        var entityArray = _group.GetEntityArray();
+        var settingsArray = _group.GetComponentDataArray<Grenade.Settings>();
+        var internalStateArray = _group.GetComponentDataArray<Grenade.InternalState>();
         for (var i = 0; i < internalStateArray.Length; i++)
         {
             var internalState = internalStateArray[i];
 
-            if (internalState.active == 0 || math.length(internalState.velocity) < 0.5f)
+            if (internalState.Active == 0 || math.length(internalState.Velocity) < 0.5f)
+            {
                 continue;
+            }
 
-            var entity = entityArray[i]; 
+            var entity = entityArray[i];
             var settings = settingsArray[i];
-            
+
             // Crate movement query
-            var startPos = internalState.position;
-            var newVelocity = internalState.velocity - new float3(0,1,0) * settings.gravity * time.TickDuration;
+            var startPos = internalState.Position;
+            var newVelocity = internalState.Velocity - new float3(0, 1, 0) * settings.gravity * time.TickDuration;
             var deltaPos = newVelocity * time.TickDuration;
 
-            internalState.position = startPos + deltaPos;
-            internalState.velocity = newVelocity;
-            
-            
-            var collisionMask = ~(1U << internalState.teamId);
-           
+            internalState.Position = startPos + deltaPos;
+            internalState.Velocity = newVelocity;
+
+            var collisionMask = ~(1U << internalState.TeamId);
+
             // Setup new collision query
-            var queryReciever = World.GetExistingManager<RaySphereQueryReciever>();
-            internalState.rayQueryId = queryReciever.RegisterQuery(new RaySphereQueryReciever.Query()
+            var queryReceiver = World.GetExistingManager<RaySphereQueryReciever>();
+            internalState.RayQueryId = queryReceiver.RegisterQuery(new RaySphereQueryReciever.Query()
             {
                 hitCollisionTestTick = time.Tick,
                 origin = startPos,
                 direction = math.normalize(newVelocity),
                 distance = math.length(deltaPos) + settings.collisionRadius,
                 radius = settings.proximityTriggerDist,
-                mask = collisionMask, 
-                ExcludeOwner = time.DurationSinceTick(internalState.startTick) < 0.2f ? internalState.owner : Entity.Null,
+                mask = collisionMask,
+                ExcludeOwner = time.DurationSinceTick(internalState.StartTick) < 0.2f
+                    ? internalState.Owner
+                    : Entity.Null,
             });
-            
-            EntityManager.SetComponentData(entity,internalState);
+
+            EntityManager.SetComponentData(entity, internalState);
         }
     }
 }
@@ -116,105 +119,109 @@ public class StartGrenadeMovement : BaseComponentSystem
 [DisableAutoCreation]
 public class FinalizeGrenadeMovement : BaseComponentSystem
 {
-    ComponentGroup Group;   
-    
-    public FinalizeGrenadeMovement(GameWorld world) : base(world) {}
+    private ComponentGroup _group;
+
+    public FinalizeGrenadeMovement(GameWorld world) : base(world)
+    {
+    }
 
     protected override void OnCreateManager()
     {
         base.OnCreateManager();
-        Group = GetComponentGroup(typeof(Grenade.Settings),typeof(Grenade.InternalState), 
+        _group = GetComponentGroup(typeof(Grenade.Settings), typeof(Grenade.InternalState),
             typeof(Grenade.InterpolatedState));
     }
 
     protected override void OnUpdate()
     {
         Profiler.BeginSample("FinalizeGrenadeMovement");
-        
-        var time = m_world.WorldTime;
-        var queryReciever = World.GetExistingManager<RaySphereQueryReciever>();
 
-        var grenadeEntityArray = Group.GetEntityArray();
-        var settingsArray = Group.GetComponentDataArray<Grenade.Settings>();
-        var internalStateArray = Group.GetComponentDataArray<Grenade.InternalState>();
-        var interpolatedStateArray = Group.GetComponentDataArray<Grenade.InterpolatedState>();
+        var time = m_world.WorldTime;
+        var queryReceiver = World.GetExistingManager<RaySphereQueryReciever>();
+
+        var grenadeEntityArray = _group.GetEntityArray();
+        var settingsArray = _group.GetComponentDataArray<Grenade.Settings>();
+        var internalStateArray = _group.GetComponentDataArray<Grenade.InternalState>();
+        var interpolatedStateArray = _group.GetComponentDataArray<Grenade.InterpolatedState>();
 
         for (var i = 0; i < internalStateArray.Length; i++)
         {
             var internalState = internalStateArray[i];
             var entity = grenadeEntityArray[i];
-            
-            if (internalState.active == 0)
+
+            if (internalState.Active == 0)
             {
-                // Keep grenades around for a short duration so shortlived grenades gets a chance to get replicated 
+                // Keep grenades around for a short duration so short-lived grenades gets a chance to get replicated 
                 // and explode effect played
-                
-                if(m_world.WorldTime.DurationSinceTick(internalState.explodeTick) > 1.0f)
+                if (m_world.WorldTime.DurationSinceTick(internalState.ExplodeTick) > 1.0f)
+                {
                     m_world.RequestDespawn(PostUpdateCommands, entity);
-                
+                }
+
                 continue;
             }
 
             var settings = settingsArray[i];
             var interpolatedState = interpolatedStateArray[i];
-            var hitCollisionOwner = Entity.Null;            
-            if (internalState.rayQueryId != -1)
+            var hitCollisionOwner = Entity.Null;
+            if (internalState.RayQueryId != -1)
             {
                 RaySphereQueryReciever.Query query;
                 RaySphereQueryReciever.QueryResult queryResult;
-                queryReciever.GetResult(internalState.rayQueryId, out query, out queryResult);
-                internalState.rayQueryId = -1;
-                    
+                queryReceiver.GetResult(internalState.RayQueryId, out query, out queryResult);
+                internalState.RayQueryId = -1;
+
                 // If grenade hit something that was no hitCollision it is environment and grenade should bounce
                 if (queryResult.hit == 1 && queryResult.hitCollisionOwner == Entity.Null)
                 {
-                    var moveDir = math.normalize(internalState.velocity);
-                    var moveVel = math.length(internalState.velocity);
+                    var moveDir = math.normalize(internalState.Velocity);
+                    var moveVel = math.length(internalState.Velocity);
 
-                    internalState.position = queryResult.hitPoint + queryResult.hitNormal * settings.collisionRadius;
+                    internalState.Position = queryResult.hitPoint + queryResult.hitNormal * settings.collisionRadius;
 
                     moveDir = Vector3.Reflect(moveDir, queryResult.hitNormal);
-                    internalState.velocity = moveDir * moveVel * settings.bounciness;
+                    internalState.Velocity = moveDir * moveVel * settings.bounciness;
 
-                    if(moveVel > 1.0f)
+                    if (moveVel > 1.0f)
+                    {
                         interpolatedState.bouncetick = m_world.WorldTime.Tick;
+                    }
                 }
 
                 if (queryResult.hitCollisionOwner != Entity.Null)
                 {
-                    internalState.position = queryResult.hitPoint;
+                    internalState.Position = queryResult.hitPoint;
                 }
 
                 hitCollisionOwner = queryResult.hitCollisionOwner;
             }
-            
+
             // Should we explode ?
-            var timeout = time.DurationSinceTick(internalState.startTick) > settings.maxLifetime;
+            var timeout = time.DurationSinceTick(internalState.StartTick) > settings.maxLifetime;
             if (timeout || hitCollisionOwner != Entity.Null)
             {
-                internalState.active = 0;
-                internalState.explodeTick = time.Tick; 
+                internalState.Active = 0;
+                internalState.ExplodeTick = time.Tick;
                 interpolatedState.exploded = 1;
 
                 if (settings.splashDamage.radius > 0)
                 {
-                    var collisionMask = ~(1 << internalState.teamId);
+                    var collisionMask = ~(1 << internalState.TeamId);
 
-                    SplashDamageRequest.Create(PostUpdateCommands, time.Tick, internalState.owner, internalState.position,
+                    SplashDamageRequest.Create(PostUpdateCommands, time.Tick, internalState.Owner,
+                        internalState.Position,
                         collisionMask, settings.splashDamage);
                 }
             }
-            
-            interpolatedState.position = internalState.position;
-            
-            DebugDraw.Sphere(interpolatedState.position,settings.collisionRadius,Color.red);
-            
-            
-            EntityManager.SetComponentData(entity,internalState);
-            EntityManager.SetComponentData(entity,interpolatedState);
+
+            interpolatedState.position = internalState.Position;
+
+            DebugDraw.Sphere(interpolatedState.position, settings.collisionRadius, Color.red);
+
+            EntityManager.SetComponentData(entity, internalState);
+            EntityManager.SetComponentData(entity, interpolatedState);
         }
-        
+
         Profiler.EndSample();
     }
-    
 }
