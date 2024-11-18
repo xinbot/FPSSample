@@ -221,7 +221,7 @@ public class ClientGameWorld
         _handleNamePlateOwnerDeSpawn.Update();
         // TODO (mogensh) this destroys presentations and needs to be done first so its picked up. We need better way of handling destruction ordering
         _characterModule.HandleDepawns();
-        _projectileModule.HandleProjectileDespawn();
+        _projectileModule.HandleProjectileDeSpawn();
         _twistSystem.HandleDespawning();
         _fanSystem.HandleDespawning();
         _ragDollSystem.HandleDespawning();

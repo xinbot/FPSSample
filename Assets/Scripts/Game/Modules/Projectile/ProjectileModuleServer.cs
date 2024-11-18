@@ -1,65 +1,65 @@
-﻿using System.Collections.Generic;
-using UnityEngine;
-using Unity.Entities;
-using UnityEngine.Profiling;
+﻿using UnityEngine.Profiling;
 
-
-public class ProjectileModuleServer 
+public class ProjectileModuleServer
 {
-    [ConfigVar(Name = "projectile.drawserverdebug", DefaultValue = "0", Description = "Show projectilesystem debug")]
-    public static ConfigVar drawDebug;
-    
+    [ConfigVar(Name = "projectile.drawserverdebug", DefaultValue = "0", Description = "Show projectile system debug")]
+    public static ConfigVar DrawDebug;
+
+    private readonly GameWorld _gameWorld;
+    private readonly HandleServerProjectileRequests _handleRequests;
+    private readonly CreateProjectileMovementCollisionQueries _createMovementQueries;
+    private readonly HandleProjectileMovementCollisionQuery _handleMovementQueries;
+    private readonly DespawnProjectiles _deSpawnProjectiles;
+
     public ProjectileModuleServer(GameWorld gameWorld, BundledResourceManager resourceSystem)
     {
-        m_GameWorld = gameWorld;
+        _gameWorld = gameWorld;
 
-        m_handleRequests = m_GameWorld.GetECSWorld().CreateManager<HandleServerProjectileRequests>(m_GameWorld, resourceSystem);
-        m_CreateMovementQueries =  m_GameWorld.GetECSWorld().CreateManager<CreateProjectileMovementCollisionQueries>(m_GameWorld);
-        m_HandleMovementQueries = m_GameWorld.GetECSWorld().CreateManager<HandleProjectileMovementCollisionQuery>(m_GameWorld);
-        m_DespawnProjectiles = m_GameWorld.GetECSWorld().CreateManager<DespawnProjectiles>(m_GameWorld);
+        _handleRequests = _gameWorld.GetECSWorld()
+            .CreateManager<HandleServerProjectileRequests>(_gameWorld, resourceSystem);
+
+        _createMovementQueries = _gameWorld.GetECSWorld()
+            .CreateManager<CreateProjectileMovementCollisionQueries>(_gameWorld);
+
+        _handleMovementQueries =
+            _gameWorld.GetECSWorld().CreateManager<HandleProjectileMovementCollisionQuery>(_gameWorld);
+
+        _deSpawnProjectiles = _gameWorld.GetECSWorld().CreateManager<DespawnProjectiles>(_gameWorld);
     }
 
     public void Shutdown()
     {
-        m_GameWorld.GetECSWorld().DestroyManager(m_handleRequests);
-        m_GameWorld.GetECSWorld().DestroyManager(m_CreateMovementQueries);
-        m_GameWorld.GetECSWorld().DestroyManager(m_HandleMovementQueries);
-        m_GameWorld.GetECSWorld().DestroyManager(m_DespawnProjectiles);
+        _gameWorld.GetECSWorld().DestroyManager(_handleRequests);
+        _gameWorld.GetECSWorld().DestroyManager(_createMovementQueries);
+        _gameWorld.GetECSWorld().DestroyManager(_handleMovementQueries);
+        _gameWorld.GetECSWorld().DestroyManager(_deSpawnProjectiles);
     }
 
     public void HandleRequests()
     {
         Profiler.BeginSample("ProjectileModuleServer.CreateMovementQueries");
-        
-        m_handleRequests.Update();
-        
+
+        _handleRequests.Update();
+
         Profiler.EndSample();
     }
 
-   
     public void MovementStart()
     {
         Profiler.BeginSample("ProjectileModuleServer.CreateMovementQueries");
-        
-        m_CreateMovementQueries.Update();
-        
+
+        _createMovementQueries.Update();
+
         Profiler.EndSample();
     }
 
     public void MovementResolve()
     {
         Profiler.BeginSample("ProjectileModuleServer.HandleMovementQueries");
-        
-        m_HandleMovementQueries.Update();
-        m_DespawnProjectiles.Update();
-        
+
+        _handleMovementQueries.Update();
+        _deSpawnProjectiles.Update();
+
         Profiler.EndSample();
     }
-
-    readonly GameWorld m_GameWorld;
-    readonly HandleServerProjectileRequests m_handleRequests;
-    readonly CreateProjectileMovementCollisionQueries m_CreateMovementQueries;
-    readonly HandleProjectileMovementCollisionQuery m_HandleMovementQueries;
-    readonly DespawnProjectiles m_DespawnProjectiles;
-
 }

@@ -13,100 +13,118 @@ public class ClientProjectile : MonoBehaviour
     public SoundDef thrustSound;
     public float rotationSpeed = 500;
     public float offsetScaleDuration = 0.5f;
-    public SoundSystem.SoundHandle m_ThrustSoundHandle;
+    public SoundSystem.SoundHandle thrustSoundHandle;
     public SpatialEffectTypeDefinition impactEffect;
-    
+
     // State
-    public bool IsVisible { get { return m_isVisible == 1; } }
-    [NonSerialized] public Entity projectile;
-    [NonSerialized] public bool impacted;
-    [NonSerialized] public float roll;
-    [NonSerialized] public Vector3 startOffset;
-    [NonSerialized] public float offsetScale;
-    
-    [NonSerialized] public int poolIndex;
-    [NonSerialized] public int bufferIndex;
+    public bool isVisible => _isVisible == 1;
+
+    [NonSerialized] public bool Impacted;
+    [NonSerialized] public float Roll;
+    [NonSerialized] public float OffsetScale;
+
+    [NonSerialized] public Entity Projectile;
+    [NonSerialized] public Vector3 StartOffset;
+
+    [NonSerialized] public int PoolIndex;
+    [NonSerialized] public int BufferIndex;
+
+    private int _isVisible = -1;
 
     public void Reset()
     {
-        projectile = Entity.Null;
-        impacted = false;
+        Projectile = Entity.Null;
+        Impacted = false;
     }
-    
-    public void SetVisible(bool isVisible)
+
+    public void SetVisible(bool state)
     {
-        var newVal = isVisible ? 1 : 0;
-        if (m_isVisible != -1 && newVal == m_isVisible)
+        var newVal = state ? 1 : 0;
+        if (_isVisible != -1 && newVal == _isVisible)
+        {
             return;
-        m_isVisible = newVal;
-        
-        if(shellRoot != null)
-            shellRoot.SetActive(isVisible);
+        }
 
-        if(trailRoot != null)
+        _isVisible = newVal;
+
+        if (shellRoot != null)
         {
-            if (isVisible)
+            shellRoot.SetActive(state);
+        }
+
+        if (trailRoot != null)
+        {
+            if (state)
+            {
                 StartAllEffects(trailRoot);
+            }
             else
+            {
                 StopAllEffects(trailRoot);
+            }
         }
 
-        if (thrustSound && isVisible)
+        if (thrustSound && state)
         {
-            m_ThrustSoundHandle = Game.soundSystem.Play(thrustSound, gameObject.transform);
+            thrustSoundHandle = Game.soundSystem.Play(thrustSound, gameObject.transform);
         }
-        else if (m_ThrustSoundHandle.IsValid() && !isVisible)
+        else if (thrustSoundHandle.IsValid() && !state)
         {
-            Game.soundSystem.Stop(m_ThrustSoundHandle);
+            Game.soundSystem.Stop(thrustSoundHandle);
         }
 
         var lights = GetComponentsInChildren<Light>();
-        foreach (var light in lights)
-            light.enabled = isVisible;
+        for (int i = 0; i < lights.Length; i++)
+        {
+            lights[i].enabled = state;
+        }
     }
 
     public void SetMuzzlePosition(EntityManager entityManager, float3 muzzlePos)
     {
-        if(ProjectileModuleClient.logInfo.IntValue > 1)
-            GameDebug.Log("SetMuzzlePosition clientprojectile:" + name + " projectile:" + projectile);
-        
-        var projectileData = entityManager.GetComponentData<ProjectileData>(projectile);
+        if (ProjectileModuleClient.LogInfo.IntValue > 1)
+        {
+            GameDebug.Log("SetMuzzlePosition client projectile:" + name + " projectile:" + Projectile);
+        }
 
-        var dir = Vector3.Normalize(projectileData.endPos - projectileData.startPos);
-        var deltaPos = muzzlePos - projectileData.startPos;
+        var projectileData = entityManager.GetComponentData<ProjectileData>(Projectile);
+
+        var dir = Vector3.Normalize(projectileData.EndPos - projectileData.StartPos);
+        var deltaPos = muzzlePos - projectileData.StartPos;
         var q = Quaternion.LookRotation(dir);
         var invQ = Quaternion.Inverse(q);
 
-        startOffset = invQ * deltaPos;
-        offsetScale = 1;
-    }
-    
-    void StopAllEffects(GameObject root)
-    {
-        VisualEffect[] effects = root.GetComponentsInChildren<VisualEffect>();
-        for (int i = 0; i < effects.Length; i++)
-        {
-            effects[i].Stop();
-        }
-
-        Light[] lights = root.GetComponentsInChildren<Light>();
-        foreach (var light in lights)
-            light.enabled = false;
+        StartOffset = invQ * deltaPos;
+        OffsetScale = 1;
     }
 
-    void StartAllEffects(GameObject root)
+    private void StopAllEffects(GameObject root)
     {
-        //        Game.Log("StartAllEffects:" + root.name);
-
-        if (root == null)
-            return;
-
-        VisualEffect[] effects = root.GetComponentsInChildren<VisualEffect>();
-        for (int i = 0; i < effects.Length; i++)
+        if (root)
         {
-            effects[i].Play();
+            var effects = root.GetComponentsInChildren<VisualEffect>();
+            for (int i = 0; i < effects.Length; i++)
+            {
+                effects[i].Stop();
+            }
+
+            var lights = root.GetComponentsInChildren<Light>();
+            for (var i = 0; i < lights.Length; i++)
+            {
+                lights[i].enabled = false;
+            }
         }
     }
 
-    int m_isVisible = -1;
+    private void StartAllEffects(GameObject root)
+    {
+        if (root)
+        {
+            var effects = root.GetComponentsInChildren<VisualEffect>();
+            for (var i = 0; i < effects.Length; i++)
+            {
+                effects[i].Play();
+            }
+        }
+    }
 }

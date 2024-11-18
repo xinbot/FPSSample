@@ -1,7 +1,5 @@
-﻿using Unity.Collections;
-using UnityEngine;
+﻿using UnityEngine;
 using Unity.Entities;
-using UnityEngine.Profiling;
 using Unity.Mathematics;
 
 [DisableAutoCreation]
@@ -26,32 +24,32 @@ public class CreateProjectileMovementCollisionQueries : BaseComponentSystem
         for (var i = 0; i < projectileDataArray.Length; i++)
         {
             var projectileData = projectileDataArray[i];
-            if (projectileData.impactTick > 0)
+            if (projectileData.ImpactTick > 0)
                 continue;
 
             var entity = entityArray[i];
 
-            var collisionTestTick = time.Tick - projectileData.collisionCheckTickDelay;
+            var collisionTestTick = time.Tick - projectileData.CollisionCheckTickDelay;
 
-            var totalMoveDuration = time.DurationSinceTick(projectileData.startTick);
-            var totalMoveDist = totalMoveDuration * projectileData.settings.velocity;
+            var totalMoveDuration = time.DurationSinceTick(projectileData.StartTick);
+            var totalMoveDist = totalMoveDuration * projectileData.Settings.velocity;
 
-            var dir = Vector3.Normalize(projectileData.endPos - projectileData.startPos);
-            var newPosition = (Vector3)projectileData.startPos + dir * totalMoveDist;
-            var moveDist = math.distance(projectileData.position, newPosition);
+            var dir = Vector3.Normalize(projectileData.EndPos - projectileData.StartPos);
+            var newPosition = (Vector3)projectileData.StartPos + dir * totalMoveDist;
+            var moveDist = math.distance(projectileData.Position, newPosition);
 
-            var collisionMask = ~(1U << projectileData.teamId);
+            var collisionMask = ~(1U << projectileData.TeamId);
 
             var queryReciever = World.GetExistingManager<RaySphereQueryReciever>();
-            projectileData.rayQueryId = queryReciever.RegisterQuery(new RaySphereQueryReciever.Query()
+            projectileData.RayQueryId = queryReciever.RegisterQuery(new RaySphereQueryReciever.Query()
             {
                 hitCollisionTestTick = collisionTestTick,
-                origin = projectileData.position,
+                origin = projectileData.Position,
                 direction = dir,
                 distance = moveDist,
-                radius = projectileData.settings.collisionRadius,
+                radius = projectileData.Settings.collisionRadius,
                 mask = collisionMask,
-                ExcludeOwner = projectileData.projectileOwner,
+                ExcludeOwner = projectileData.ProjectileOwner,
             });
             PostUpdateCommands.SetComponent(entity,projectileData);
         }
@@ -81,27 +79,27 @@ public class HandleProjectileMovementCollisionQuery : BaseComponentSystem
         {
             var projectileData = projectileDataArray[i];
             
-            if (projectileData.impactTick > 0)
+            if (projectileData.ImpactTick > 0)
                 continue;
             
             RaySphereQueryReciever.Query query;
             RaySphereQueryReciever.QueryResult queryResult;
-            queryReciever.GetResult(projectileData.rayQueryId, out query, out queryResult);
+            queryReciever.GetResult(projectileData.RayQueryId, out query, out queryResult);
             
-            var projectileVec = projectileData.endPos - projectileData.startPos;
+            var projectileVec = projectileData.EndPos - projectileData.StartPos;
             var projectileDir = Vector3.Normalize(projectileVec);
-            var newPosition = (Vector3)projectileData.position + projectileDir * query.distance;
+            var newPosition = (Vector3)projectileData.Position + projectileDir * query.distance;
 
             var impact = queryResult.hit == 1;
             if (impact)
             {
-                projectileData.impacted = 1;
-                projectileData.impactPos = queryResult.hitPoint;
-                projectileData.impactNormal = queryResult.hitNormal;
-                projectileData.impactTick = m_world.WorldTime.Tick;
+                projectileData.Impacted = 1;
+                projectileData.ImpactPos = queryResult.hitPoint;
+                projectileData.ImpactNormal = queryResult.hitNormal;
+                projectileData.ImpactTick = m_world.WorldTime.Tick;
 
                 // Owner can despawn while projectile is in flight, so we need to make sure we dont send non existing instigator
-                var damageInstigator = EntityManager.Exists(projectileData.projectileOwner) ? projectileData.projectileOwner : Entity.Null;
+                var damageInstigator = EntityManager.Exists(projectileData.ProjectileOwner) ? projectileData.ProjectileOwner : Entity.Null;
 
                 var collisionHit = queryResult.hitCollisionOwner != Entity.Null;
                 if (collisionHit)
@@ -111,31 +109,31 @@ public class HandleProjectileMovementCollisionQuery : BaseComponentSystem
                         if (EntityManager.HasComponent<DamageEvent>(queryResult.hitCollisionOwner))
                         {
                             var damageEventBuffer = EntityManager.GetBuffer<DamageEvent>(queryResult.hitCollisionOwner);
-                            DamageEvent.AddEvent(damageEventBuffer, damageInstigator, projectileData.settings.impactDamage, projectileDir, projectileData.settings.impactImpulse);
+                            DamageEvent.AddEvent(damageEventBuffer, damageInstigator, projectileData.Settings.impactDamage, projectileDir, projectileData.Settings.impactImpulse);
                         }
                     }
                 }
 
-                if (projectileData.settings.splashDamage.radius > 0)
+                if (projectileData.Settings.splashDamage.radius > 0)
                 {
                     if (damageInstigator != Entity.Null)
                     {
-                        var collisionMask = ~(1 << projectileData.teamId);
-                        SplashDamageRequest.Create(PostUpdateCommands, query.hitCollisionTestTick, damageInstigator, queryResult.hitPoint, collisionMask, projectileData.settings.splashDamage);
+                        var collisionMask = ~(1 << projectileData.TeamId);
+                        SplashDamageRequest.Create(PostUpdateCommands, query.hitCollisionTestTick, damageInstigator, queryResult.hitPoint, collisionMask, projectileData.Settings.splashDamage);
                     }
                 }
 
                 newPosition = queryResult.hitPoint;
             }
 
-            if (ProjectileModuleServer.drawDebug.IntValue == 1)
+            if (ProjectileModuleServer.DrawDebug.IntValue == 1)
             {
                 var color = impact ? Color.red : Color.green;
-                Debug.DrawLine(projectileData.position, newPosition, color, 2);
+                Debug.DrawLine(projectileData.Position, newPosition, color, 2);
                 DebugDraw.Sphere(newPosition, 0.1f, color, impact ? 2 : 0);
             }
 
-            projectileData.position = newPosition;
+            projectileData.Position = newPosition;
             PostUpdateCommands.SetComponent(entityArray[i],projectileData);
         }
     }
@@ -164,17 +162,17 @@ public class DespawnProjectiles : BaseComponentSystem
         {
             var projectileData = projectileDataArray[i];
             
-            if (projectileData.impactTick > 0)
+            if (projectileData.ImpactTick > 0)
             {
-                if (m_world.WorldTime.DurationSinceTick(projectileData.impactTick) > 1.0f)
+                if (m_world.WorldTime.DurationSinceTick(projectileData.ImpactTick) > 1.0f)
                 {
                     PostUpdateCommands.AddComponent(entityArray[i],new DespawningEntity());
                 }
                 continue;
             }
 
-            var age = time.DurationSinceTick(projectileData.startTick);
-            var toOld = age > projectileData.maxAge;
+            var age = time.DurationSinceTick(projectileData.StartTick);
+            var toOld = age > projectileData.MAXAge;
             if (toOld)
             {
                 PostUpdateCommands.AddComponent(entityArray[i],new DespawningEntity());

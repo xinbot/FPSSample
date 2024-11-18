@@ -469,7 +469,7 @@ public class PreviewGameLoop : IGameLoop
         // TODO (mogensh) this destroys presentations and needs to be done first so its picked up. Find better solution  
         _characterModule.HandleDepawns();
         _deSpawnProjectiles.Update();
-        _projectileModule.HandleProjectileDespawn();
+        _projectileModule.HandleProjectileDeSpawn();
         _handleNamePlateOwnerDeSpawn.Update();
         _twistSystem.HandleDespawning();
         _fanSystem.HandleDespawning();

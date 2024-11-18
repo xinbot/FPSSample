@@ -225,8 +225,8 @@ public class TerraformerWeaponClientProjectileSpawnHandler : InitializeComponent
         {
          var clientProjectile = clientProjectileArray[i];
         
-         var projectileData = EntityManager.GetComponentData<ProjectileData>(clientProjectile.projectile);
-         var projectileOwner = projectileData.projectileOwner;
+         var projectileData = EntityManager.GetComponentData<ProjectileData>(clientProjectile.Projectile);
+         var projectileOwner = projectileData.ProjectileOwner;
         
          for (var j = 0; j < charPresentationArray.Length; j++)
          {

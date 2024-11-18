@@ -1,8 +1,5 @@
-﻿using System.Collections.Generic;
-using Unity.Collections;
-using UnityEngine;
+﻿using UnityEngine;
 using Unity.Entities;
-using UnityEngine.Profiling;
 
 [DisableAutoCreation]
 public class HandleServerProjectileRequests : BaseComponentSystem
@@ -45,7 +42,7 @@ public class HandleServerProjectileRequests : BaseComponentSystem
 		var projectileRegistry = m_resourceSystem.GetResourceRegistry<ProjectileRegistry>();
 		foreach (var request in requests)
 		{
-			var registryIndex = projectileRegistry.FindIndex(request.projectileAssetGuid);
+			var registryIndex = projectileRegistry.FindIndex(request.ProjectileAssetGuid);
 			if (registryIndex == -1)
 			{
 				GameDebug.LogError("Cant find asset guid in registry");
