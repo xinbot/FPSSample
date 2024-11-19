@@ -61,11 +61,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   phase: 0
-  m_RagdollPrefab: {fileID: 8537137350429540879, guid: fb1f3ccba92440a40951c09ddd3e5581,
+  ragdollPrefab: {fileID: 8537137350429540879, guid: fb1f3ccba92440a40951c09ddd3e5581,
     type: 3}
   ragdollInstance: {fileID: 0}
   ragdollSkeleton: {fileID: 0}
-  targeteBones: []
+  targetBones: []
   lastBonePositions: []
   lastBoneRotations: []
 --- !u!114 &3456563001780183008
@@ -228,11 +228,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 11400002, guid: 57b0fbe16dccc7e42a73d8ed6918b488, type: 3}
       propertyPath: skeletonColor.r
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 11400002, guid: 57b0fbe16dccc7e42a73d8ed6918b488, type: 3}
       propertyPath: skeletonColor.g
-      value: 0.43090016
+      value: 0.063429356
+      objectReference: {fileID: 0}
+    - target: {fileID: 11400002, guid: 57b0fbe16dccc7e42a73d8ed6918b488, type: 3}
+      propertyPath: skeletonColor.b
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 400132, guid: 57b0fbe16dccc7e42a73d8ed6918b488, type: 3}
       propertyPath: m_LocalRotation.y

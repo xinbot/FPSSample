@@ -1,53 +1,53 @@
 ﻿using UnityEngine;
 
-public class RagdollModule 
+public class RagdollModule
 {
+    private readonly GameWorld _world;
+    private readonly GameObject _systemRoot;
+
+    private readonly UpdateRagdolls _updateRagdolls;
+    private readonly HandleRagdollSpawn _handleRagdollSpawn;
+    private readonly HandleRagdollDespawn _handleRagdollDespawn;
+
     public RagdollModule(GameWorld world)
     {
-        m_world = world;
+        _world = world;
 
         if (world.SceneRoot != null)
         {
-            m_SystemRoot = new GameObject("RagdollSystem");
-            m_SystemRoot.transform.SetParent(world.SceneRoot.transform);
+            _systemRoot = new GameObject("RagdollSystem");
+            _systemRoot.transform.SetParent(world.SceneRoot.transform);
         }
-        
-        m_updateRagdolls = m_world.GetECSWorld().CreateManager<UpdateRagdolls>(m_world);
-        m_handleRagdollSpawn = m_world.GetECSWorld().CreateManager<HandleRagdollSpawn>(m_world, m_SystemRoot);
-        m_handleRagdollDespawn = m_world.GetECSWorld().CreateManager<HandleRagdollDespawn>(m_world);
+
+        _updateRagdolls = _world.GetECSWorld().CreateManager<UpdateRagdolls>(_world);
+        _handleRagdollSpawn = _world.GetECSWorld().CreateManager<HandleRagdollSpawn>(_world, _systemRoot);
+        _handleRagdollDespawn = _world.GetECSWorld().CreateManager<HandleRagdollDespawn>(_world);
     }
 
     public void Shutdown()
     {
+        _world.GetECSWorld().DestroyManager(_updateRagdolls);
+        _world.GetECSWorld().DestroyManager(_handleRagdollSpawn);
+        _world.GetECSWorld().DestroyManager(_handleRagdollDespawn);
 
-        m_world.GetECSWorld().DestroyManager(m_updateRagdolls);
-        m_world.GetECSWorld().DestroyManager(m_handleRagdollSpawn);
-        m_world.GetECSWorld().DestroyManager(m_handleRagdollDespawn);
-        
-        if(m_SystemRoot != null)
-            GameObject.Destroy(m_SystemRoot);
+        if (_systemRoot != null)
+        {
+            Object.Destroy(_systemRoot);
+        }
     }
-
 
     public void HandleSpawning()
     {
-        m_handleRagdollSpawn.Update();
+        _handleRagdollSpawn.Update();
     }
 
     public void HandleDespawning()
     {
-        m_handleRagdollDespawn.Update();
+        _handleRagdollDespawn.Update();
     }
-    
+
     public void LateUpdate()
     {
-        m_updateRagdolls.Update();
+        _updateRagdolls.Update();
     }
-    
-    protected GameWorld m_world;
-    protected GameObject m_SystemRoot;
-
-    readonly UpdateRagdolls m_updateRagdolls;
-    readonly HandleRagdollSpawn m_handleRagdollSpawn;
-    readonly HandleRagdollDespawn m_handleRagdollDespawn;
 }

@@ -275,8 +275,8 @@ public class HandleDamage : BaseComponentSystem
                 if (healthState.health <= 0)
                 {
                     var ragdollState =  EntityManager.GetComponentData<RagdollStateData>(entity);
-                    ragdollState.ragdollActive = 1;
-                    ragdollState.impulse = impulseVec;
+                    ragdollState.RagdollActive = 1;
+                    ragdollState.Impulse = impulseVec;
                     EntityManager.SetComponentData(entity,ragdollState);
                 }
             }
