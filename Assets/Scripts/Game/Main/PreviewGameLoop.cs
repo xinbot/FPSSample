@@ -142,7 +142,7 @@ public class PreviewGameLoop : IGameLoop
 
     private RagdollModule _ragDollModule;
     private SpinSystem _spinSystem;
-    private DespawnProjectiles _deSpawnProjectiles;
+    private DeSpawnProjectiles _deSpawnProjectiles;
 
     private PreviewGameMode _previewGameMode;
     private DamageAreaSystemServer _damageAreaSystemServer;
@@ -252,7 +252,7 @@ public class PreviewGameLoop : IGameLoop
         _itemModule = new ItemModule(_gameWorld);
         _ragDollModule = new RagdollModule(_gameWorld);
 
-        _deSpawnProjectiles = _gameWorld.GetECSWorld().CreateManager<DespawnProjectiles>(_gameWorld);
+        _deSpawnProjectiles = _gameWorld.GetECSWorld().CreateManager<DeSpawnProjectiles>(_gameWorld);
         _damageAreaSystemServer = _gameWorld.GetECSWorld().CreateManager<DamageAreaSystemServer>(_gameWorld);
 
         _teleporterSystemServer = _gameWorld.GetECSWorld().CreateManager<TeleporterSystemServer>(_gameWorld);

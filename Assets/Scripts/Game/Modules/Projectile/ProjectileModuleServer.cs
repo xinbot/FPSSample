@@ -9,7 +9,7 @@ public class ProjectileModuleServer
     private readonly HandleServerProjectileRequests _handleRequests;
     private readonly CreateProjectileMovementCollisionQueries _createMovementQueries;
     private readonly HandleProjectileMovementCollisionQuery _handleMovementQueries;
-    private readonly DespawnProjectiles _deSpawnProjectiles;
+    private readonly DeSpawnProjectiles _deSpawnProjectiles;
 
     public ProjectileModuleServer(GameWorld gameWorld, BundledResourceManager resourceSystem)
     {
@@ -24,7 +24,7 @@ public class ProjectileModuleServer
         _handleMovementQueries =
             _gameWorld.GetECSWorld().CreateManager<HandleProjectileMovementCollisionQuery>(_gameWorld);
 
-        _deSpawnProjectiles = _gameWorld.GetECSWorld().CreateManager<DespawnProjectiles>(_gameWorld);
+        _deSpawnProjectiles = _gameWorld.GetECSWorld().CreateManager<DeSpawnProjectiles>(_gameWorld);
     }
 
     public void Shutdown()

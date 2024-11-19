@@ -18,8 +18,8 @@ public class ProjectileModuleClient
     private readonly HandleProjectileMovementCollisionQuery _handleProjectileMovementQueries;
 
     private readonly HandleProjectileSpawn _handleProjectileSpawn;
-    private readonly RemoveMispredictedProjectiles _removeMisPredictedProjectiles;
-    private readonly DespawnClientProjectiles _deSpawnClientProjectiles;
+    private readonly RemoveMisPredictedProjectiles _removeMisPredictedProjectiles;
+    private readonly DeSpawnClientProjectiles _deSpawnClientProjectiles;
     private readonly UpdateClientProjectilesNonPredicted _updateClientProjectilesNonPredicted;
     private readonly UpdateClientProjectilesPredicted _updateClientProjectilesPredicted;
 
@@ -45,10 +45,10 @@ public class ProjectileModuleClient
         _handleProjectileSpawn = _world.GetECSWorld()
             .CreateManager<HandleProjectileSpawn>(_world, _systemRoot, resourceSystem, clientProjectileFactory);
 
-        _removeMisPredictedProjectiles = _world.GetECSWorld().CreateManager<RemoveMispredictedProjectiles>(_world);
+        _removeMisPredictedProjectiles = _world.GetECSWorld().CreateManager<RemoveMisPredictedProjectiles>(_world);
 
         _deSpawnClientProjectiles = _world.GetECSWorld()
-            .CreateManager<DespawnClientProjectiles>(_world, clientProjectileFactory);
+            .CreateManager<DeSpawnClientProjectiles>(_world, clientProjectileFactory);
 
         _createProjectileMovementQueries =
             _world.GetECSWorld().CreateManager<CreateProjectileMovementCollisionQueries>(_world);
