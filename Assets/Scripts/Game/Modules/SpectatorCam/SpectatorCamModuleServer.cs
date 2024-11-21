@@ -1,25 +1,22 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
-
-public class SpectatorCamModuleServer 
+﻿public class SpectatorCamModuleServer
 {
+    private readonly GameWorld _world;
+    private readonly HandleSpectatorCamRequests _handleSpectatorCamRequests;
+
     public SpectatorCamModuleServer(GameWorld world, BundledResourceManager resourceManager)
     {
-        m_world = world;
-        m_HandleSpectatorCamRequests =  world.GetECSWorld().CreateManager<HandleSpectatorCamRequests>(world, resourceManager);
+        _world = world;
+        _handleSpectatorCamRequests =
+            world.GetECSWorld().CreateManager<HandleSpectatorCamRequests>(world, resourceManager);
     }
 
     public void Shutdown()
     {
-        m_world.GetECSWorld().DestroyManager(m_HandleSpectatorCamRequests);  
+        _world.GetECSWorld().DestroyManager(_handleSpectatorCamRequests);
     }
 
     public void HandleSpawnRequests()
     {
-        m_HandleSpectatorCamRequests.Update();
+        _handleSpectatorCamRequests.Update();
     }
-    
-    GameWorld m_world;
-    HandleSpectatorCamRequests m_HandleSpectatorCamRequests;
 }

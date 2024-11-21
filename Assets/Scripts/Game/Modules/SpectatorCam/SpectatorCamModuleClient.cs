@@ -1,30 +1,25 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
-
-public class SpectatorCamModuleClient  
+﻿public class SpectatorCamModuleClient
 {
+    private readonly GameWorld _world;
+    private readonly UpdateSpectatorCam _updateSpectatorCam;
+    private readonly UpdateSpectatorCamControl _updateSpectatorCamControl;
+
     public SpectatorCamModuleClient(GameWorld world)
     {
-        m_world = world;
-        m_UpdateSpectatorCam =  m_world.GetECSWorld().CreateManager<UpdateSpectatorCam>(m_world);
-        m_UpdateSpectatorCamControl =  m_world.GetECSWorld().CreateManager<UpdateSpectatorCamControl>(m_world);
-
+        _world = world;
+        _updateSpectatorCam = _world.GetECSWorld().CreateManager<UpdateSpectatorCam>(_world);
+        _updateSpectatorCamControl = _world.GetECSWorld().CreateManager<UpdateSpectatorCamControl>(_world);
     }
 
     public void Shutdown()
     {
-        m_world.GetECSWorld().DestroyManager(m_UpdateSpectatorCam);       
-        m_world.GetECSWorld().DestroyManager(m_UpdateSpectatorCamControl);       
+        _world.GetECSWorld().DestroyManager(_updateSpectatorCam);
+        _world.GetECSWorld().DestroyManager(_updateSpectatorCamControl);
     }
 
     public void Update()
     {
-        m_UpdateSpectatorCam.Update();
-        m_UpdateSpectatorCamControl.Update();
+        _updateSpectatorCam.Update();
+        _updateSpectatorCamControl.Update();
     }
-    
-    GameWorld m_world;
-    UpdateSpectatorCam m_UpdateSpectatorCam;
-    UpdateSpectatorCamControl m_UpdateSpectatorCamControl;
 }
