@@ -38,7 +38,7 @@ public class DestructiblePropPresentation : MonoBehaviour
             {
                 var hitColl = coll.GetComponent<HitCollision>();
                 if (hitColl != null)
-                    hitColl.owner = goe.Entity;
+                    hitColl.Owner = goe.Entity;
             }        
         }
     }

@@ -110,10 +110,10 @@ public class HandleSplashDamageRequests : BaseComponentSystem
 			var request = requestArray[i];
 			var broadPhaseJob = new BroadPhaseSphereOverlapJob
 			{
-				entities = entityArray,
-				bounds = boundsArray[i],
-				sphere = new sphere(request.center, request.settings.radius),
-				result = broadPhaseResultArray[i],
+				Entities = entityArray,
+				Bounds = boundsArray[i],
+				Sphere = new sphere(request.center, request.settings.radius),
+				Result = broadPhaseResultArray[i],
 			};
 			broadPhaseHandleArray[i] = broadPhaseJob.Schedule();
 		}
@@ -144,7 +144,7 @@ public class HandleSplashDamageRequests : BaseComponentSystem
 				for (int j = 0; j < m_resultsBuffer.Count; j++)
 				{
 					Damage(request.center, ref request.settings, request.instigator, m_resultsOwnerBuffer[j],
-						m_resultsBuffer[j].primCenter);
+						m_resultsBuffer[j].PrimitiveCenter);
 				}
 			}
 			
@@ -159,7 +159,7 @@ public class HandleSplashDamageRequests : BaseComponentSystem
 
 				foreach (var collision in colliderCollections.Values)
 				{
-					var collisionOwnerEntity = collision.hitCollision.owner;
+					var collisionOwnerEntity = collision.hitCollision.Owner;
 
 					Damage(request.center, ref request.settings, request.instigator, collisionOwnerEntity,
 						collision.closestPoint);
@@ -225,16 +225,15 @@ public class HandleSplashDamageRequests : BaseComponentSystem
 			if(!HitCollisionData.IsRelevant(entityManager, hitColliHistoryEntityArray[i], mask, forceExcluded, forceIncluded))
 				continue;
 
-			var collectionResult = new HitCollisionData.CollisionResult();
-            
-			var hit = HitCollisionData.SphereOverlapSingle(entityManager, entity, tick, sphere, ref collectionResult);
+			HitCollisionData.CollisionResult collectionResult;
+			var hit = HitCollisionData.SphereOverlapSingle(entityManager, entity, tick, sphere, out collectionResult);
 
 			if (hit)
 			{
 				var hitCollisionData = entityManager.GetComponentData<HitCollisionData>(hitColliHistoryEntityArray[i]);
 
 				results.Add(collectionResult);
-				hitCollisionOwners.Add(hitCollisionData.hitCollisionOwner);
+				hitCollisionOwners.Add(hitCollisionData.HitCollisionOwner);
 			}
 		}
 	}
@@ -250,7 +249,7 @@ public class HandleSplashDamageRequests : BaseComponentSystem
 			var historyBuffer = entityManager.GetBuffer<HitCollisionData.BoundsHistory>(entity);
 
 			var histIndex = collData.GetHistoryIndex(tick);
-			var boundSphere = primlib.sphere(historyBuffer[histIndex].pos, collData.boundsRadius);
+			var boundSphere = primlib.sphere(historyBuffer[histIndex].Pos, collData.BoundsRadius);
 			boundsArray[i] = boundSphere;
 		}
 	}
@@ -279,14 +278,14 @@ public class HandleSplashDamageRequests : BaseComponentSystem
 			float dist = Vector3.Distance(origin, closestPoint);
 
 			ClosestCollision currentClosest;
-			if (colliderOwners.TryGetValue(hitCollision.owner, out currentClosest))
+			if (colliderOwners.TryGetValue(hitCollision.Owner, out currentClosest))
 			{
 				if (dist < currentClosest.dist)
 				{
 					currentClosest.hitCollision = hitCollision;
 					currentClosest.closestPoint = closestPoint;
 					currentClosest.dist = dist;
-					colliderOwners[hitCollision.owner] = currentClosest;
+					colliderOwners[hitCollision.Owner] = currentClosest;
 				}
 			}
 			else
@@ -294,7 +293,7 @@ public class HandleSplashDamageRequests : BaseComponentSystem
 				currentClosest.hitCollision = hitCollision;
 				currentClosest.closestPoint = closestPoint;
 				currentClosest.dist = dist;
-				colliderOwners.Add(hitCollision.owner, currentClosest);
+				colliderOwners.Add(hitCollision.Owner, currentClosest);
 			}
 		}
 	}

@@ -43,7 +43,7 @@ public class CharacterMoveQuery : MonoBehaviour
         charController.height = settings.height;
 
         var hitCollision = go.GetComponent<HitCollision>();
-        hitCollision.owner = hitCollOwner;
+        hitCollision.Owner = hitCollOwner;
     }
 
     public void Shutdown()

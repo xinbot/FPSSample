@@ -73,14 +73,14 @@ public class HandleCharacterSpawn : InitializeComponentGroupSystem<Character, Ha
             if (EntityManager.HasComponent<HitCollisionData>(charPresentationEntity))
             {
                 var hitCollisionData = EntityManager.GetComponentData<HitCollisionData>(charPresentationEntity);    
-                hitCollisionData.hitCollisionOwner = charEntity;
+                hitCollisionData.HitCollisionOwner = charEntity;
                 EntityManager.SetComponentData(charPresentationEntity, hitCollisionData);
             }
             else
             {
                 var hitCollisionData = new HitCollisionData
                 {
-                    hitCollisionOwner = charEntity,
+                    HitCollisionOwner = charEntity,
                 };
                 EntityManager.AddComponentData(charPresentationEntity, hitCollisionData);
             }

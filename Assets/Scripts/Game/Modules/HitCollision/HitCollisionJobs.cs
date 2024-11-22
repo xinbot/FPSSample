@@ -1,5 +1,4 @@
-﻿using System.Threading;
-using CollisionLib;
+﻿using CollisionLib;
 using Primitives;
 using Unity.Burst;
 using Unity.Collections;
@@ -7,398 +6,312 @@ using Unity.Entities;
 using Unity.Jobs;
 using Unity.Mathematics;
 using UnityEngine.Jobs;
-using UnityEngine.Profiling;
-
 
 [BurstCompile(CompileSynchronously = true)]
 public struct BroadPhaseSphereCastJob : IJob
 {
-    public NativeList<Entity> result;
+    public NativeList<Entity> Result;
 
+    private ray _ray;
+    private float _rayDist;
+    private float _rayRadius;
+    private Entity _include;
+    private Entity _exclude;
+    private uint _flagMask;
 
-    public ray ray;
-    public float rayDist;
-    public float rayRadius;
-    public Entity include;
-    public Entity exclude;
-    public uint flagMask;
-    
-    
-    [ReadOnly]
-    public NativeArray<Entity> ColliderEntities;
+    [ReadOnly] private NativeArray<uint> _flags;
 
-    [ReadOnly]
-    public NativeArray<HitCollisionData> ColliderData;
+    [ReadOnly] private NativeArray<Entity> _colliderEntities;
 
-    [ReadOnly]
-    public NativeArray<uint> flags;
+    [ReadOnly] private NativeArray<HitCollisionData> _colliderData;
 
-    [ReadOnly]
-    public NativeArray<sphere> bounds;
+    [ReadOnly] private NativeArray<sphere> _bounds;
 
-    public BroadPhaseSphereCastJob(NativeArray<Entity> colliderEntities, 
-        NativeArray<HitCollisionData> colliderData, NativeArray<uint> flags, NativeArray<sphere> bounds, Entity exclude,
-        Entity include, uint flagMask, ray ray, float distance, float radius)
+    public BroadPhaseSphereCastJob(NativeArray<Entity> colliderEntities, NativeArray<HitCollisionData> colliderData,
+        NativeArray<uint> flags, NativeArray<sphere> bounds, Entity exclude, Entity include, uint flagMask, ray ray,
+        float distance, float radius)
     {
-        this.ColliderEntities = colliderEntities;
-        this.ColliderData = colliderData;
-        this.flags = flags;
-        this.ray = ray;
-        this.include = include;
-        this.exclude = exclude;
-        this.flagMask = flagMask;
-        this.bounds = bounds;
-        rayDist = distance;
-        rayRadius = radius;
-        
-        result = new NativeList<Entity>(colliderEntities.Length,Allocator.TempJob);
+        _colliderEntities = colliderEntities;
+        _colliderData = colliderData;
+        _flags = flags;
+        _bounds = bounds;
+
+        _ray = ray;
+        _include = include;
+        _exclude = exclude;
+        _flagMask = flagMask;
+        _rayDist = distance;
+        _rayRadius = radius;
+
+        Result = new NativeList<Entity>(colliderEntities.Length, Allocator.TempJob);
     }
 
     public void Dispose()
     {
-        result.Dispose();
+        Result.Dispose();
     }
-    
+
     public void Execute()
     {
-        for(int i=0;i<bounds.Length;i++)
+        for (int i = 0; i < _bounds.Length; i++)
         {
-            var relevant = (include != Entity.Null && include == ColliderData[i].hitCollisionOwner) ||
-                           ((flags[i] & flagMask) != 0 &&
-                            !(exclude != Entity.Null && exclude == ColliderData[i].hitCollisionOwner));
+            var relevant = _include != Entity.Null && _include == _colliderData[i].HitCollisionOwner ||
+                           !(_exclude != Entity.Null && _exclude == _colliderData[i].HitCollisionOwner) &&
+                           (_flags[i] & _flagMask) != 0;
 
             if (!relevant)
+            {
                 continue;
-                
-            var boundsHit = coll.RayCast(bounds[i], ray, rayDist, rayRadius);
-            if(boundsHit)
-                result.Add(ColliderEntities[i]);
+            }
+
+            var boundsHit = coll.RayCast(_bounds[i], _ray, _rayDist, _rayRadius);
+            if (boundsHit)
+            {
+                Result.Add(_colliderEntities[i]);
+            }
         }
     }
 }
-  
-//
-////[BurstCompile(CompileSynchronously = true)]
-//public struct BroadPhaseSphereCastMultiJob : IJob
-//{
-//    public NativeList<Entity> result;
-//
-//
-//    public ray ray;
-//    public float rayDist;
-//    public float rayRadius;
-//
-//    [ReadOnly]
-//    public NativeArray<Entity> entities;
-//    [ReadOnly]
-//    public NativeArray<sphere> bounds;
-//
-//    [ReadOnly] 
-//    public NativeArray<int> relevantArray;
-//
-//
-//    public BroadPhaseSphereCastMultiJob(EntityManager entityManager, NativeArray<Entity> entityArray, Entity exclude,
-//        Entity include, int flagMask, ray ray, float distance, float radius, int tick)
-//    {
-//        entities = entityArray;
-//        this.ray = ray;
-//        rayDist = distance;
-//        rayRadius = radius;
-//        
-//        bounds = new NativeArray<sphere>(entityArray.Length,Allocator.TempJob);
-//        relevantArray = new NativeArray<int>(entityArray.Length,Allocator.TempJob);
-//        
-//        
-//        for (int i = 0; i < entities.Length; i++)
-//        {
-//            // Get bounds for tick
-//            var collData = entityManager.GetComponentData<HitCollisionData>(entities[i]);
-//            var historyBuffer = entityManager.GetBuffer<HitCollisionData.History>(entities[i]);
-//            var histIndex = HitCollisionData.GetHistoryIndex(ref collData, tick);
-//            var boundSphere = primlib.sphere(historyBuffer[histIndex].center, collData.boundsRadius);
-//            bounds[i] = boundSphere;
-//            
-//            var relevant = HitCollisionData.IsRelevant(entityManager, entities[i], flagMask, exclude,
-//                include);
-//            relevantArray[i] = relevant ? 1 : 0;
-//        }
-//        
-//        result = new NativeList<Entity>(entityArray.Length,Allocator.TempJob);
-//        
-//        ownerArray.Dispose();
-//    }
-//
-//    public void Dispose()
-//    {
-//        bounds.Dispose();
-//        relevantArray.Dispose();
-//        result.Dispose();
-//    }
-//    
-//    public void Execute()
-//    {
-//        for(int i=0;i<bounds.Length;i++)
-//        {
-//            if (relevantArray[i] == 0)
-//                continue;
-//                
-//            var boundsHit = coll.RayCast(bounds[i], ray, rayDist, rayRadius);
-//            if(boundsHit)
-//                result.Add(entities[i]);
-//        }
-//    }
-//}
 
-
-    
 [BurstCompile(CompileSynchronously = true)]
 public struct SphereCastSingleJob : IJob
 {
-    public NativeArray<HitCollisionData.CollisionResult> result;
-    public Entity hitCollObject;
-    
-    [ReadOnly]
-    NativeSlice<HitCollisionData.TransformHistory> transformBuffer;
+    public NativeArray<HitCollisionData.CollisionResult> Result;
+    public Entity HitCollObject;
 
-    [ReadOnly]
-    DynamicBuffer<HitCollisionData.Sphere> sphereArray;
-    [ReadOnly]
-    DynamicBuffer<HitCollisionData.Capsule> capsuleArray;
-    [ReadOnly]
-    DynamicBuffer<HitCollisionData.Box> boxArray;
+    [ReadOnly] private NativeSlice<HitCollisionData.TransformHistory> _transformBuffer;
 
-    ray ray;
-    float rayDist;
-    float rayRadius;
+    [ReadOnly] private DynamicBuffer<HitCollisionData.Sphere> _sphereArray;
 
-    public SphereCastSingleJob(EntityManager entityManager, Entity entity, ray ray, float distance, float radius, int tick)
+    [ReadOnly] private DynamicBuffer<HitCollisionData.Capsule> _capsuleArray;
+
+    [ReadOnly] private DynamicBuffer<HitCollisionData.Box> _boxArray;
+
+    private ray _ray;
+    private float _rayDist;
+    private float _rayRadius;
+
+    public SphereCastSingleJob(EntityManager entityManager, Entity entity, ray ray, float distance, float radius,
+        int tick)
     {
-        this.ray = ray;
-        rayDist = distance;
-        rayRadius = radius;
+        _ray = ray;
+        _rayDist = distance;
+        _rayRadius = radius;
 
-        hitCollObject = entity;
-        
+        HitCollObject = entity;
+
         var collData = entityManager.GetComponentData<HitCollisionData>(entity);
         var histIndex = collData.GetHistoryIndex(tick);
 
-        transformBuffer = new NativeSlice<HitCollisionData.TransformHistory>(
-            entityManager.GetBuffer<HitCollisionData.TransformHistory>(entity).ToNativeArray(),
-            histIndex * HitCollisionData.k_maxColliderCount);
+        _transformBuffer = new NativeSlice<HitCollisionData.TransformHistory>(
+            entityManager.GetBuffer<HitCollisionData.TransformHistory>(entity).AsNativeArray(),
+            histIndex * HitCollisionData.MaxColliderCount);
 
-        sphereArray = entityManager.GetBuffer<HitCollisionData.Sphere>(entity);
-        capsuleArray = entityManager.GetBuffer<HitCollisionData.Capsule>(entity);
-        boxArray = entityManager.GetBuffer<HitCollisionData.Box>(entity);
-        result = new NativeArray<HitCollisionData.CollisionResult>(1,Allocator.TempJob);
+        _sphereArray = entityManager.GetBuffer<HitCollisionData.Sphere>(entity);
+
+        _capsuleArray = entityManager.GetBuffer<HitCollisionData.Capsule>(entity);
+
+        _boxArray = entityManager.GetBuffer<HitCollisionData.Box>(entity);
+
+        Result = new NativeArray<HitCollisionData.CollisionResult>(1, Allocator.TempJob);
     }
 
     public void Dispose()
     {
-        result.Dispose();
+        Result.Dispose();
     }
-    
+
     public void Execute()
     {
         // TODO (mogensh) : find all hits and return closest
 
-        var rayEnd = ray.origin + ray.direction * rayDist;
-        
-        for (var i = 0; i < sphereArray.Length; i++)
+        var rayEnd = _ray.origin + _ray.direction * _rayDist;
+
+        for (var i = 0; i < _sphereArray.Length; i++)
         {
-            var prim = sphereArray[i].prim;
-            var sourceIndex = sphereArray[i].transformIndex;                
-            prim = primlib.transform(prim, transformBuffer[sourceIndex].pos, 
-                transformBuffer[sourceIndex].rot);
-            var hit = coll.RayCast(prim, ray, rayDist, rayRadius);
+            var prim = _sphereArray[i].SpherePrimitive;
+            var sourceIndex = _sphereArray[i].TransformIndex;
+            prim = primlib.transform(prim, _transformBuffer[sourceIndex].Pos, _transformBuffer[sourceIndex].Rot);
+
+            var hit = coll.RayCast(prim, _ray, _rayDist, _rayRadius);
             if (hit)
             {
-                result[0] = new HitCollisionData.CollisionResult()
+                Result[0] = new HitCollisionData.CollisionResult
                 {
-                    info = sphereArray[i].info,
-                    primCenter = prim.center,
-                    hit = 1,
-                    sphere = prim,
+                    Info = _sphereArray[i].Info,
+                    PrimitiveCenter = prim.center,
+                    Hit = 1,
+                    SpherePrimitive = prim,
                 };
                 return;
             }
         }
 
-        for (var i = 0; i < capsuleArray.Length; i++)
+        for (var i = 0; i < _capsuleArray.Length; i++)
         {
-            var prim = capsuleArray[i].prim;
-            var sourceIndex = capsuleArray[i].transformIndex;                
-            prim = primlib.transform(prim, transformBuffer[sourceIndex].pos, transformBuffer[sourceIndex].rot);
+            var prim = _capsuleArray[i].CapsulePrimitive;
+            var sourceIndex = _capsuleArray[i].TransformIndex;
+            prim = primlib.transform(prim, _transformBuffer[sourceIndex].Pos, _transformBuffer[sourceIndex].Rot);
 
-            var rayCapsule = new capsule(ray.origin, rayEnd, rayRadius);
-
+            var rayCapsule = new capsule(_ray.origin, rayEnd, _rayRadius);
             var hit = InstersectionHelper.IntersectCapsuleCapsule(ref prim, ref rayCapsule);
             if (hit)
             {
-                result[0] = new HitCollisionData.CollisionResult()
+                Result[0] = new HitCollisionData.CollisionResult
                 {
-                    info = capsuleArray[i].info,
-                    primCenter = prim.p1 + (prim.p2 - prim.p1)*0.5f,
-                    hit = 1,
-                    capsule = prim,
+                    Info = _capsuleArray[i].Info,
+                    PrimitiveCenter = prim.p1 + (prim.p2 - prim.p1) * 0.5f,
+                    Hit = 1,
+                    CapsulePrimitive = prim,
                 };
                 return;
             }
         }
 
-        for (var i = 0; i < boxArray.Length; i++)
+        for (var i = 0; i < _boxArray.Length; i++)
         {
-            var prim = boxArray[i].prim;
-            var sourceIndex = boxArray[i].transformIndex;                
-            
-            var primWorldSpace = primlib.transform(prim, transformBuffer[sourceIndex].pos, transformBuffer[sourceIndex].rot);
-            var rayCapsule = new capsule(ray.origin, rayEnd, rayRadius);
+            var prim = _boxArray[i].BoxPrimitive;
+            var sourceIndex = _boxArray[i].TransformIndex;
 
+            var primWorldSpace =
+                primlib.transform(prim, _transformBuffer[sourceIndex].Pos, _transformBuffer[sourceIndex].Rot);
+            var rayCapsule = new capsule(_ray.origin, rayEnd, _rayRadius);
             var hit = coll.OverlapCapsuleBox(rayCapsule, primWorldSpace);
-            
-                           
             if (hit)
             {
-                result[0] = new HitCollisionData.CollisionResult()
+                Result[0] = new HitCollisionData.CollisionResult()
                 {
-                    info = boxArray[i].info,
-                    primCenter = primWorldSpace.center,
-                    hit = 1,
-                    box = primWorldSpace,
+                    Info = _boxArray[i].Info,
+                    PrimitiveCenter = primWorldSpace.center,
+                    Hit = 1,
+                    BoxPrimitive = primWorldSpace,
                 };
-                return;  
+                return;
             }
-        }  
-    }
-}
-
-
-  
-[BurstCompile(CompileSynchronously = true)]
-public struct BroadPhaseSphereOverlapJob : IJob
-{
-    public sphere sphere;
-
-    [ReadOnly]
-    public NativeArray<Entity> entities;
-    [ReadOnly]
-    public NativeArray<sphere> bounds;
-        
-    public NativeList<Entity> result;
-
-    public void Execute()
-    {
-        for(int i=0;i<bounds.Length;i++)
-        {
-            var dist = math.distance(sphere.center, bounds[i].center);
-            var hit = dist < sphere.radius + bounds[i].radius;
-            if(hit)
-                result.Add(entities[i]);
         }
     }
 }
 
+[BurstCompile(CompileSynchronously = true)]
+public struct BroadPhaseSphereOverlapJob : IJob
+{
+    public sphere Sphere;
+
+    [ReadOnly] public NativeArray<Entity> Entities;
+
+    [ReadOnly] public NativeArray<sphere> Bounds;
+
+    public NativeList<Entity> Result;
+
+    public void Execute()
+    {
+        for (int i = 0; i < Bounds.Length; i++)
+        {
+            var dist = math.distance(Sphere.center, Bounds[i].center);
+            var hit = dist < Sphere.radius + Bounds[i].radius;
+            if (hit)
+            {
+                Result.Add(Entities[i]);
+            }
+        }
+    }
+}
 
 [BurstCompile(CompileSynchronously = true)]
-struct SphereOverlapJob : IJob
+public struct SphereOverlapJob : IJob
 {
-    [ReadOnly]
-    public NativeSlice<HitCollisionData.TransformHistory> transformBuffer;
-    
-    [ReadOnly]
-    public NativeArray<HitCollisionData.Sphere> sphereArray;
-    [ReadOnly]
-    public NativeArray<HitCollisionData.Capsule> capsuleArray;
-    [ReadOnly]
-    public NativeArray<HitCollisionData.Box> boxArray;
+    public sphere Sphere;
 
-    public sphere sphere;
+    [ReadOnly] public NativeSlice<HitCollisionData.TransformHistory> TransformBuffer;
 
-    public NativeArray<HitCollisionData.CollisionResult> result;
+    [ReadOnly] public NativeArray<HitCollisionData.Sphere> SphereArray;
+
+    [ReadOnly] public NativeArray<HitCollisionData.Capsule> CapsuleArray;
+
+    [ReadOnly] public NativeArray<HitCollisionData.Box> BoxArray;
+
+    public NativeArray<HitCollisionData.CollisionResult> Result;
 
     public void Execute()
     {
         // TODO (mogensh) : find all hits and return closest
 
-        
-        for (var i = 0; i < sphereArray.Length; i++)
+        for (var i = 0; i < SphereArray.Length; i++)
         {
-            var prim = sphereArray[i].prim;
-            var sourceIndex = sphereArray[i].transformIndex;                
-            prim = primlib.transform(prim, transformBuffer[sourceIndex].pos, transformBuffer[sourceIndex].rot);
+            var prim = SphereArray[i].SpherePrimitive;
+            var sourceIndex = SphereArray[i].TransformIndex;
+            prim = primlib.transform(prim, TransformBuffer[sourceIndex].Pos, TransformBuffer[sourceIndex].Rot);
 
-            var dist = math.distance(sphere.center, prim.center);
-
-            var hit = dist < sphere.radius + prim.radius;
+            var dist = math.distance(Sphere.center, prim.center);
+            var hit = dist < Sphere.radius + prim.radius;
             if (hit)
             {
-                result[0] = new HitCollisionData.CollisionResult()
+                Result[0] = new HitCollisionData.CollisionResult
                 {
-                    info = sphereArray[i].info,
-                    primCenter = prim.center,
-                    hit = 1,
-                    sphere = prim,
+                    Info = SphereArray[i].Info,
+                    PrimitiveCenter = prim.center,
+                    Hit = 1,
+                    SpherePrimitive = prim
                 };
                 return;
             }
         }
 
-        for (var i = 0; i < capsuleArray.Length; i++)
+        for (var i = 0; i < CapsuleArray.Length; i++)
         {
-            var prim = capsuleArray[i].prim;
-            var sourceIndex = capsuleArray[i].transformIndex;                
-            prim = primlib.transform(prim, transformBuffer[sourceIndex].pos, transformBuffer[sourceIndex].rot);
+            var prim = CapsuleArray[i].CapsulePrimitive;
+            var sourceIndex = CapsuleArray[i].TransformIndex;
+            prim = primlib.transform(prim, TransformBuffer[sourceIndex].Pos, TransformBuffer[sourceIndex].Rot);
+
             var v = prim.p2 - prim.p1;
-            var hit = coll.RayCast(sphere, new ray(prim.p1, math.normalize(v)), math.length(v), prim.radius);
+            var hit = coll.RayCast(Sphere, new ray(prim.p1, math.normalize(v)), math.length(v), prim.radius);
             if (hit)
             {
-                result[0] = new HitCollisionData.CollisionResult()
+                Result[0] = new HitCollisionData.CollisionResult()
                 {
-                    info = capsuleArray[i].info,
-                    primCenter = prim.p1 + (prim.p2 - prim.p1)*0.5f,
-                    hit = 1,
-                    capsule = prim,
+                    Info = CapsuleArray[i].Info,
+                    PrimitiveCenter = prim.p1 + (prim.p2 - prim.p1) * 0.5f,
+                    Hit = 1,
+                    CapsulePrimitive = prim,
                 };
                 return;
             }
         }
 
-        for (var i = 0; i < boxArray.Length; i++)
+        for (var i = 0; i < BoxArray.Length; i++)
         {
-            var prim = boxArray[i].prim;
-            var sourceIndex = boxArray[i].transformIndex;                
-            
-            var primWorldSpace = primlib.transform(prim, transformBuffer[sourceIndex].pos, transformBuffer[sourceIndex].rot);
+            var prim = BoxArray[i].BoxPrimitive;
+            var sourceIndex = BoxArray[i].TransformIndex;
+            var primWorldSpace =
+                primlib.transform(prim, TransformBuffer[sourceIndex].Pos, TransformBuffer[sourceIndex].Rot);
 
-            var hit = true; // TODO (mogensh) SPhere Box collision
-                           
-            if (hit)
+            // TODO (mogensh) Sphere Box collision
+            if (true)
             {
-                result[0] = new HitCollisionData.CollisionResult()
+                Result[0] = new HitCollisionData.CollisionResult()
                 {
-                    info = boxArray[i].info,
-                    primCenter = primWorldSpace.center,
-                    hit = 1,
-                    box = primWorldSpace,
+                    Info = BoxArray[i].Info,
+                    PrimitiveCenter = primWorldSpace.center,
+                    Hit = 1,
+                    BoxPrimitive = primWorldSpace,
                 };
-                return;  
+                return;
             }
-        }  
+        }
     }
 }
 
-
 [BurstCompile(CompileSynchronously = true)]
-struct StoreBonesJobJob : IJobParallelForTransform
+public struct StoreBonesJob : IJobParallelForTransform
 {
-    public NativeSlice<HitCollisionData.TransformHistory> transformBuffer;
-    
+    public NativeSlice<HitCollisionData.TransformHistory> TransformBuffer;
+
     public void Execute(int i, TransformAccess transform)
     {
-        transformBuffer[i] = new HitCollisionData.TransformHistory
+        TransformBuffer[i] = new HitCollisionData.TransformHistory
         {
-            pos = transform.position,
-            rot = transform.rotation,
+            Pos = transform.position,
+            Rot = transform.rotation,
         };
     }
 }
-

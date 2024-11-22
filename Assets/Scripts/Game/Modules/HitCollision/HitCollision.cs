@@ -1,8 +1,7 @@
 ﻿using Unity.Entities;
 using UnityEngine;
 
-public class HitCollision : MonoBehaviour      
+public class HitCollision : MonoBehaviour
 {
-    public Entity owner;
+    public Entity Owner;
 }
-

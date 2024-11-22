@@ -32,7 +32,7 @@ public class DamageArea : MonoBehaviour
         if (hitCollision == null)
             return;
 
-        charactersInside.Add(new CharacterInfo { hitCollisionOwner = hitCollision.owner, nextDamageTick = 0 });
+        charactersInside.Add(new CharacterInfo { hitCollisionOwner = hitCollision.Owner, nextDamageTick = 0 });
     }
 
     void OnTriggerExit(Collider c)
@@ -43,7 +43,7 @@ public class DamageArea : MonoBehaviour
         
         for (var i = 0; i < charactersInside.Count; i++)
         {
-            if (charactersInside[i].hitCollisionOwner == hitCollision.owner)
+            if (charactersInside[i].hitCollisionOwner == hitCollision.Owner)
             {
                 charactersInside.EraseSwap(i);
                 break;

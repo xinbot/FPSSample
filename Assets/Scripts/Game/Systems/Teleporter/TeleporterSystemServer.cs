@@ -28,9 +28,9 @@ public class TeleporterSystemServer : ComponentSystem
             {
                 
 
-                if (t.characterInside.owner != Entity.Null && EntityManager.HasComponent<Character>(t.characterInside.owner))
+                if (t.characterInside.Owner != Entity.Null && EntityManager.HasComponent<Character>(t.characterInside.Owner))
                 {
-                    var character = EntityManager.GetComponentObject<Character>(t.characterInside.owner);    
+                    var character = EntityManager.GetComponentObject<Character>(t.characterInside.Owner);    
                     
                     var dstPos = t.targetTeleporter.GetSpawnPositionWorld();
                     var dstRot = t.targetTeleporter.GetSpawnRotationWorld();
