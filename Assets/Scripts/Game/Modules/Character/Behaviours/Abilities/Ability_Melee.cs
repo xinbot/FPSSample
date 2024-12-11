@@ -193,16 +193,16 @@ class Melee_Update : BaseComponentDataSystem<CharBehaviour,AbilityControl, Abili
 
                         predictedState.SetPhase(Ability_Melee.Phase.Hold, time.Tick);
 
-                        var queryReciever = World.GetExistingManager<RaySphereQueryReciever>();
-                        localState.rayQueryId = queryReciever.RegisterQuery(new RaySphereQueryReciever.Query()
+                        var queryReciever = World.GetExistingManager<RaySphereQueryReceiver>();
+                        localState.rayQueryId = queryReciever.RegisterQuery(new RaySphereQueryReceiver.Query()
                         {
-                            origin = eyePos,
-                            direction = viewDir,
-                            distance = settings.damageDist,
+                            Origin = eyePos,
+                            Direction = viewDir,
+                            Distance = settings.damageDist,
                             ExcludeOwner = charAbility.character,
-                            hitCollisionTestTick = command.renderTick,
-                            radius = settings.damageRadius,
-                            mask = ~0U,
+                            HitCollisionTestTick = command.renderTick,
+                            Radius = settings.damageRadius,
+                            Mask = ~0U,
                         });
 
                         EntityManager.SetComponentData(abilityEntity,localState);
@@ -252,20 +252,20 @@ class Melee_HandleCollision : BaseComponentDataSystem<Ability_Melee.LocalState>
         if (localState.rayQueryId == -1)
             return;
         
-        var queryReciever = World.GetExistingManager<RaySphereQueryReciever>();
+        var queryReciever = World.GetExistingManager<RaySphereQueryReceiver>();
         
-        RaySphereQueryReciever.Query query;
-        RaySphereQueryReciever.QueryResult queryResult;
+        RaySphereQueryReceiver.Query query;
+        RaySphereQueryReceiver.QueryResult queryResult;
         queryReciever.GetResult(localState.rayQueryId, out query, out queryResult);
         localState.rayQueryId = -1;
         
-        if (queryResult.hitCollisionOwner != Entity.Null)
+        if (queryResult.HitCollisionOwner != Entity.Null)
         {
             var charAbility = EntityManager.GetComponentData<CharBehaviour>(abilityEntity);       
             var settings = EntityManager.GetComponentData<Ability_Melee.Settings>(abilityEntity);
 
-            var damageEventBuffer = EntityManager.GetBuffer<DamageEvent>(queryResult.hitCollisionOwner);
-            DamageEvent.AddEvent(damageEventBuffer, charAbility.character, settings.damage, query.direction, settings.damageImpulse);
+            var damageEventBuffer = EntityManager.GetBuffer<DamageEvent>(queryResult.HitCollisionOwner);
+            DamageEvent.AddEvent(damageEventBuffer, charAbility.character, settings.damage, query.Direction, settings.damageImpulse);
 
             var interpolatedState = EntityManager.GetComponentData<Ability_Melee.InterpolatedState>(abilityEntity);
             interpolatedState.impactTick = m_world.WorldTime.Tick;            

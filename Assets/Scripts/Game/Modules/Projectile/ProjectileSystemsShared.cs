@@ -44,15 +44,15 @@ public class CreateProjectileMovementCollisionQueries : BaseComponentSystem
 
             var collisionMask = ~(1U << projectileData.TeamId);
 
-            var queryReceiver = World.GetExistingManager<RaySphereQueryReciever>();
-            projectileData.RayQueryId = queryReceiver.RegisterQuery(new RaySphereQueryReciever.Query
+            var queryReceiver = World.GetExistingManager<RaySphereQueryReceiver>();
+            projectileData.RayQueryId = queryReceiver.RegisterQuery(new RaySphereQueryReceiver.Query
             {
-                hitCollisionTestTick = collisionTestTick,
-                origin = projectileData.Position,
-                direction = dir,
-                distance = moveDist,
-                radius = projectileData.Settings.collisionRadius,
-                mask = collisionMask,
+                HitCollisionTestTick = collisionTestTick,
+                Origin = projectileData.Position,
+                Direction = dir,
+                Distance = moveDist,
+                Radius = projectileData.Settings.collisionRadius,
+                Mask = collisionMask,
                 ExcludeOwner = projectileData.ProjectileOwner,
             });
 
@@ -81,7 +81,7 @@ public class HandleProjectileMovementCollisionQuery : BaseComponentSystem
     {
         var entityArray = _group.GetEntityArray();
         var projectileDataArray = _group.GetComponentDataArray<ProjectileData>();
-        var queryReceiver = World.GetExistingManager<RaySphereQueryReciever>();
+        var queryReceiver = World.GetExistingManager<RaySphereQueryReceiver>();
         for (var i = 0; i < projectileDataArray.Length; i++)
         {
             var projectileData = projectileDataArray[i];
@@ -90,20 +90,20 @@ public class HandleProjectileMovementCollisionQuery : BaseComponentSystem
                 continue;
             }
 
-            RaySphereQueryReciever.Query query;
-            RaySphereQueryReciever.QueryResult queryResult;
+            RaySphereQueryReceiver.Query query;
+            RaySphereQueryReceiver.QueryResult queryResult;
             queryReceiver.GetResult(projectileData.RayQueryId, out query, out queryResult);
 
             var projectileVec = projectileData.EndPos - projectileData.StartPos;
             var projectileDir = Vector3.Normalize(projectileVec);
-            var newPosition = (Vector3) projectileData.Position + projectileDir * query.distance;
+            var newPosition = (Vector3) projectileData.Position + projectileDir * query.Distance;
 
-            var impact = queryResult.hit == 1;
+            var impact = queryResult.Hit == 1;
             if (impact)
             {
                 projectileData.Impacted = 1;
-                projectileData.ImpactPos = queryResult.hitPoint;
-                projectileData.ImpactNormal = queryResult.hitNormal;
+                projectileData.ImpactPos = queryResult.HitPoint;
+                projectileData.ImpactNormal = queryResult.HitNormal;
                 projectileData.ImpactTick = m_world.WorldTime.Tick;
 
                 // Owner can deSpawn while projectile is in flight, so we need to make sure we don't send non existing instigator
@@ -111,14 +111,14 @@ public class HandleProjectileMovementCollisionQuery : BaseComponentSystem
                     ? projectileData.ProjectileOwner
                     : Entity.Null;
 
-                var collisionHit = queryResult.hitCollisionOwner != Entity.Null;
+                var collisionHit = queryResult.HitCollisionOwner != Entity.Null;
                 if (collisionHit)
                 {
                     if (damageInstigator != Entity.Null)
                     {
-                        if (EntityManager.HasComponent<DamageEvent>(queryResult.hitCollisionOwner))
+                        if (EntityManager.HasComponent<DamageEvent>(queryResult.HitCollisionOwner))
                         {
-                            var damageEventBuffer = EntityManager.GetBuffer<DamageEvent>(queryResult.hitCollisionOwner);
+                            var damageEventBuffer = EntityManager.GetBuffer<DamageEvent>(queryResult.HitCollisionOwner);
                             DamageEvent.AddEvent(damageEventBuffer, damageInstigator,
                                 projectileData.Settings.impactDamage, projectileDir,
                                 projectileData.Settings.impactImpulse);
@@ -131,12 +131,12 @@ public class HandleProjectileMovementCollisionQuery : BaseComponentSystem
                     if (damageInstigator != Entity.Null)
                     {
                         var collisionMask = ~(1 << projectileData.TeamId);
-                        SplashDamageRequest.Create(PostUpdateCommands, query.hitCollisionTestTick, damageInstigator,
-                            queryResult.hitPoint, collisionMask, projectileData.Settings.splashDamage);
+                        SplashDamageRequest.Create(PostUpdateCommands, query.HitCollisionTestTick, damageInstigator,
+                            queryResult.HitPoint, collisionMask, projectileData.Settings.splashDamage);
                     }
                 }
 
-                newPosition = queryResult.hitPoint;
+                newPosition = queryResult.HitPoint;
             }
 
             if (ProjectileModuleServer.DrawDebug.IntValue == 1)

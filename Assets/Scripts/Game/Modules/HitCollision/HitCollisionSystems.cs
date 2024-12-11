@@ -3,18 +3,17 @@ using UnityEngine;
 using Unity.Entities;
 using UnityEngine.Jobs;
 
+public struct Initialized : IComponentData
+{
+}
+
 [DisableAutoCreation]
-public class HandleHitCollisionSpawning : InitializeComponentGroupSystem<HitCollisionHistory,
-    HandleHitCollisionSpawning.Initialized>
+public class HandleHitCollisionSpawning : InitializeComponentGroupSystem<HitCollisionHistory, Initialized>
 {
     private readonly GameObject _systemRoot;
     private int _bufferSize;
 
     private List<Collider> _sourceColliders = new List<Collider>();
-
-    public struct Initialized : IComponentData
-    {
-    }
 
     public HandleHitCollisionSpawning(GameWorld world, GameObject systemRoot, int bufferSize) : base(world)
     {
@@ -53,10 +52,13 @@ public class HandleHitCollisionSpawning : InitializeComponentGroupSystem<HitColl
 
             var uniqueParents = new List<Transform>(16);
             var colliderParents = new List<Transform>(16);
+
             var capsuleColliders = new List<CapsuleCollider>(16);
             var capsuleColliderParents = new List<Transform>(16);
+
             var sphereColliders = new List<SphereCollider>(16);
             var sphereColliderParents = new List<Transform>(16);
+
             var boxColliders = new List<BoxCollider>(16);
             var boxColliderParents = new List<Transform>(16);
 
@@ -144,7 +146,9 @@ public class HandleHitCollisionDespawning : DeinitializeComponentGroupSystem<Hit
             var hitCollHistory = hitCollHistoryArray[i];
 
             if (hitCollHistory.ColliderParents.isCreated)
+            {
                 hitCollHistory.ColliderParents.Dispose();
+            }
         }
     }
 }

@@ -130,25 +130,25 @@ public class CharacterDebugWindow : EditorWindow
             var damStart = aimPointWorld - damDir * 2;
             
             var collisionMask = ~0U;
-            var queryReciever = World.Active.GetExistingManager<RaySphereQueryReciever>();
-            var id = queryReciever.RegisterQuery(new RaySphereQueryReciever.Query()
+            var queryReciever = World.Active.GetExistingManager<RaySphereQueryReceiver>();
+            var id = queryReciever.RegisterQuery(new RaySphereQueryReceiver.Query()
             {
-                origin = damStart,
-                direction = damDir,
-                distance = 1000,
+                Origin = damStart,
+                Direction = damDir,
+                Distance = 1000,
                 ExcludeOwner = Entity.Null,
-                hitCollisionTestTick = 1,
-                radius = 0,
-                mask = collisionMask,
+                HitCollisionTestTick = 1,
+                Radius = 0,
+                Mask = collisionMask,
             });
         
-            RaySphereQueryReciever.Query query;
-            RaySphereQueryReciever.QueryResult queryResult;
+            RaySphereQueryReceiver.Query query;
+            RaySphereQueryReceiver.QueryResult queryResult;
             queryReciever.GetResult(id, out query, out queryResult);
 
-            if (queryResult.hit == 1)
+            if (queryResult.Hit == 1)
             {
-                var damageEventBuffer = goe.EntityManager.GetBuffer<DamageEvent>(queryResult.hitCollisionOwner);
+                var damageEventBuffer = goe.EntityManager.GetBuffer<DamageEvent>(queryResult.HitCollisionOwner);
                 DamageEvent.AddEvent(damageEventBuffer, Entity.Null, damageInfo.damage,
                     damageInfo.direction * Vector3.forward, damageInfo.impulse);
             }

@@ -26,7 +26,7 @@ public class HitCollisionModule
 
         m_primDebugChannel = primDebugChannel;
         
-        m_RaySphereQueryReciever = m_world.GetECSWorld().CreateManager<RaySphereQueryReciever>(m_world);
+        _mRaySphereQueryReceiver = m_world.GetECSWorld().CreateManager<RaySphereQueryReceiver>(m_world);
         m_HandleSplashDamageRequest = m_world.GetECSWorld().CreateManager<HandleSplashDamageRequests>(m_world);
         m_StoreColliderStates = m_world.GetECSWorld().CreateManager<StoreColliderStates>(m_world);
         m_HandleHitCollisionSpawning = m_world.GetECSWorld().CreateManager<HandleHitCollisionSpawning>(m_world,m_SystemRoot,bufferSize);
@@ -42,7 +42,7 @@ public class HitCollisionModule
         m_world.GetECSWorld().DestroyManager(m_StoreColliderStates);
         m_world.GetECSWorld().DestroyManager(m_HandleHitCollisionSpawning);
         m_world.GetECSWorld().DestroyManager(m_HandleHitCollisionDespawning);
-        m_world.GetECSWorld().DestroyManager(m_RaySphereQueryReciever);
+        m_world.GetECSWorld().DestroyManager(_mRaySphereQueryReceiver);
 
         if(m_SystemRoot != null)
             GameObject.Destroy(m_SystemRoot);
@@ -73,7 +73,7 @@ public class HitCollisionModule
     readonly StoreColliderStates m_StoreColliderStates;
     readonly HandleHitCollisionSpawning m_HandleHitCollisionSpawning;
     readonly HandleHitCollisionDespawning m_HandleHitCollisionDespawning;
-    readonly RaySphereQueryReciever m_RaySphereQueryReciever;                                              
+    readonly RaySphereQueryReceiver _mRaySphereQueryReceiver;                                              
         
     GameObject m_SystemRoot;
     static int m_primDebugChannel;

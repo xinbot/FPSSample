@@ -354,16 +354,16 @@ class AutoRifle_Update : BaseComponentDataSystem<CharBehaviour,AbilityControl,Ab
 			const int distance = 500;
 			var collisionMask = ~(1U << character.teamId);
 
-			var queryReciever = World.GetExistingManager<RaySphereQueryReciever>();
-			internalState.rayQueryId = queryReciever.RegisterQuery(new RaySphereQueryReciever.Query()
+			var queryReciever = World.GetExistingManager<RaySphereQueryReceiver>();
+			internalState.rayQueryId = queryReciever.RegisterQuery(new RaySphereQueryReceiver.Query()
 			{
-				origin = eyePos,
-				direction = direction,
-				distance = distance,
+				Origin = eyePos,
+				Direction = direction,
+				Distance = distance,
 				ExcludeOwner = charAbility.character,
-				hitCollisionTestTick = command.renderTick,
-				radius = settings.hitscanRadius,
-				mask = collisionMask,
+				HitCollisionTestTick = command.renderTick,
+				Radius = settings.hitscanRadius,
+				Mask = collisionMask,
 			});
 
 			EntityManager.SetComponentData(abilityEntity,internalState);
@@ -389,23 +389,23 @@ class AutoRifle_HandleCollisionQuery : BaseComponentDataSystem<Ability_AutoRifle
 			return;
 
 		Profiler.BeginSample("-get result");
-		var queryReciever = World.GetExistingManager<RaySphereQueryReciever>();
-		RaySphereQueryReciever.Query query;
-		RaySphereQueryReciever.QueryResult queryResult;
+		var queryReciever = World.GetExistingManager<RaySphereQueryReceiver>();
+		RaySphereQueryReceiver.Query query;
+		RaySphereQueryReceiver.QueryResult queryResult;
 		queryReciever.GetResult(internalState.rayQueryId, out query, out queryResult);
 		internalState.rayQueryId = -1;
 		Profiler.EndSample();
 		
 		float3 endPos;
 
-		var impact = queryResult.hit == 1;
+		var impact = queryResult.Hit == 1;
 		if (impact)
 		{
-			var hitCollisionHit = queryResult.hitCollisionOwner != Entity.Null;
+			var hitCollisionHit = queryResult.HitCollisionOwner != Entity.Null;
 			interpolatedState.impactType = hitCollisionHit
 				? Ability_AutoRifle.ImpactType.Character
 				: Ability_AutoRifle.ImpactType.Environment;
-			endPos = queryResult.hitPoint;
+			endPos = queryResult.HitPoint;
 			
 			// Apply damage
 			if (hitCollisionHit)
@@ -414,18 +414,18 @@ class AutoRifle_HandleCollisionQuery : BaseComponentDataSystem<Ability_AutoRifle
 				var charAbility = EntityManager.GetComponentData<CharBehaviour>(abilityEntity);
 				var settings = EntityManager.GetComponentData<Ability_AutoRifle.Settings>(abilityEntity);
 				
-				var damageEventBuffer = EntityManager.GetBuffer<DamageEvent>(queryResult.hitCollisionOwner);
-				DamageEvent.AddEvent(damageEventBuffer, charAbility.character, settings.damage, query.direction,settings.damageImpulse);
+				var damageEventBuffer = EntityManager.GetBuffer<DamageEvent>(queryResult.HitCollisionOwner);
+				DamageEvent.AddEvent(damageEventBuffer, charAbility.character, settings.damage, query.Direction,settings.damageImpulse);
 				
 				Profiler.EndSample();
 			}
 
-			interpolatedState.impactNormal = queryResult.hitNormal;
+			interpolatedState.impactNormal = queryResult.HitNormal;
 		}
 		else
 		{
 			interpolatedState.impactType = Ability_AutoRifle.ImpactType.None;
-			endPos = query.origin + query.distance * query.direction;
+			endPos = query.Origin + query.Distance * query.Direction;
 		}
 		interpolatedState.fireTick = m_world.WorldTime.Tick;
 		interpolatedState.fireEndPos = endPos;

@@ -1,6 +1,4 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using Unity.Entities;
+﻿using Unity.Entities;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -13,9 +11,10 @@ public class RocketLauncherUI : AbilityUI
     public override void UpdateAbilityUI(EntityManager entityManager, ref GameTime time)
     {
         var charRepAll = entityManager.GetComponentData<CharacterReplicatedData>(abilityOwner);
-        var ability = charRepAll.FindAbilityWithComponent(entityManager,typeof(Ability_ProjectileLauncher.PredictedState));
-        GameDebug.Assert(ability != Entity.Null,"AbilityController does not own a Ability_ProjectileLauncher ability");
-        
+        var ability =
+            charRepAll.FindAbilityWithComponent(entityManager, typeof(Ability_ProjectileLauncher.PredictedState));
+        GameDebug.Assert(ability != Entity.Null, "AbilityController does not own a Ability_ProjectileLauncher ability");
+
         var behaviorCtrl = entityManager.GetComponentData<AbilityControl>(ability);
         var predictedState = entityManager.GetComponentData<Ability_ProjectileLauncher.PredictedState>(ability);
         var settings = entityManager.GetComponentData<Ability_ProjectileLauncher.Settings>(ability);
@@ -28,9 +27,7 @@ public class RocketLauncherUI : AbilityUI
         if (showCooldown)
         {
             float cooldownLeft = settings.cooldownDuration - time.DurationSinceTick(predictedState.activeTick);
-            cooldownText.text = string.Format("{0:F1}", cooldownLeft);
+            cooldownText.text = $"{cooldownLeft:F1}";
         }
     }
 }
-
-

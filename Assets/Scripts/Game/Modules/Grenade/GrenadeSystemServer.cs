@@ -97,15 +97,15 @@ public class StartGrenadeMovement : BaseComponentSystem
             var collisionMask = ~(1U << internalState.TeamId);
 
             // Setup new collision query
-            var queryReceiver = World.GetExistingManager<RaySphereQueryReciever>();
-            internalState.RayQueryId = queryReceiver.RegisterQuery(new RaySphereQueryReciever.Query()
+            var queryReceiver = World.GetExistingManager<RaySphereQueryReceiver>();
+            internalState.RayQueryId = queryReceiver.RegisterQuery(new RaySphereQueryReceiver.Query()
             {
-                hitCollisionTestTick = time.Tick,
-                origin = startPos,
-                direction = math.normalize(newVelocity),
-                distance = math.length(deltaPos) + settings.collisionRadius,
-                radius = settings.proximityTriggerDist,
-                mask = collisionMask,
+                HitCollisionTestTick = time.Tick,
+                Origin = startPos,
+                Direction = math.normalize(newVelocity),
+                Distance = math.length(deltaPos) + settings.collisionRadius,
+                Radius = settings.proximityTriggerDist,
+                Mask = collisionMask,
                 ExcludeOwner = time.DurationSinceTick(internalState.StartTick) < 0.2f
                     ? internalState.Owner
                     : Entity.Null,
@@ -137,7 +137,7 @@ public class FinalizeGrenadeMovement : BaseComponentSystem
         Profiler.BeginSample("FinalizeGrenadeMovement");
 
         var time = m_world.WorldTime;
-        var queryReceiver = World.GetExistingManager<RaySphereQueryReciever>();
+        var queryReceiver = World.GetExistingManager<RaySphereQueryReceiver>();
 
         var grenadeEntityArray = _group.GetEntityArray();
         var settingsArray = _group.GetComponentDataArray<Grenade.Settings>();
@@ -166,20 +166,20 @@ public class FinalizeGrenadeMovement : BaseComponentSystem
             var hitCollisionOwner = Entity.Null;
             if (internalState.RayQueryId != -1)
             {
-                RaySphereQueryReciever.Query query;
-                RaySphereQueryReciever.QueryResult queryResult;
+                RaySphereQueryReceiver.Query query;
+                RaySphereQueryReceiver.QueryResult queryResult;
                 queryReceiver.GetResult(internalState.RayQueryId, out query, out queryResult);
                 internalState.RayQueryId = -1;
 
                 // If grenade hit something that was no hitCollision it is environment and grenade should bounce
-                if (queryResult.hit == 1 && queryResult.hitCollisionOwner == Entity.Null)
+                if (queryResult.Hit == 1 && queryResult.HitCollisionOwner == Entity.Null)
                 {
                     var moveDir = math.normalize(internalState.Velocity);
                     var moveVel = math.length(internalState.Velocity);
 
-                    internalState.Position = queryResult.hitPoint + queryResult.hitNormal * settings.collisionRadius;
+                    internalState.Position = queryResult.HitPoint + queryResult.HitNormal * settings.collisionRadius;
 
-                    moveDir = Vector3.Reflect(moveDir, queryResult.hitNormal);
+                    moveDir = Vector3.Reflect(moveDir, queryResult.HitNormal);
                     internalState.Velocity = moveDir * moveVel * settings.bounciness;
 
                     if (moveVel > 1.0f)
@@ -188,12 +188,12 @@ public class FinalizeGrenadeMovement : BaseComponentSystem
                     }
                 }
 
-                if (queryResult.hitCollisionOwner != Entity.Null)
+                if (queryResult.HitCollisionOwner != Entity.Null)
                 {
-                    internalState.Position = queryResult.hitPoint;
+                    internalState.Position = queryResult.HitPoint;
                 }
 
-                hitCollisionOwner = queryResult.hitCollisionOwner;
+                hitCollisionOwner = queryResult.HitCollisionOwner;
             }
 
             // Should we explode ?
